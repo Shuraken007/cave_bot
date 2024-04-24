@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "cave_bot"
+version = "0.1.0"
+description = "discord bot for building map on chat reports"
+authors = ["Shuraken007 <alexander.mad93@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+discord-py = "^2.3.2"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.scripts]
+main = "cave_bot:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
