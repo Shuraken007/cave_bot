@@ -17,8 +17,7 @@
 
 # add token
    You should got TOKEN on prev step. 
-   Add file .env near with current README.md :
-   .env
+   Add file `.env` near with current README.md
    ```
       # .env
       DISCORD_TOKEN=DSDlsCi...8sl8
