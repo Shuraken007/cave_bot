@@ -1,5 +1,5 @@
 # create bot
-1. create bot in discord with this instruction:
+- create bot in discord with this instruction:
    https://discordpy.readthedocs.io/en/stable/discord.html
    you should get:
       * TOKEN of bot
@@ -10,14 +10,15 @@
          * send messages
          * read message history
          * attach files
-2. invite bot to your server and restrict it to specific channel:
+- invite bot to your server and restrict it to specific channel:
    * right click on bot -> Apps -> Manage Integration -> Manage
    * block all channels
    * add required channel
 
-# add tocken
-   you must got TOKEN on prev step
-   add file .env near with current README.md with token content:
+# add token
+   You should got TOKEN on prev step. 
+   Add file .env near with current README.md :
+   .env
    ```
       # .env
       DISCORD_TOKEN=DSDlsCi...8sl8
