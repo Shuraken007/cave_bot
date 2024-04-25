@@ -40,7 +40,7 @@ async def restart():
    bot.parser = Parser()
    bot.logger = Logger('output')
    bot.render_ascii = RenderAscii()
-   # bot.render_image = RenderImage(2000, 'img', 'output')
+   bot.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'])
    await spawn_scan()
    print('restarted')
 
@@ -93,13 +93,15 @@ async def add(ctx, alias, coords):
    if ctx.channel.id not in allowed_channel_ids:
       return
 
-   alias = bot.parser.validate_alias(alias)
-   x, y = bot.parser.validate_coords(coords)
+   report = {'add_request': f'alias: {alias}, coords: {coords}'}
+   alias = bot.parser.validate_alias(alias, report)
+   x, y = bot.parser.validate_coords(coords, report)
 
    if not (alias and x and y):
+      bot.logger.dump_msg(report, 'log', mode='dump')
       return
 
-   sending_message = bot.field.add(alias, x, y, bot.db, ctx.message)
+   sending_message = bot.field.add(alias, x, y, bot, ctx.message)
    if sending_message:
       await ctx.message.channel.send(sending_message)
 
@@ -108,9 +110,11 @@ async def remove(ctx, coords):
    if ctx.channel.id not in allowed_channel_ids:
       return
 
-   x, y = bot.parser.validate_coords(coords)
+   report = {'remove_request': f'coords: {coords}'}
+   x, y = bot.parser.validate_coords(coords, report)
 
    if not (x and y):
+      bot.logger.dump_msg(report, 'log', mode='dump')
       return
 
    sending_message = bot.field.remove(x, y, bot.db, ctx.message)

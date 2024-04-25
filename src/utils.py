@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 
-def build_path(path_arr, file_name, mkdir=False):
+def build_path(path_arr, file_name=None, mkdir=False):
    path = os.path.join(os.path.dirname( __file__ ), '..', *path_arr)
    if mkdir:
       Path(path).mkdir(parents=True, exist_ok=True)

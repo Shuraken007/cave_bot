@@ -1,5 +1,5 @@
 #!python3
-from const import FieldType, field_description, field_aliases, color_scheme, field_to_ascii, MAP_SIZE
+from const import field_aliases, MAP_SIZE
 
 class Field:
    def add(self, alias, x, y, bot, message):

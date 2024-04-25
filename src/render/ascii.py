@@ -1,5 +1,43 @@
 import color_util
-from const import field_to_ascii, color_scheme, MAP_SIZE
+from const import MAP_SIZE, FieldType as f
+
+color_scheme = {
+   f.unknown              : None,
+   f.demon_hands          : ['red', None],
+   f.demon_head           : ['red', None],
+   f.demon_tail           : ['red', None],
+   f.spider               : ['red', None],
+   f.idle_reward          : ['green', None],
+   f.summon_stone         : ['cyan', None],
+   f.artifact             : ['yellow', None],
+   f.amulet_of_fear       : ['yellow', None],
+   f.demon_skull          : ['yellow', None],
+   f.golden_compass       : ['yellow', None],
+   f.lucky_bones          : ['yellow', None],
+   f.scepter_of_domination: ['yellow', None],
+   f.spiral_of_time       : ['yellow', None],
+   f.token_of_memories    : ['yellow', None],
+}
+
+field_to_ascii = {
+     f.unknown              : ["░", "▒"],
+   # f.unknown              : ["░", "⍣", "◆"],
+     f.empty                : "▁",
+     f.demon_hands          : '▇',
+     f.demon_head           : '▇',
+     f.demon_tail           : '▇',
+     f.spider               : '▇',
+     f.idle_reward          : '○︎',
+     f.summon_stone         : '●︎',
+     f.artifact             : "◆",
+     f.amulet_of_fear       : "◆",
+     f.demon_skull          : "◆",
+     f.golden_compass       : "◆",
+     f.lucky_bones          : "◆",
+     f.scepter_of_domination: "◆",
+     f.spiral_of_time       : "◆",
+     f.token_of_memories    : "◆",
+}
 
 class RenderAscii:
    def wrap_line(self, line, i):
