@@ -1,7 +1,4 @@
-import re
 import enum
-
-MATCH_REPORT = re.compile(r"(\d+\-\d+) : (.+);")
 
 class FieldType(enum.IntEnum):
    unknown = 0,
@@ -30,16 +27,15 @@ field_description = {
    f.demon_head : "Loose all remaining turns",
 }
 
-field_aliases = {
+field_aliases_config = {
    f.unknown              : ["u", "unknown"],
    f.empty                : ["e", "empty"],
-   f.demon_hands          : ["dha", "demon hands"],
-   f.demon_head           : ["dhe", "demon head"],
-   f.demon_tail           : ["dt", "demon tail"],
+   f.demon_hands          : ["dh", "demon's hand"],
+   f.demon_head           : ["d", "demon"],
+   f.demon_tail           : ["dt", "demon's tail"],
    f.spider               : ["s", "spider"],
    f.idle_reward          : ["i", "idle reward"],
-   f.summon_stone         : ["ss", "summon stone"],
-   f.artifact             : ["a", "artifact"],
+   f.summon_stone         : ["ss", "summoning stone", "summon stone"],
    f.amulet_of_fear       : ["af", "amulet of fear"],
    f.demon_skull          : ["ds", "demon skull"],
    f.golden_compass       : ["gc", "golden compass"],
@@ -48,6 +44,13 @@ field_aliases = {
    f.spiral_of_time       : ["st", "spiral of time"],
    f.token_of_memories    : ["tm", "token of memories"],
 }
+
+# build reverted field_aliases: "u" : f.unknown
+
+field_aliases = {}
+for k, v in field_aliases_config.items():
+   for alias in v:
+      field_aliases[alias] = k
 
 color_scheme = {
    f.unknown              : None,

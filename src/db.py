@@ -2,8 +2,7 @@ import sqlite3
 from datetime import datetime, timezone, timedelta
 import sys
 from const import FieldType as ft, MAP_SIZE
-from pathlib import Path
-import os
+from utils import build_path
 
 def get_last_monday():
    utc = timezone.utc
@@ -25,10 +24,7 @@ class Db():
    def connect(self):
       db_name = get_uniq_db_name()
       try:
-         db_dir_path = os.path.join(os.path.dirname( __file__ ), '..', self.db_dir)
-         Path(db_dir_path).mkdir(parents=True, exist_ok=True)
-         db_file_path = os.path.join(db_dir_path, db_name)
-
+         db_file_path = build_path(['db'], db_name, mkdir=True)
          connection = sqlite3.connect(
             db_file_path,
             detect_types=sqlite3.PARSE_DECLTYPES
