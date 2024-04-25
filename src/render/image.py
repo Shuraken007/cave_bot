@@ -13,7 +13,6 @@ color_scheme = {
    f.spider               : 'red',
    f.idle_reward          : 'blue',
    f.summon_stone         : 'epic',
-   f.artifact             : 'orange',
    f.amulet_of_fear       : 'orange',
    f.demon_skull          : 'orange',
    f.golden_compass       : 'orange',

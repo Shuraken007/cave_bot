@@ -9,7 +9,6 @@ color_scheme = {
    f.spider               : ['red', None],
    f.idle_reward          : ['green', None],
    f.summon_stone         : ['cyan', None],
-   f.artifact             : ['yellow', None],
    f.amulet_of_fear       : ['yellow', None],
    f.demon_skull          : ['yellow', None],
    f.golden_compass       : ['yellow', None],
@@ -29,7 +28,6 @@ field_to_ascii = {
      f.spider               : '▇',
      f.idle_reward          : '○︎',
      f.summon_stone         : '●︎',
-     f.artifact             : "◆",
      f.amulet_of_fear       : "◆",
      f.demon_skull          : "◆",
      f.golden_compass       : "◆",
@@ -80,4 +78,4 @@ class RenderAscii:
          arr.append(line)
       
       arr.append(color_util.ansi_message_end())
-      return '\n'.join(arr)
+      return '\n'.join(arr), None

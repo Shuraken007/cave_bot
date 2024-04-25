@@ -4,52 +4,51 @@ from const import field_aliases, MAP_SIZE
 MATCH_REPORT = re.compile(r"(\d+\-\d+) : ([\w' ]+)")
 
 class Parser:
-   def validate_coords(self, coords, report):
+   def validate_coords(self, coords, ctx):
       try:
          extracted_coords = coords.split('-')
          if len(extracted_coords) != 2:
-            report['response'] = f'error: only {len(extracted_coords)} coords'
-            return None, None
+            err_msg = f'error: only {len(extracted_coords)} coords {extracted_coords}'
+            return None, None, err_msg
 
          x = int(extracted_coords[0])
          y = int(extracted_coords[1])
 
          if x < 1 or x > MAP_SIZE[0] or y < 1 or y > MAP_SIZE[1]:
-            report['response'] = f'error: x - {x} or y - {y} failed bounds'
-            return None, None
+            err_msg = f'error: x - {x} or y - {y} failed bounds'
+            return None, None, err_msg
       
-         return x, y
+         return x, y, None
       except Exception as e:
-         print(e)
-         report['response'] = str(e)
-         return None, None
+         ctx.report['exception'] = str(e)
+         return None, None, None
 
-   def validate_alias(self, alias, report):
+   def validate_alias(self, alias):
       alias = alias.lower()
       if not alias in field_aliases:
-         report['response'] = f'error: unknown alias {alias}'
-         return None
+         err_msg = f'error: unknown alias {alias}'
+         return None, err_msg
          # return f'alias {alias} is not known'
-      return alias
+      return alias, None
    
-   def parse_msg(self, message, bot):
-      if message.author == bot.user:
-         return
+   def parse_msg(self, message, ctx, bot):
       arr = message.content.split("\n")
       for e in arr:
-         report = {'request': e}
+         log = {'args': e}
          if match := MATCH_REPORT.match(e):
             coords = match.group(1)
             alias = match.group(2).strip()
 
-            alias = self.validate_alias(alias, report)
-            x, y = self.validate_coords(coords, report)
+            alias, err_msg = self.validate_alias(alias, bot)
+            x, y, err_msg = self.validate_coords(coords, bot)
 
-            if not (alias and x and y):
-               bot.logger.dump_msg(report, 'log', mode='dump')
-               return
+            if err_msg:
+               log['error'] = err_msg
+               ctx.log.append(log)
+               continue
 
             bot.field.add(alias, x, y, bot, message)
          else:
-            report['response'] = f'not match'
-            bot.logger.dump_msg(report, 'log', mode='dump')
+            log['error'] = f'not match'
+            ctx.log.append(log)
+      return None, None

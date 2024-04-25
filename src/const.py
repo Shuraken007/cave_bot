@@ -9,7 +9,6 @@ class FieldType(enum.IntEnum):
    spider = 5
    idle_reward = 6
    summon_stone = 7
-   artifact = 8
    amulet_of_fear = 9
    demon_skull = 10
    golden_compass = 11
@@ -22,8 +21,8 @@ f = FieldType
 
 field_description = {
    f.demon_hands: "Loose next turn",
-   f.spider     : "run back to previous room",
-   f.demon_tail : "next direction will be random",
+   f.spider     : "Run back to previous room",
+   f.demon_tail : "Next direction will be random",
    f.demon_head : "Loose all remaining turns",
 }
 
@@ -57,6 +56,12 @@ scan_allowed_channel_ids = [1214291351945093120]
 allowed_channel_ids = [1214291351945093120, 1231401015228497981]
 
 MAP_SIZE = [20, 20]
+
+emoji = {
+   'yes': '\N{WHITE HEAVY CHECK MARK}',
+   'no': '\N{CROSS MARK}',
+   'already': "🔄",
+}
 
 if __name__ == '__main__':
    FieldType.print()
