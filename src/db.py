@@ -123,18 +123,23 @@ class Db():
          (x, y)
       )
 
-   def add_user_request(self, user_id, x, y, field_type):
-      field_name = ft(field_type).name
-
-      field_type_added = self.cursor.execute(
+   def get_field_type_by_user_id(self, user_id, x, y):
+      field_type = self.cursor.execute(
          '''SELECT field_type FROM user_request 
             WHERE user_id == ? AND x == ? AND y == ?
          ''',
          (user_id, x, y)
       ).fetchone()
 
-      if field_type_added is not None:
-         field_type_added = field_type_added[0]
+      if field_type is not None:
+         field_type = field_type[0]
+
+      return field_type
+
+   def add_user_request(self, user_id, x, y, field_type):
+      field_name = ft(field_type).name
+
+      field_type_added = self.get_field_type_by_user_id(user_id, x, y)
 
       if field_type_added is not None and field_type_added == field_type:
          return False
@@ -162,17 +167,10 @@ class Db():
          return False
 
    def remove_user_request(self, user_id, x, y):
-      field_type_added = self.cursor.execute(
-         '''SELECT field_type FROM user_request 
-            WHERE user_id == ? AND x == ? AND y == ?
-         ''',
-         (user_id, x, y)
-      ).fetchone()
+      field_type_added = self.get_field_type_by_user_id(user_id, x, y)
 
       if field_type_added is None:
          return False
-
-      field_type_added = field_type_added[0]
 
       try:
          self.cursor.execute('BEGIN')

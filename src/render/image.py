@@ -193,7 +193,7 @@ class RenderImage():
       img.draw.text(coords, text, font=self.font, fill=color)
       return
 
-   def render(self, field):
+   def render(self, field, user_id, bot):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
       
@@ -202,7 +202,9 @@ class RenderImage():
             coords = self.get_cell_coords(i, j)
             values = field.fields[i][j]
             field_type = values.index(max(values))
-
+            if user_id and bot.db.get_field_type_by_user_id(user_id, i+1, j+1):
+               field_type = f.unknown
+               
             img = self.images.get(f(field_type))
             
             if img and f(field_type) in color_scheme:

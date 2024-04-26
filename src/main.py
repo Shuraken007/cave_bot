@@ -1,6 +1,6 @@
 #!python3
 import discord
-from typing import Literal
+from typing import Literal, Optional
 from discord.ext import tasks, commands
 from dotenv import load_dotenv
 import os
@@ -10,6 +10,7 @@ from field import Field
 from parser import Parser
 from datetime import datetime, timezone
 from const import scan_allowed_channel_ids, allowed_channel_ids, emoji, FieldType, field_aliases
+from helpo import help
 from logger import Logger
 from render.ascii import RenderAscii
 from render.image import RenderImage
@@ -24,10 +25,12 @@ class MyBot(commands.Bot):
          await ctx.send(f"Wrong Argument: {error}")
       elif isinstance(error, commands.CheckFailure):
          await ctx.send(error)
+      elif isinstance(error, commands.CommandNotFound):
+         await ctx.send(error)
       else:
          await super().on_command_error(ctx, error)  # вызывает изначальное поведение on_error_message
 
-      if ctx.log is not None:
+      if hasattr(ctx, 'log') and getattr(ctx, 'log') is not None:
          ctx.log['error'] = str(error)
          bot.logger.dump_msg(ctx.log, 'log', mode='dump')
 
@@ -141,7 +144,6 @@ async def preprocess(ctx):
    ctx.log = {}
    if len(ctx.args) > 1:
       ctx.log = {'args': ctx.args[1:]}
-      
 
 @bot.after_invoke
 async def postprocess(ctx):
@@ -153,55 +155,29 @@ async def postprocess(ctx):
       (type(ctx.log) == list and len(ctx.log) > 0):
       bot.logger.dump_msg(ctx.log, 'log', mode='dump')
 
-coord_descr = commands.parameter(description="x-y: 1-2 11-9")
-
-
-def grouped(iterable, n):
-    return zip(*[iter(iterable)]*n)
-what_str = []
-for a1, a2, a3, a4, a5, a6, a7, a8 in grouped(field_aliases.keys(), 8):
-   what_str.append(' | '.join([a1, a2, a3, a4, a5, a6, a7, a8]))
-what_str = "\n".join(what_str)
-what_descr = commands.parameter(description=what_str)
-
-add_description = """
-   add item by coords:
-   !a empty 3-5 | !a e 3-5
-   !a "idle reward" 6-8 | !a i 6-8
-   !add "summon stone" 2-1 3-4 8-12
-   !a ss 2-1 3-4 8-12
-"""
-
 @strict_channels()
-@bot.command(aliases=['a'], brief = "add item by coords", description = add_description)
-async def add(ctx, what: AliasConverter = what_descr, coords: commands.Greedy[CoordsConverter] = coord_descr):
+@bot.command(aliases=['a'], brief = "add item by coords", description = help['add_description'])
+async def add(ctx, what: AliasConverter = help['what_descr'], coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
    for coord in coords:
       ctx.cmd_msg, ctx.cmd_emoji = bot.field.add(what, *coord, bot, ctx.message)
 
-
-remove_description = """
-   if you gave wrong info, you can remove it:
-   !remove 2-2
-   !r 2-2
-   !r 2-2 2-5 6-4 8-9
-"""
 @strict_channels()
-@bot.command(aliases=['r'], brief = "removes your record by coords x-y", description=remove_description)
-async def remove(ctx, coords: commands.Greedy[CoordsConverter] = coord_descr):
+@bot.command(aliases=['r'], brief = "removes your record by coords x-y", description=help['remove_description'])
+async def remove(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
    for coord in coords:
       ctx.cmd_msg, ctx.cmd_emoji = bot.field.remove(*coord, bot.db, ctx.message)
 
 @strict_channels()
-@bot.command(aliases=['s'], brief = "render map as ascii text")
-async def show(ctx):
-   ctx.cmd_msg, ctx.cmd_emoji = bot.render_ascii.render(bot.field)
-
-@strict_channels()
-@bot.command(aliases=['m'], brief = "render map as high rez image")
-async def map(ctx):
+@bot.command(aliases=['m'], brief = "render map as image or text")
+async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii']):
    image = None
+   if me:
+      me = ctx.message.author.id
    async with ctx.typing():
-      image = bot.render_image.render(bot.field)
+      if ascii:
+         ctx.cmd_msg, ctx.cmd_emoji = bot.render_ascii.render(bot.field, me, bot)
+      else:
+         image = bot.render_image.render(bot.field, me, bot)
 
    if image:
       with io.BytesIO() as image_binary:

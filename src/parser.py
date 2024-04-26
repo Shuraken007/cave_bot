@@ -39,7 +39,7 @@ class Parser:
             coords = match.group(1)
             alias = match.group(2).strip()
 
-            alias, err_msg = self.validate_alias(alias, bot)
+            alias, err_msg = self.validate_alias(alias)
             x, y, err_msg = self.validate_coords(coords, bot)
 
             if err_msg:

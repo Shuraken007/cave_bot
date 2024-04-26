@@ -60,7 +60,7 @@ class RenderAscii:
 
       return c
 
-   def render(self, field):
+   def render(self, field, user_id, bot):
       arr = []
       arr.append(color_util.ansi_message_start())
       for i in range(0, MAP_SIZE[0]):
@@ -72,6 +72,9 @@ class RenderAscii:
                line += " "
             values = field.fields[i][j]
             field_type = values.index(max(values))
+            if user_id and bot.db.get_field_type_by_user_id(user_id, i+1, j+1):
+               field_type = f.unknown
+
             c = self.get_char(field_type, i, j)
             line += c
          line = self.wrap_line(line, i)
