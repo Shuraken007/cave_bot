@@ -1,4 +1,4 @@
-from const import FieldType as f, MAP_SIZE
+from const import CellType as f, MAP_SIZE
 from utils import build_path
 
 # from fontTools.ttLib import TTFont
@@ -193,31 +193,31 @@ class RenderImage():
       img.draw.text(coords, text, font=self.font, fill=color)
       return
 
-   def render(self, field, user_id, bot):
+   def render(self, view, user_id, bot):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
       
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
-            coords = self.get_cell_coords(i, j)
-            values = field.fields[i][j]
-            field_type = values.index(max(values))
-            if user_id and bot.db.get_field_type_by_user_id(user_id, i+1, j+1):
-               field_type = f.unknown
-               
-            img = self.images.get(f(field_type))
+            cell_type = view.get_cell_type(i+1, j+1)
+
+            if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
+               cell_type = f.unknown
+
+            img = self.images.get(f(cell_type))
             
-            if img and f(field_type) in color_scheme:
-               color_name = color_scheme[f(field_type)]
+            if img and f(cell_type) in color_scheme:
+               color_name = color_scheme[f(cell_type)]
                color = map_colour_alias_to_rgb[color_name]
                img = img.copy()
                self.change_color(img, (0, 0, 0, 0), color)
 
+            coords = self.get_cell_coords(i, j)
             if img:
                shift = [coords[0]/self.bg_w * 100, coords[1]/self.bg_w * 100]
                add_img(back, img, "TOPLEFT", shift, foregound_on_background=True)
 
-            if field_type in [f.unknown, f.empty ]:
+            if cell_type in [f.unknown, f.empty ]:
                pos_spec = { 
                   'coords': coords.copy(), 
                   'align': "CENTER",
@@ -235,10 +235,10 @@ class RenderImage():
 
 if __name__ == '__main__':
    render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'])
-   from field import Field
-   from db import Db
-   db = Db('db')
-   field = Field(db)
-   img = render_image.render(field)
+   from view import View
+   from model import Model
+   db = Model('db')
+   view = View(db)
+   img = render_image.render(view)
    save_path = build_path(['output', 'img'], 'test.png', mkdir=True)
    img.save(save_path)

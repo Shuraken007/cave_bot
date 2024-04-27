@@ -1,5 +1,5 @@
 import color_util
-from const import MAP_SIZE, FieldType as f
+from const import MAP_SIZE, CellType as f
 
 color_scheme = {
    f.unknown              : None,
@@ -18,7 +18,7 @@ color_scheme = {
    f.token_of_memories    : ['yellow', None],
 }
 
-field_to_ascii = {
+cell_to_ascii = {
      f.unknown              : ["░", "▒"],
    # f.unknown              : ["░", "⍣", "◆"],
      f.empty                : "▁",
@@ -48,19 +48,19 @@ class RenderAscii:
          postfix += str(i+1)
       return prefix + line + postfix
 
-   def get_char(self, field_type, i, j):
-      c = field_to_ascii[field_type]
+   def get_char(self, cell_type, i, j):
+      c = cell_to_ascii[cell_type]
       if type(c) == list:
          c = c[(i+j) % len(c)]
          # c = c[(i) % len(c)]
 
-      color = color_scheme.get(field_type)
+      color = color_scheme.get(cell_type)
       if color:
          c = color_util.color_msg(c, *color)
 
       return c
 
-   def render(self, field, user_id, bot):
+   def render(self, view, user_id, bot, report):
       arr = []
       arr.append(color_util.ansi_message_start())
       for i in range(0, MAP_SIZE[0]):
@@ -70,15 +70,14 @@ class RenderAscii:
          for j in range(0, MAP_SIZE[1]):
             if j % 5 == 0 and j > 0:
                line += " "
-            values = field.fields[i][j]
-            field_type = values.index(max(values))
-            if user_id and bot.db.get_field_type_by_user_id(user_id, i+1, j+1):
-               field_type = f.unknown
+            cell_type = view.get_cell_type(i+1, j+1)
+            if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
+               cell_type = f.unknown
 
-            c = self.get_char(field_type, i, j)
+            c = self.get_char(cell_type, i, j)
             line += c
          line = self.wrap_line(line, i)
          arr.append(line)
       
       arr.append(color_util.ansi_message_end())
-      return '\n'.join(arr), None
+      report.add_message('\n'.join(arr))

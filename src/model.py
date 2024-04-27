@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime, timezone, timedelta
 import sys
-from const import FieldType as ft, MAP_SIZE
+from const import CellType, MAP_SIZE
 from utils import build_path
 
 def get_last_monday():
@@ -14,13 +14,13 @@ def get_last_monday():
 def get_uniq_db_name():
    return get_last_monday().strftime('%d_%m_%Y.db')
 
-def get_field_type_str():
-   enum_fields = []
-   for e in ft:
-      enum_fields.append('{} INT DEFAULT 0'.format(e.name))
-   return '{}'.format(','.join(enum_fields))
+def get_cell_type_str():
+   enum_cells = []
+   for cell_type in CellType:
+      enum_cells.append('{} INT DEFAULT 0'.format(cell_type.name))
+   return '{}'.format(','.join(enum_cells))
 
-class Db():
+class Model():
    def connect(self):
       db_name = get_uniq_db_name()
       try:
@@ -37,9 +37,9 @@ class Db():
       except Exception as e:
          sys.exit(e)
 
-   def create_table_fields(self):
+   def create_table_cells(self):
       table_exists = self.cursor.execute('''
-         SELECT name FROM sqlite_master WHERE type='table' AND name="fields"
+         SELECT name FROM sqlite_master WHERE type='table' AND name="cells"
       ''').fetchall()
 
       if table_exists:
@@ -49,13 +49,13 @@ class Db():
          self.cursor.execute('BEGIN')
 
          self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS fields(x INT, y INT, {})
-         '''.format(self.field_type_str))
+            CREATE TABLE IF NOT EXISTS cells(x INT, y INT, {})
+         '''.format(self.cell_type_str))
 
          for i in range(1, MAP_SIZE[0] + 1):
             for j in range(1, MAP_SIZE[1] + 1):
                self.cursor.execute('''
-                  INSERT INTO fields(x, y) VALUES(?, ?);
+                  INSERT INTO cells(x, y) VALUES(?, ?);
                ''', 
                   (i, j)
                )
@@ -63,25 +63,25 @@ class Db():
       except:
          self.cursor.execute('ROLLBACK')
 
-   def get_field_by_coords(self, x, y):
-      field = self.cursor.execute(f'''
-         select * from fields
+   def get_cell_type_counters(self, x, y):
+      cell = self.cursor.execute(f'''
+         select * from cells
          WHERE x == ? AND y == ?
       ''',
          (x, y)
       ).fetchall()
 
-      if field is not None:
-         field = field[0]
-         return field[2:]
+      if cell is not None:
+         cell = cell[0]
+         return cell[2:]
 
    def create_table_user_request(self):
       self.cursor.execute('''
          CREATE TABLE IF NOT EXISTS user_request(
             user_id TEXT, 
             x INT, y INT,
-            field_type INT,
-            UNIQUE(x, y) ON CONFLICT REPLACE
+            cell_type INT,
+            UNIQUE(user_id, x, y) ON CONFLICT REPLACE
          );
       ''')
       
@@ -115,48 +115,48 @@ class Db():
 
       self.connection.commit()
 
-   def change_field_value(self, x, y, field, delta):
+   def update_cell(self, x, y, cell_type, delta):
       self.cursor.execute(f'''
-         UPDATE fields set {field} = {field} {delta:+} 
+         UPDATE cells set {cell_type.name} = {cell_type.name} {delta:+} 
          WHERE x == ? AND y == ?
       ''',
          (x, y)
       )
 
-   def get_field_type_by_user_id(self, user_id, x, y):
-      field_type = self.cursor.execute(
-         '''SELECT field_type FROM user_request 
+   def get_user_record(self, user_id, x, y):
+      cell_type = self.cursor.execute(
+         '''SELECT cell_type FROM user_request 
             WHERE user_id == ? AND x == ? AND y == ?
          ''',
          (user_id, x, y)
       ).fetchone()
 
-      if field_type is not None:
-         field_type = field_type[0]
-
-      return field_type
-
-   def add_user_request(self, user_id, x, y, field_type):
-      field_name = ft(field_type).name
-
-      field_type_added = self.get_field_type_by_user_id(user_id, x, y)
-
-      if field_type_added is not None and field_type_added == field_type:
-         return False
+      if cell_type is not None:
+         cell_type = CellType(cell_type[0])
       
+      return cell_type
+
+   def update_user_record(self, user_id, x, y, cell_type):
+      self.cursor.execute('''
+         INSERT OR REPLACE INTO user_request VALUES( ?, ?, ?, ? );
+      ''', 
+         (user_id, x, y, cell_type.value)
+      )      
+
+   def delete_user_record(self, user_id, x, y):
+      self.cursor.execute('''
+         DELETE FROM user_request 
+         WHERE user_id == ? AND x == ? AND y == ?;
+      ''', 
+         (user_id, x, y)
+      )
+
+   def update_user_record_and_cell(self, user_id, coords, cell_type):
       try:
          self.cursor.execute('BEGIN')
 
-         if field_type_added is not None:
-            field_name_added = ft(field_type_added).name
-            self.change_field_value(x, y, field_name_added, -1)
-
-         self.cursor.execute('''
-            INSERT OR REPLACE INTO user_request VALUES( ?, ?, ?, ? );
-         ''', 
-            (user_id, x, y, field_type)
-         )
-         self.change_field_value(x, y, field_name, +1)
+         self.update_user_record(user_id, *coords, cell_type)
+         self.update_cell(*coords, cell_type, +1)
 
          self.cursor.execute('COMMIT')
 
@@ -166,33 +166,21 @@ class Db():
          print(e)
          return False
 
-   def remove_user_request(self, user_id, x, y):
-      field_type_added = self.get_field_type_by_user_id(user_id, x, y)
-
-      if field_type_added is None:
-         return False
-
+   def delete_user_record_and_update_cell(self, user_id, coords, cell_type):
       try:
          self.cursor.execute('BEGIN')
+         self.delete_user_record(user_id, *coords)
+         self.update_cell(*coords, cell_type, -1)
 
-         field_name_added = ft(field_type_added).name
-         self.change_field_value(x, y, field_name_added, -1)
-
-         self.cursor.execute('''
-            DELETE FROM user_request 
-            WHERE user_id == ? AND x == ? AND y == ?;
-         ''', 
-            (user_id, x, y)
-         )
          self.cursor.execute('COMMIT')
 
-         return field_type_added
+         return True
       except Exception as e:
          self.cursor.execute('ROLLBACK')
          print(e)
          return False
       
-   def remove_user_records(self, user_id):
+   def delete_user_records(self, user_id):
       coords = self.cursor.execute(
          '''SELECT x, y FROM user_request 
             WHERE user_id == ?
@@ -200,28 +188,26 @@ class Db():
          (user_id,)
       ).fetchall()      
 
-      print(coords)
-
       for x_y in coords:
-         self.remove_user_request(user_id, x_y[0], x_y[1])
+         self.delete_user_record(user_id, x_y[0], x_y[1])
 
    def __init__(self, db_dir):
       self.db_dir = db_dir
       self.connection, self.cursor = self.connect()
-      self.field_type_str = get_field_type_str()
-      self.create_table_fields()
+      self.cell_type_str = get_cell_type_str()
+      self.create_table_cells()
       self.create_table_user_request()
       self.create_table_util()
-
+      # self.connection.set_trace_callback(print)
 
 if __name__ == '__main__':
-   db = Db('db')
-   db.connection.set_trace_callback(print)
+   model = Model('model')
+   model.connection.set_trace_callback(print)
 
-   db.create_table_fields()
-   db.create_table_user_request()
-   db.add_user_request('shuraken007', 1, 1, 1)
-   db.add_user_request('shuraken007', 1, 2, 0)
-   print(db.get_field_by_coords(1, 1))
-   # db.remove_user_records('shuraken007')
-   db.connection.close()
+   model.create_table_cells()
+   model.create_table_user_request()
+   model.add_user_request('shuraken007', 1, 1, 1)
+   model.add_user_request('shuraken007', 1, 2, 0)
+   print(model.get_cell_values(1, 1))
+   # model.delete_user_records('shuraken007')
+   model.connection.close()

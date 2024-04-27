@@ -1,6 +1,6 @@
 import enum
 
-class FieldType(enum.IntEnum):
+class CellType(enum.IntEnum):
    unknown = 0,
    empty = 1,
    demon_hands = 2
@@ -9,24 +9,24 @@ class FieldType(enum.IntEnum):
    spider = 5
    idle_reward = 6
    summon_stone = 7
-   amulet_of_fear = 9
-   demon_skull = 10
-   golden_compass = 11
-   lucky_bones = 12
-   scepter_of_domination = 13
-   spiral_of_time = 14
-   token_of_memories = 15
+   amulet_of_fear = 8
+   demon_skull = 9
+   golden_compass = 10
+   lucky_bones = 11
+   scepter_of_domination = 12
+   spiral_of_time = 13
+   token_of_memories = 14
 
-f = FieldType
+f = CellType
 
-field_description = {
+cell_description = {
    f.demon_hands: "Loose next turn",
    f.spider     : "Run back to previous room",
    f.demon_tail : "Next direction will be random",
    f.demon_head : "Loose all remaining turns",
 }
 
-field_aliases_config = {
+cell_aliases_config = {
    f.unknown              : ["u", "unknown"],
    f.empty                : ["e", "empty"],
    f.demon_hands          : ["dh", "demon's hand"],
@@ -44,12 +44,12 @@ field_aliases_config = {
    f.token_of_memories    : ["tm", "token of memories"],
 }
 
-# build reverted field_aliases: "u" : f.unknown
+# build reverted cell_aliases: "u" : f.unknown
 
-field_aliases = {}
-for k, v in field_aliases_config.items():
+cell_aliases = {}
+for k, v in cell_aliases_config.items():
    for alias in v:
-      field_aliases[alias] = k
+      cell_aliases[alias] = k
 
 # scan_allowed = [1231401015228497981]
 scan_allowed_channel_ids = [1214291351945093120]
@@ -57,11 +57,5 @@ allowed_channel_ids = [1214291351945093120, 1231401015228497981]
 
 MAP_SIZE = [20, 20]
 
-emoji = {
-   'yes': '\N{WHITE HEAVY CHECK MARK}',
-   'no': '\N{CROSS MARK}',
-   'already': "🔄",
-}
-
 if __name__ == '__main__':
-   FieldType.print()
+   CellType.print()
