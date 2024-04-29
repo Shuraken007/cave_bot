@@ -189,7 +189,18 @@ class Model():
          cell_type = CellType(cell_type[0])
       
       return cell_type
-   
+
+   def get_all_user_record(self, user_id):
+      data = self.week.cursor.execute(
+         '''SELECT x, y, cell_type FROM user_request 
+            WHERE user_id == ? 
+            ORDER BY x ASC, y ASC;
+         ''',
+         (user_id,)
+      ).fetchall()
+
+      return data
+
    def get_users_and_types_by_coords(self, x, y):
       data = self.week.cursor.execute(
          '''SELECT cell_type, user_id FROM user_request 

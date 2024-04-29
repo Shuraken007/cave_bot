@@ -24,6 +24,18 @@ help = {
    !d 2-2
    !d 2-2 2-5 6-4 8-9
 """,
+'deleteuser_description': """
+   same as !delete , but with specifying users:
+   !delete @user1 2-2
+   !d @user1 2-2
+   !d @user1 @user2 2-2 2-5 6-4 8-9
+""",
+'deletealluser_description': """
+   just delete all user records
+   !deletealluser @user1
+   !dau @user1
+   !dau @user1 @user2
+""",
 'what_descr': what_descr,
 'coord_descr': commands.parameter(description="x-y: 1-2 11-9"),
 'me_descr': commands.parameter(description="don't render what you reported, it's easier to find rest items"),
@@ -69,8 +81,13 @@ help = {
    show cell by coords - which item which player reportes
    helps to search - who added wrong data
    !cell 5-3
-   !cell 5-3 compact
-   !c 5-3 c
-   !c 5-3 6-7 9-1 c
-"""
+   !c 5-3 6-7 9-1
+""",
+'reportusers_description': """
+   report what users reported
+   !reportuser @user1
+   !ru @user1, @user2
+   !ru @user1, @user2 c
+      where c - compact
+""",
 }

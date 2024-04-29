@@ -151,40 +151,87 @@ class Controller:
          ctx.report.add_error(error)
          ctx.report.add_reaction(r.user_data_wrong)
 
-   def delete(self, coords, ctx):
-      user_id = ctx.message.author.id
-      cell_type_was = self.model.get_user_record(user_id, *coords)
+   def delete(self, coords, user, ctx):
+      author_role = self.get_user_role(ctx.message.author)
+      if user.id != ctx.message.author.id and \
+         not self.user_have_role_less_than(user, author_role, ctx.report):
+         return
+
+      cell_type_was = self.model.get_user_record(user.id, *coords)
 
       if cell_type_was is None:
          ctx.report.add_reaction(r.user_data_equal)
          return
 
-      self.model.delete_user_record_and_update_cell(user_id, coords, cell_type_was)
+      self.model.delete_user_record_and_update_cell(user.id, coords, cell_type_was)
       ctx.report.add_reaction(r.user_data_deleted)
       is_cell_type_changed = self.update_cell(coords)
 
       if is_cell_type_changed:
          ctx.report.add_reaction(r.cell_update)
 
-   # def delete_by_user(self, user, message, report)
+   def deleteall(self, user, ctx):
+      author_role = self.get_user_role(ctx.message.author)
+      if user.id != ctx.message.author.id and \
+         not self.user_have_role_less_than(user, author_role, ctx.report):
+         return
 
-   def report(self, is_compact, ctx):
-      user_id = ctx.message.author.id
+      data = self.model.get_all_user_record(user.id)
+
+      for (x, y, cell_type_val) in data:
+         self.model.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val))
+         ctx.report.add_reaction(r.user_data_deleted)
+         is_cell_type_changed = self.update_cell([x, y])
+         if is_cell_type_changed:
+            ctx.report.add_reaction(r.cell_update)
+
+
+
+   # def report(self, is_compact, ctx):
+   #    user_id = ctx.message.author.id
+   #    msg_arr = []
+   #    compact = {}
+
+   #    for i in range(0, MAP_SIZE[0]):
+   #       for j in range(0, MAP_SIZE[1]):
+   #          cell_type = self.model.get_user_record(user_id, i+1, j+1)
+   #          if cell_type is None:
+   #             continue
+
+   #          coords_as_str = f'{i+1}-{j+1}'
+   #          msg_arr.append(f'{coords_as_str} : {cell_type.name}')
+
+   #          if not cell_type.name in compact:
+   #             compact[cell_type.name] = []
+   #          compact[cell_type.name].append(coords_as_str)
+
+   #    if is_compact:
+   #       msg_arr = []
+   #       for key, value in compact.items():
+   #          val_as_str = ' | '.join(value)
+   #          msg_arr.append(f'{key} : {val_as_str}')
+
+   #    msg = '\n'.join(msg_arr)
+   #    ctx.report.add_message(msg)
+   def report(self, user, is_compact, ctx):
+      author_role = self.get_user_role(ctx.message.author)
+      if user.id != ctx.message.author.id and \
+         not self.user_have_role_less_than(user, author_role, ctx.report):
+         return
+
       msg_arr = []
       compact = {}
 
-      for i in range(0, MAP_SIZE[0]):
-         for j in range(0, MAP_SIZE[1]):
-            cell_type = self.model.get_user_record(user_id, i+1, j+1)
-            if cell_type is None:
-               continue
+      data = self.model.get_all_user_record(user.id)
 
-            coords_as_str = f'{i+1}-{j+1}'
-            msg_arr.append(f'{coords_as_str} : {cell_type.name}')
+      for (x, y, cell_type_val) in data:
+         coords_as_str = f'{x}-{y}'
+         ct_name = ct(cell_type_val).name
+         msg_arr.append(f'{coords_as_str} : {ct_name}')
 
-            if not cell_type.name in compact:
-               compact[cell_type.name] = []
-            compact[cell_type.name].append(coords_as_str)
+         if not ct_name in compact:
+            compact[ct_name] = []
+         compact[ct_name].append(coords_as_str)
 
       if is_compact:
          msg_arr = []

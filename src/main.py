@@ -279,13 +279,48 @@ async def add(ctx, what: AliasConverter = help['what_descr'], coords: commands.G
 async def delete(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
    for coord in coords:
       ctx.report.set_key(f'{coord}')
-      bot.controller.delete(coord, ctx)
+      bot.controller.delete(coord, ctx.message.author, ctx)
+
+@strict_channels()
+@strict_users(ur.nobody)
+@bot.command(aliases=['da'], brief = "deletes all your record")
+async def deleteall(ctx):
+   ctx.report.add_message(f'Removed coords:')
+   bot.controller.report(ctx.message.author, 'c', ctx)
+   bot.controller.deleteall(ctx.message.author, ctx)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['du'], brief = "deletes user record by coords x-y", description=help['deleteuser_description'])
+async def deleteuser(ctx, users: commands.Greedy[discord.User], coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      for coord in coords:
+         bot.controller.delete(coord, user, ctx)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['dau'], brief = "deletes all user records", description=help['deletealluser_description'])
+async def deletealluser(ctx, users: commands.Greedy[discord.User]):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      ctx.report.add_message(f'Removed coords:')
+      bot.controller.report(user, 'c', ctx)
+      bot.controller.deleteall(user, ctx)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['ru'], brief = "reportes users", description=help['reportusers_description'])
+async def reportuser(ctx, users: commands.Greedy[discord.User], c: Optional[Literal['c']] = help['compact_descr'],):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      bot.controller.report(user, c, ctx)
 
 @strict_channels()
 @strict_users(ur.nobody)
 @bot.command(aliases=['r'], brief = "reportes what you already reported")
 async def report(ctx, c: Optional[Literal['c']] = help['compact_descr'],):
-   bot.controller.report(c, ctx)
+   bot.controller.report(ctx.message.author, c, ctx)
 
 @strict_channels()
 @strict_users(ur.nobody)
