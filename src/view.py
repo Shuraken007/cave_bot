@@ -16,7 +16,7 @@ class Cell:
    
    def update(self, cell_type_counters):
       self.val = cell_type_counters
-   
+      
 class View:
    def update_cell(self, x, y, cell_type_counters):
       self.cells[x-1][y-1].update(cell_type_counters)

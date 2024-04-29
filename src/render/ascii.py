@@ -1,40 +1,40 @@
 import color_util
-from const import MAP_SIZE, CellType as f
+from const import MAP_SIZE, CellType as ct
 
 color_scheme = {
-   f.unknown              : None,
-   f.demon_hands          : ['red', None],
-   f.demon_head           : ['red', None],
-   f.demon_tail           : ['red', None],
-   f.spider               : ['red', None],
-   f.idle_reward          : ['green', None],
-   f.summon_stone         : ['cyan', None],
-   f.amulet_of_fear       : ['yellow', None],
-   f.demon_skull          : ['yellow', None],
-   f.golden_compass       : ['yellow', None],
-   f.lucky_bones          : ['yellow', None],
-   f.scepter_of_domination: ['yellow', None],
-   f.spiral_of_time       : ['yellow', None],
-   f.token_of_memories    : ['yellow', None],
+   ct.unknown              : None,
+   ct.demon_hands          : ['red', None],
+   ct.demon_head           : ['red', None],
+   ct.demon_tail           : ['red', None],
+   ct.spider               : ['red', None],
+   ct.idle_reward          : ['green', None],
+   ct.summon_stone         : ['cyan', None],
+   ct.amulet_of_fear       : ['yellow', None],
+   ct.demon_skull          : ['yellow', None],
+   ct.golden_compass       : ['yellow', None],
+   ct.lucky_bones          : ['yellow', None],
+   ct.scepter_of_domination: ['yellow', None],
+   ct.spiral_of_time       : ['yellow', None],
+   ct.token_of_memories    : ['yellow', None],
 }
 
 cell_to_ascii = {
-     f.unknown              : ["░", "▒"],
-   # f.unknown              : ["░", "⍣", "◆"],
-     f.empty                : "▁",
-     f.demon_hands          : '▇',
-     f.demon_head           : '▇',
-     f.demon_tail           : '▇',
-     f.spider               : '▇',
-     f.idle_reward          : '○︎',
-     f.summon_stone         : '●︎',
-     f.amulet_of_fear       : "◆",
-     f.demon_skull          : "◆",
-     f.golden_compass       : "◆",
-     f.lucky_bones          : "◆",
-     f.scepter_of_domination: "◆",
-     f.spiral_of_time       : "◆",
-     f.token_of_memories    : "◆",
+     ct.unknown              : ["░", "▒"],
+   # ct.unknown              : ["░", "⍣", "◆"],
+     ct.empty                : "▁",
+     ct.demon_hands          : '▇',
+     ct.demon_head           : '▇',
+     ct.demon_tail           : '▇',
+     ct.spider               : '▇',
+     ct.idle_reward          : '○︎',
+     ct.summon_stone         : '●︎',
+     ct.amulet_of_fear       : "◆",
+     ct.demon_skull          : "◆",
+     ct.golden_compass       : "◆",
+     ct.lucky_bones          : "◆",
+     ct.scepter_of_domination: "◆",
+     ct.spiral_of_time       : "◆",
+     ct.token_of_memories    : "◆",
 }
 
 class RenderAscii:
@@ -60,9 +60,9 @@ class RenderAscii:
 
       return c
 
-   def render(self, view, user_id, bot, report):
+   def render(self, user_id, bot, ctx):
       arr = []
-      arr.append(color_util.ansi_message_start())
+      # arr.append(color_util.ansi_message_start())
       for i in range(0, MAP_SIZE[0]):
          line = ""
          if i % 10 == 0 and i > 0:
@@ -70,14 +70,14 @@ class RenderAscii:
          for j in range(0, MAP_SIZE[1]):
             if j % 5 == 0 and j > 0:
                line += " "
-            cell_type = view.get_cell_type(i+1, j+1)
+            cell_type = bot.view.get_cell_type(i+1, j+1)
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
-               cell_type = f.unknown
+               cell_type = ct.unknown
 
             c = self.get_char(cell_type, i, j)
             line += c
          line = self.wrap_line(line, i)
          arr.append(line)
       
-      arr.append(color_util.ansi_message_end())
-      report.add_message('\n'.join(arr))
+      # arr.append(color_util.ansi_message_end())
+      ctx.report.add_message('\n'.join(arr))

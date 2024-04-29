@@ -12,9 +12,9 @@ from model import Model, get_last_monday
 from view import View
 from controller import Controller
 
-from const import scan_allowed_channel_ids, allowed_channel_ids
+from const import scan_allowed_channel_ids, allowed_channel_ids, UserRole as ur
 from report import Report
-from emoji import add_emoji
+from reaction import process_reactions, Reactions
 from parser import Parser
 from helpo import help
 from logger import Logger
@@ -25,6 +25,7 @@ load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 class MyBot(commands.Bot):
    async def on_command_error(self, ctx, error):
@@ -38,14 +39,19 @@ class MyBot(commands.Bot):
       else:
          await super().on_command_error(ctx, error)  # вызывает изначальное поведение on_error_message
 
+   def create_report(self, args = None):
+      report = Report()
+      report.set_key('default')
+      if args is not None and len(args) > 1:
+         report.add_log({'args': args[1:]})
+
+      return report
+
    def init_ctx(self, ctx):
       if hasattr(ctx, 'report'):
          return
       
-      ctx.report = Report()
-      ctx.report.set_key('1')
-      if len(ctx.args) > 1:
-         ctx.report.add_log({'args': ctx.args[1:]})
+      ctx.report = self.create_report(ctx.args)
 
 bot = MyBot(command_prefix='!', intents=intents)
 bot.model = None
@@ -56,9 +62,9 @@ bot.render_ascii = None
 bot.render_image = None
 
 async def restart():
-   if bot.model is not None:
-      bot.model.connection.close()
-   bot.model = Model('db')
+   if hasattr(bot, 'model') and hasattr(bot.model, 'tmp') and hasattr(bot.model.tmp, 'connection'):
+      bot.model.tmp.connection.close()
+   bot.model = Model('db', const_db_name='const', admin_id = os.getenv('ADMIN_ID'))
    bot.view = View(bot.model)
    bot.controller = Controller(bot.model, bot.view)
    bot.parser = Parser()
@@ -80,8 +86,17 @@ async def restart_on_monday():
 
 def strict_channels():
    def predicate(ctx):
+      bot.init_ctx(ctx)
       if ctx.channel.id not in allowed_channel_ids:
          raise commands.CheckFailure(f"Channel {ctx.channel.name} not allowed!")
+      return True
+   return commands.check(predicate)
+
+def strict_users(min_role):
+   def predicate(ctx):
+      bot.init_ctx(ctx)
+      if not bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report):
+         raise commands.CheckFailure()
       return True
    return commands.check(predicate)
 
@@ -91,11 +106,9 @@ async def on_ready():
    await restart()
 
 async def spawn_scan():
-   guild = discord.utils.get(bot.guilds, name="MksiDev Games")
    for channel_id in scan_allowed_channel_ids:
       channel = bot.get_channel(channel_id)
-      ctx = type('',(object,),{"channel": channel, 'report': Report()})()
-      ctx.report.set_key('1')
+      ctx = type('',(object,),{"channel": channel, 'report': bot.create_report()})()
       scan_cmd = bot.get_command('scan')
       await scan_cmd(ctx)
 
@@ -108,16 +121,16 @@ async def on_message(message):
    if message.author == bot.user:
       return
    
-   ctx = type('',(object,),{'report': Report(), 'message': message})()
-   ctx.report.set_key('1')
+   ctx = type('',(object,),{'report': bot.create_report(), 'message': message})()
 
-   bot.parser.parse_msg(message, bot, ctx.report)
+   bot.parser.parse_msg(bot, ctx)
 
    await postprocess(ctx)
 
    await bot.process_commands(message)
 
 @strict_channels()
+@strict_users(ur.admin)
 @bot.command(hidden=True)
 async def scan(ctx, limit=2000):
    ctx.report.off = True
@@ -132,7 +145,7 @@ async def scan(ctx, limit=2000):
    for msg in messages:
       if msg.author == bot.user:
          continue
-      bot.parser.parse_msg(msg, bot, ctx.report)
+      bot.parser.parse_msg(ctx, bot)
       last_msg_datetime = msg.created_at
 
    if last_msg_datetime:
@@ -174,46 +187,115 @@ async def postprocess(ctx):
       return
    
    r = ctx.report
-   keys_len = len(r.get_keys())
-   
+   report_keys = r.get_keys()
+   keys_len = len(report_keys)
+   if 'reactions' in report_keys:
+      keys_len -= 1
+   if 'default' in report_keys:
+      keys_len -= 1
    if reactions:= r.get_reactions():
-      for reaction, value in reactions.items():
-         await add_emoji(reaction, value, ctx.message)
+      await process_reactions(reactions, ctx.message, ctx.report)
+
+   total_msg = ["```ansi"]
 
    for key in r.get_keys():
-      total_msg = ""
-      msg_prefix = ""
+      key_msg = []
+      msg_prefix = None
       if keys_len > 1:
          msg_prefix = key + ': '
+         if key == 'reactions':
+            msg_prefix = ""
 
       if messages:= r.get_messages(key):
-         total_msg += msg_prefix +"\n".join(messages)
+         key_msg.extend(messages)
       if errors:= r.get_errors(key):
-         total_msg += msg_prefix +"\n".join(errors)
-      if len(total_msg) > 0:
-         await ctx.message.channel.send(total_msg)
+         key_msg.extend(errors)
+      if len(key_msg) > 0:
+         if msg_prefix is not None:
+            total_msg.append(msg_prefix)
+            if key != 'reactions':
+               key_msg = ["\t" + msg for msg in key_msg]
+
+         total_msg.extend(key_msg)
 
       if log:= r.get_log(key):
          bot.logger.dump_msg(log, 'log', mode='dump')
 
+   if len(total_msg) > 1:
+      total_msg.append('```')
+      await ctx.message.channel.send("\n".join(total_msg))
+   
+
 @strict_channels()
+@strict_users(ur.super_admin)
+@bot.command(aliases=['aa'], brief = "add user with admin role - more commands available", description = help['addadmin_description'])
+async def adminadd(ctx, users: commands.Greedy[discord.User]):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      bot.controller.add_user_role(user, ur.admin, ctx)
+
+@strict_channels()
+@strict_users(ur.super_admin)
+@bot.command(aliases=['ad'], brief = "delete user with admin", description = help['deleteadmin_description'])
+async def admindelete(ctx, users: commands.Greedy[discord.User]):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      bot.controller.delete_user_role(user, ctx)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['al'], brief = "list user priveleges", description = help['adminlist_description'])
+async def adminlist(ctx):
+   await bot.controller.report_user_roles(bot, ctx.report)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['ba'], brief = "ban user - no interraction with bot", description = help['banadd_description'])
+async def banadd(ctx, users: commands.Greedy[discord.User]):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      bot.controller.add_user_role(user, ur.banned, ctx)
+
+@strict_channels()
+@strict_users(ur.admin)
+@bot.command(aliases=['bd'], brief = "delete user ban", description = help['deleteban_description'])
+async def bandelete(ctx, users: commands.Greedy[discord.User]):
+   for user in users:
+      ctx.report.set_key(f'{user.name}')
+      bot.controller.delete_user_role(user, ctx)
+
+@strict_channels()
+@strict_users(ur.nobody)
 @bot.command(aliases=['a'], brief = "add item by coords", description = help['add_description'])
 async def add(ctx, what: AliasConverter = help['what_descr'], coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
    for coord in coords:
-      bot.controller.add(what, coord, ctx.message, ctx.report)
+      ctx.report.set_key(f'{coord}')
+      bot.controller.add(what, coord, ctx)
 
 @strict_channels()
+@strict_users(ur.nobody)
 @bot.command(aliases=['d'], brief = "deletes your record by coords x-y", description=help['delete_description'])
 async def delete(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
    for coord in coords:
-      bot.controller.delete(coord, ctx.message, ctx.report)
+      ctx.report.set_key(f'{coord}')
+      bot.controller.delete(coord, ctx)
 
 @strict_channels()
+@strict_users(ur.nobody)
 @bot.command(aliases=['r'], brief = "reportes what you already reported")
 async def report(ctx, c: Optional[Literal['c']] = help['compact_descr'],):
-   bot.controller.report(c, ctx.message, ctx.report)
+   bot.controller.report(c, ctx)
 
 @strict_channels()
+@strict_users(ur.nobody)
+@bot.command(aliases=['c'], brief = "show cell by coords - which item which player reportes")
+async def cell(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
+   for coord in coords:
+      ctx.report.set_key(f'{coord}')
+      await bot.controller.report_cell(coord, ctx, bot)
+
+@strict_channels()
+@strict_users(ur.nobody)
 @bot.command(aliases=['m'], brief = "render map as image or text", description = help['map_description'])
 async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii']):
    image = None
@@ -221,9 +303,9 @@ async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Option
       me = ctx.message.author.id
    async with ctx.typing():
       if ascii:
-         bot.render_ascii.render(bot.view, me, bot, ctx.report)
+         bot.render_ascii.render(me, bot, ctx)
       else:
-         image = bot.render_image.render(bot.view, me, bot)
+         image = bot.render_image.render(me, bot, ctx)
 
    if image:
       with io.BytesIO() as image_binary:

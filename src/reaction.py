@@ -35,10 +35,28 @@ emoji = {
    "9": "9️⃣",
 }
 
+allowed_value = [r.cell_new]
+
 def number_to_digits(number):
    return [str(x) for x in str(number)]
 
-async def add_emoji(reaction, value, message):
+async def process_reactions(reactions, message, report):
+   for reaction, value in reactions.items():
+      if value > 1:
+         add_reaction_to_report(reaction, value, report)
+
+      if value > 1 and reaction not in allowed_value:
+         value = 1
+      
+      await add_reaction(reaction, value, message)
+
+def add_reaction_to_report(reaction, value, report):
+   report.set_key('reactions')
+   msg = '{} ({}) - {}' \
+      .format(emoji[reaction], value, reaction.name)
+   report.add_message(msg)
+
+async def add_reaction(reaction, value, message):
    reactions = [reaction]
    if value > 1:
       reactions += number_to_digits(value) 

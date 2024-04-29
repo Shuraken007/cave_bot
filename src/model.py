@@ -1,8 +1,31 @@
 import sqlite3
 from datetime import datetime, timezone, timedelta
 import sys
-from const import CellType, MAP_SIZE
+from const import CellType, MAP_SIZE, UserRole as ur
 from utils import build_path
+
+class DbConnection:
+   def connect(self, db_name, db_dir):
+      try:
+         db_file_path = build_path([db_dir], db_name + '.db', mkdir=True)
+         connection = sqlite3.connect(
+            db_file_path,
+            detect_types=sqlite3.PARSE_DECLTYPES
+         )
+         cursor = connection.cursor()
+         if connection:
+            print(f"DataBase connected to {db_name}...OK")
+
+         return cursor, connection
+      except Exception as e:
+         sys.exit(e)
+   
+   def __init__(self, db_name, db_dir):
+      self.cursor, self.connection = \
+      self.connect(db_name, db_dir)
+      # self.week.connection.set_trace_callback(print)
+
+
 
 def get_last_monday():
    utc = timezone.utc
@@ -12,7 +35,7 @@ def get_last_monday():
    return monday
 
 def get_uniq_db_name():
-   return get_last_monday().strftime('%d_%m_%Y.db')
+   return get_last_monday().strftime('%d_%m_%Y')
 
 def get_cell_type_str():
    enum_cells = []
@@ -21,24 +44,8 @@ def get_cell_type_str():
    return '{}'.format(','.join(enum_cells))
 
 class Model():
-   def connect(self):
-      db_name = get_uniq_db_name()
-      try:
-         db_file_path = build_path(['db'], db_name, mkdir=True)
-         connection = sqlite3.connect(
-            db_file_path,
-            detect_types=sqlite3.PARSE_DECLTYPES
-         )
-         cursor = connection.cursor()
-         if connection:
-            print(f"DataBase connected to {db_name}...OK")
-
-         return connection, cursor
-      except Exception as e:
-         sys.exit(e)
-
    def create_table_cells(self):
-      table_exists = self.cursor.execute('''
+      table_exists = self.week.cursor.execute('''
          SELECT name FROM sqlite_master WHERE type='table' AND name="cells"
       ''').fetchall()
 
@@ -46,25 +53,25 @@ class Model():
          return
       
       try:
-         self.cursor.execute('BEGIN')
+         self.week.cursor.execute('BEGIN')
 
-         self.cursor.execute('''
+         self.week.cursor.execute('''
             CREATE TABLE IF NOT EXISTS cells(x INT, y INT, {})
          '''.format(self.cell_type_str))
 
          for i in range(1, MAP_SIZE[0] + 1):
             for j in range(1, MAP_SIZE[1] + 1):
-               self.cursor.execute('''
+               self.week.cursor.execute('''
                   INSERT INTO cells(x, y) VALUES(?, ?);
                ''', 
                   (i, j)
                )
-         self.connection.commit()
+         self.week.connection.commit()
       except:
-         self.cursor.execute('ROLLBACK')
+         self.week.cursor.execute('ROLLBACK')
 
    def get_cell_type_counters(self, x, y):
-      cell = self.cursor.execute(f'''
+      cell = self.week.cursor.execute(f'''
          select * from cells
          WHERE x == ? AND y == ?
       ''',
@@ -76,29 +83,39 @@ class Model():
          return cell[2:]
 
    def create_table_user_request(self):
-      self.cursor.execute('''
+      self.week.cursor.execute('''
          CREATE TABLE IF NOT EXISTS user_request(
-            user_id TEXT, 
+            user_id INTERGER, 
             x INT, y INT,
             cell_type INT,
             UNIQUE(user_id, x, y) ON CONFLICT REPLACE
          );
       ''')
       
-      self.connection.commit()
+      self.week.connection.commit()
 
    def create_table_util(self):
-      self.cursor.execute('''
+      self.week.cursor.execute('''
          CREATE TABLE IF NOT EXISTS util(
             id INT DEFAULT 1, last_scan TIMESTAMP,
             UNIQUE(id)
          );
       ''')      
 
-      self.connection.commit()
+      self.week.connection.commit()
+
+   def create_table_user_role(self):
+      self.const.cursor.execute('''
+         CREATE TABLE IF NOT EXISTS user_role(
+            user_id INTERGER, role INT,
+            UNIQUE(user_id)
+         );
+      ''')      
+
+      self.week.connection.commit()
 
    def get_last_scan(self):
-      last_scan = self.cursor.execute('''
+      last_scan = self.week.cursor.execute('''
          SELECT last_scan FROM util''',
       ).fetchone()      
 
@@ -107,24 +124,61 @@ class Model():
       return None
    
    def set_last_scan(self, last_scan):
-      self.cursor.execute('''
+      self.week.cursor.execute('''
          INSERT OR REPLACE INTO util(id, last_scan) VALUES(1, ?);
       ''', 
          (last_scan,)
       )
 
-      self.connection.commit()
+      self.week.connection.commit()
 
-   def update_cell(self, x, y, cell_type, delta):
-      self.cursor.execute(f'''
+   def update_cell(self, x, y, cell_type, delta, is_commit=True):
+      self.week.cursor.execute(f'''
          UPDATE cells set {cell_type.name} = {cell_type.name} {delta:+} 
          WHERE x == ? AND y == ?
       ''',
          (x, y)
       )
+      if is_commit:
+         self.week.connection.commit()
+
+   def add_user_role(self, user_id, role):
+      self.const.cursor.execute(
+         '''INSERT OR REPLACE INTO user_role VALUES( ?, ?); ''',
+         (user_id, role)
+      )
+      self.const.connection.commit()
+      
+      return role       
+   
+   def delete_user_role(self, user_id):
+      self.const.cursor.execute(
+         '''DELETE FROM user_role WHERE user_id == ? ''',
+         (user_id,)
+      )
+      self.const.connection.commit()
+
+   def get_user_role(self, user_id):
+      role = self.const.cursor.execute(
+         '''SELECT role FROM user_role
+            WHERE user_id == ?
+         ''',
+         (user_id,)
+      ).fetchone()
+
+      if role is not None:
+         role = ur(role[0])
+      
+      return role            
+   
+   def get_user_roles(self)  :
+      roles = self.const.cursor.execute(
+         '''SELECT * FROM user_role''',
+      ).fetchall()
+      return roles
 
    def get_user_record(self, user_id, x, y):
-      cell_type = self.cursor.execute(
+      cell_type = self.week.cursor.execute(
          '''SELECT cell_type FROM user_request 
             WHERE user_id == ? AND x == ? AND y == ?
          ''',
@@ -135,16 +189,27 @@ class Model():
          cell_type = CellType(cell_type[0])
       
       return cell_type
+   
+   def get_users_and_types_by_coords(self, x, y):
+      data = self.week.cursor.execute(
+         '''SELECT cell_type, user_id FROM user_request 
+            WHERE x == ? AND y == ?
+            ORDER BY cell_type ASC;
+         ''',
+         (x, y)
+      )
 
+      return data
+   
    def update_user_record(self, user_id, x, y, cell_type):
-      self.cursor.execute('''
+      self.week.cursor.execute('''
          INSERT OR REPLACE INTO user_request VALUES( ?, ?, ?, ? );
       ''', 
          (user_id, x, y, cell_type.value)
       )      
 
    def delete_user_record(self, user_id, x, y):
-      self.cursor.execute('''
+      self.week.cursor.execute('''
          DELETE FROM user_request 
          WHERE user_id == ? AND x == ? AND y == ?;
       ''', 
@@ -153,35 +218,35 @@ class Model():
 
    def update_user_record_and_cell(self, user_id, coords, cell_type):
       try:
-         self.cursor.execute('BEGIN')
+         self.week.cursor.execute('BEGIN')
 
          self.update_user_record(user_id, *coords, cell_type)
-         self.update_cell(*coords, cell_type, +1)
+         self.update_cell(*coords, cell_type, +1, is_commit=False)
 
-         self.cursor.execute('COMMIT')
+         self.week.cursor.execute('COMMIT')
 
          return True
       except Exception as e:
-         self.cursor.execute('ROLLBACK')
+         self.week.cursor.execute('ROLLBACK')
          print(e)
          return False
 
    def delete_user_record_and_update_cell(self, user_id, coords, cell_type):
       try:
-         self.cursor.execute('BEGIN')
+         self.week.cursor.execute('BEGIN')
          self.delete_user_record(user_id, *coords)
-         self.update_cell(*coords, cell_type, -1)
+         self.update_cell(*coords, cell_type, -1, is_commit=False)
 
-         self.cursor.execute('COMMIT')
+         self.week.cursor.execute('COMMIT')
 
          return True
       except Exception as e:
-         self.cursor.execute('ROLLBACK')
+         self.week.cursor.execute('ROLLBACK')
          print(e)
          return False
       
    def delete_user_records(self, user_id):
-      coords = self.cursor.execute(
+      coords = self.week.cursor.execute(
          '''SELECT x, y FROM user_request 
             WHERE user_id == ?
          ''',
@@ -191,14 +256,18 @@ class Model():
       for x_y in coords:
          self.delete_user_record(user_id, x_y[0], x_y[1])
 
-   def __init__(self, db_dir):
-      self.db_dir = db_dir
-      self.connection, self.cursor = self.connect()
+   def __init__(self, db_dir, const_db_name, admin_id=None):
+      tmp_db_name = get_uniq_db_name()
+      self.week = DbConnection(tmp_db_name, db_dir)
+      self.const = DbConnection(const_db_name, db_dir)
+
       self.cell_type_str = get_cell_type_str()
       self.create_table_cells()
       self.create_table_user_request()
       self.create_table_util()
-      # self.connection.set_trace_callback(print)
+      self.create_table_user_role()
+      if admin_id:
+         self.add_user_role(admin_id, ur.super_admin)
 
 if __name__ == '__main__':
    model = Model('model')

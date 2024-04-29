@@ -35,4 +35,42 @@ help = {
    !map ascii
    !map me ascii
 """,
+'addadmin_description': """
+   add user with admin role - more commands available
+   * check any users reports
+   * find liars
+   * remove users data
+   * ban users for bot
+
+   !addadmin @DearFreeHelper
+   !aa @FirstUser @SecondUser
+""",
+'banadd_description': """
+   dreams of any admin - ban hammer, hit them hard
+
+   !banadd @SillyDebater
+   !ba @SillyDebater @SmartAss5
+""",
+'deleteban_description': """
+   unban somebody
+
+   !bandelete @LuckyFirst
+   !ba @BribeGiver3 @JudgeAcquitted2
+""",
+'deleteadmin_description': """
+   delete user from admins
+   !admindelete @SmartAss
+   !ad @noname1 @noname2
+""",
+'adminlist_description': """
+   check admin names and privilege lvl
+""",
+'cell_descr': """
+   show cell by coords - which item which player reportes
+   helps to search - who added wrong data
+   !cell 5-3
+   !cell 5-3 compact
+   !c 5-3 c
+   !c 5-3 6-7 9-1 c
+"""
 }

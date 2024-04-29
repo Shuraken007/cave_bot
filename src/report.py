@@ -1,8 +1,7 @@
 from collections import OrderedDict
-from emoji import Reactions
 
 class Report:
-   def add_reaction(self, reaction: Reactions):
+   def add_reaction(self, reaction):
       if self.off:
          return
       
@@ -75,6 +74,8 @@ class Report:
 
    def set_key(self, key):
       self.key = key
+      if key in self.keys:
+         return
       self.log[key] = {}
       self.messages[key] = []
       self.errors[key] = []
@@ -91,5 +92,5 @@ class Report:
       self.messages = {}
       self.errors = {}
       self.log = {}
-      self.keys = []
       self.off = False
+      self.keys = []

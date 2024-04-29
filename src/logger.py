@@ -4,11 +4,13 @@ from utils import build_path
 
 class Logger:
     def dump_msg(self, msg, file_name, mode=None):
+        default = lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
+
         file_path = os.path.join(self.output_dir, file_name)
         with open(file_path, 'a+', encoding='utf8') as f:
             prepared_msg = msg
             if mode == 'dump':
-                prepared_msg = json.dumps(msg, indent=4, ensure_ascii=False)
+                prepared_msg = json.dumps(msg, indent=4, ensure_ascii=False, default=default)
             elif mode == 'unique':
                 assert isinstance(msg, str), 'msg must be string for uniq mode'
                 if self.unique_hash.get(msg):

@@ -1,25 +1,25 @@
-from const import CellType as f, MAP_SIZE
+from const import CellType as ct, MAP_SIZE
 from utils import build_path
 
 # from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
 
 color_scheme = {
-   f.unknown              : None,
-   f.empty                : 'green',
-   f.demon_hands          : 'red',
-   f.demon_head           : 'red',
-   f.demon_tail           : 'red',
-   f.spider               : 'red',
-   f.idle_reward          : 'blue',
-   f.summon_stone         : 'epic',
-   f.amulet_of_fear       : 'orange',
-   f.demon_skull          : 'orange',
-   f.golden_compass       : 'orange',
-   f.lucky_bones          : 'orange',
-   f.scepter_of_domination: 'orange',
-   f.spiral_of_time       : 'orange',
-   f.token_of_memories    : 'orange',
+   ct.unknown              : None,
+   ct.empty                : 'green',
+   ct.demon_hands          : 'red',
+   ct.demon_head           : 'red',
+   ct.demon_tail           : 'red',
+   ct.spider               : 'red',
+   ct.idle_reward          : 'blue',
+   ct.summon_stone         : 'epic',
+   ct.amulet_of_fear       : 'orange',
+   ct.demon_skull          : 'orange',
+   ct.golden_compass       : 'orange',
+   ct.lucky_bones          : 'orange',
+   ct.scepter_of_domination: 'orange',
+   ct.spiral_of_time       : 'orange',
+   ct.token_of_memories    : 'orange',
 }
 
 map_colour_alias_to_rgb = {
@@ -86,19 +86,19 @@ class RenderImage():
       image_names = {
          'background': {"name": "UI_elements_board_46"},  
          'cell': {"name": "CaveFrameSingle"},  
-         f.demon_head : {"name": "DevilHeadTrap"},  
-         f.demon_hands : {"name": "HandTrap"},  
-         f.demon_tail : {"name": "TailTrap"},  
-         f.spider : {"name": "SpiderTrap"},  
-         f.summon_stone : {"name": "Icon9"},  
-         f.idle_reward : {"name": "IdleRewards"},  
-         f.amulet_of_fear : {"name": "Icon21"},  
-         f.lucky_bones : {"name": "Icon22"},  
-         f.scepter_of_domination : {"name": "Icon32"},  
-         f.spiral_of_time : {"name": "Icon37"},  
-         f.demon_skull : {"name": "Icon40"},  
-         f.token_of_memories : {"name": "Icon46"},  
-         f.golden_compass : {"name": "Icon48"},  
+         ct.demon_head : {"name": "DevilHeadTrap"},  
+         ct.demon_hands : {"name": "HandTrap"},  
+         ct.demon_tail : {"name": "TailTrap"},  
+         ct.spider : {"name": "SpiderTrap"},  
+         ct.summon_stone : {"name": "Icon9"},  
+         ct.idle_reward : {"name": "IdleRewards"},  
+         ct.amulet_of_fear : {"name": "Icon21"},  
+         ct.lucky_bones : {"name": "Icon22"},  
+         ct.scepter_of_domination : {"name": "Icon32"},  
+         ct.spiral_of_time : {"name": "Icon37"},  
+         ct.demon_skull : {"name": "Icon40"},  
+         ct.token_of_memories : {"name": "Icon46"},  
+         ct.golden_compass : {"name": "Icon48"},  
       }
 
       images = {}
@@ -114,7 +114,7 @@ class RenderImage():
 
          images[alias] = img
 
-      images[f.empty] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
+      images[ct.empty] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
 
       return images
 
@@ -193,7 +193,7 @@ class RenderImage():
       img.draw.text(coords, text, font=self.font, fill=color)
       return
 
-   def render(self, view, user_id, bot):
+   def render(self, user_id, bot, ctx):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
       
@@ -202,12 +202,12 @@ class RenderImage():
             cell_type = view.get_cell_type(i+1, j+1)
 
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
-               cell_type = f.unknown
+               cell_type = ct.unknown
 
-            img = self.images.get(f(cell_type))
+            img = self.images.get(ct(cell_type))
             
-            if img and f(cell_type) in color_scheme:
-               color_name = color_scheme[f(cell_type)]
+            if img and ct(cell_type) in color_scheme:
+               color_name = color_scheme[ct(cell_type)]
                color = map_colour_alias_to_rgb[color_name]
                img = img.copy()
                self.change_color(img, (0, 0, 0, 0), color)
@@ -217,7 +217,7 @@ class RenderImage():
                shift = [coords[0]/self.bg_w * 100, coords[1]/self.bg_w * 100]
                add_img(back, img, "TOPLEFT", shift, foregound_on_background=True)
 
-            if cell_type in [f.unknown, f.empty ]:
+            if cell_type in [ct.unknown, ct.empty ]:
                pos_spec = { 
                   'coords': coords.copy(), 
                   'align': "CENTER",
