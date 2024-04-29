@@ -17,10 +17,12 @@
 
 # add token
    You should got TOKEN on prev step. 
+   Also, add user_id for super admin role.
    Add file `.env` near with current README.md
    ```
       # .env
       DISCORD_TOKEN=DSDlsCi...8sl8
+      ADMIN_ID=78965132...8599
    ```
 
 # setup project on your system
