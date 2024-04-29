@@ -108,7 +108,7 @@ async def on_ready():
 async def spawn_scan():
    for channel_id in scan_allowed_channel_ids:
       channel = bot.get_channel(channel_id)
-      ctx = type('',(object,),{"channel": channel, 'report': bot.create_report()})()
+      ctx = type('',(object,),{"channel": channel, 'report': bot.create_report(), 'message': None})()
       scan_cmd = bot.get_command('scan')
       await scan_cmd(ctx)
 
@@ -123,7 +123,7 @@ async def on_message(message):
    
    ctx = type('',(object,),{'report': bot.create_report(), 'message': message})()
 
-   bot.parser.parse_msg(bot, ctx)
+   bot.parser.parse_msg(ctx, bot)
 
    await postprocess(ctx)
 
@@ -145,6 +145,7 @@ async def scan(ctx, limit=2000):
    for msg in messages:
       if msg.author == bot.user:
          continue
+      ctx.message = msg
       bot.parser.parse_msg(ctx, bot)
       last_msg_datetime = msg.created_at
 

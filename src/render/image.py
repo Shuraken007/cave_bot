@@ -199,7 +199,7 @@ class RenderImage():
       
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
-            cell_type = view.get_cell_type(i+1, j+1)
+            cell_type = bot.view.get_cell_type(i+1, j+1)
 
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
                cell_type = ct.unknown
