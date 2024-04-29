@@ -87,8 +87,12 @@ async def restart_on_monday():
 def strict_channels():
    def predicate(ctx):
       bot.init_ctx(ctx)
-      if ctx.channel.id not in allowed_channel_ids:
-         raise commands.CheckFailure(f"Channel {ctx.channel.name} not allowed!")
+      if not (
+            isinstance(ctx.channel, discord.DMChannel) or
+            ctx.channel.id in allowed_channel_ids
+         ):
+         channel_name = hasattr(ctx.channel, 'name') or type(ctx.channel).__name__
+         raise commands.CheckFailure(f"Channel {channel_name} not allowed!")
       return True
    return commands.check(predicate)
 
@@ -226,6 +230,9 @@ async def postprocess(ctx):
       total_msg.append('```')
       await ctx.message.channel.send("\n".join(total_msg))
    
+class SuperAdminCmd(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
 @strict_channels()
 @strict_users(ur.super_admin)

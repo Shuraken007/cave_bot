@@ -13,7 +13,7 @@ pillow = "^10.3.0"
 fonttools = "^4.51.0"
 
 [tool.poetry.scripts]
-main = "cave_bot:main"
+start = "src:main"
 
 [build-system]
 requires = ["poetry-core"]
