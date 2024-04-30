@@ -110,7 +110,7 @@ def url_to_image(url):
    image = np.asarray(bytearray(resp.read()), dtype="uint8")
    return cv.imdecode(image, cv.IMREAD_COLOR)
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
    # import os
    # from os import listdir
    # from os.path import isfile, join
