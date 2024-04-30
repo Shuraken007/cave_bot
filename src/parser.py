@@ -85,12 +85,14 @@ class Parser:
          return False
       return True
 
-   def validate_safe_cells_by_user(self, safe_cells, ctx, bot):
+   def validate_safe_cells_by_user(self, safe_cells, ctx, bot, user_cell_type_arr):
       for coords in safe_cells:
          cell_type = bot.view.get_cell_type(*coords)
+         user_cell_type = bot.model.get_user_record(ctx.message.author.id, *coords)
+         user_cell_type_arr.append(user_cell_type)
          if not self.should_user_report_cell_type(cell_type) :
             continue
-         if bot.model.get_user_record(ctx.message.author.id, *coords) :
+         if user_cell_type is not None:
             continue
 
          msg = f"""{coords} - {cell_type.name} : green on attachmen, but not reported by user, cancel image processing"""
@@ -104,12 +106,14 @@ class Parser:
    def add_safe_cells(self, safe_cells, counter, ctx, bot):
       if not safe_cells or len(safe_cells) < 1:
          return
-      if not self.validate_safe_cells_by_user(safe_cells, ctx, bot):
+      user_cell_type_arr = []
+      if not self.validate_safe_cells_by_user(safe_cells, ctx, bot, user_cell_type_arr):
          return
+      counter = 0
       for coords in safe_cells:
-         cell_type = bot.view.get_cell_type(*coords)
-         if not self.should_user_report_cell_type(cell_type):
-            cell_type_to_add = ct.safe
-            if cell_type.value > ct.safe:
-               cell_type_to_add = cell_type
-            bot.controller.add(cell_type_to_add, coords, ctx)
+         user_cell_type = user_cell_type_arr[counter]
+         if user_cell_type is None:
+            user_cell_type = ct.unknown
+         if user_cell_type == ct.unknown:
+            bot.controller.add(ct.safe, coords, ctx)
+         counter += 1
