@@ -54,12 +54,6 @@ for k, v in cell_aliases_config.items():
       cell_aliases[alias] = k
 
 
-# scan_allowed_channel_ids = [1231401015228497981]
-# allowed_channel_ids = [1231401015228497981]
-
-scan_allowed_channel_ids = [1214291351945093120]
-allowed_channel_ids = [1214291351945093120]
-
 MAP_SIZE = [20, 20]
 
 class UserRole(enum.IntEnum):

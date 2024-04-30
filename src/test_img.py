@@ -119,12 +119,38 @@ def sort_bbox(boundingBoxes):
    boundingBoxes = sorted(boundingBoxes, key=lambda b:b[0]+b[1], reverse=False)
    return boundingBoxes
 
+def min_max_coords(x, y, arr = None):
+   if arr is None:
+      arr = [x, y, x, y]
+   arr[0] = min(arr[0], x)
+   arr[1] = min(arr[1], y)
+   arr[2] = max(arr[2], x)
+   arr[3] = max(arr[3], y)
+   return arr
+
+font                   = cv.FONT_HERSHEY_COMPLEX
+fontScale              = 0.4
+fontColor              = (255,255,255)
+thickness              = 1
+lineType               = 1
+
+def get_cell_coords(x, y, minmax_arr):
+   w = minmax_arr[2] - minmax_arr[0]
+   h = minmax_arr[3] - minmax_arr[1]
+   cell_w = int(w / (MAP_SIZE[0] - 1))
+   cell_y = int(h / (MAP_SIZE[1] - 1))
+
+   i = round((x - minmax_arr[0]) / cell_w) + 1
+   j = round((y - minmax_arr[1]) / cell_y) + 1
+   print(w, h, cell_w, cell_y, x, y, i, j)
+   return i, j
+
 def contours(img):
    imgray  = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
    contours, hierarchy = cv.findContours(imgray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-   
    coords = []
    total_cells = 0
+   minmax_arr = None
    for cnt in contours:
       area = int(cv.contourArea(cnt))
       if not area > 0:
@@ -140,10 +166,12 @@ def contours(img):
       fill_rect = float(area)/rect_area
       if val > 3 and 0.9 <= aspect_ratio <= 1.3 and 0.6 <= fill_rect:
          total_cells += 1
-         # rect = cv.minAreaRect(cnt)
-         # box = cv.boxPoints(rect)
-         # box = np.intp(box)
-         # cv.drawContours(img, [box], 0, (0, 255, 255), 2)
+         minmax_arr = min_max_coords(x, y, minmax_arr)
+
+         rect = cv.minAreaRect(cnt)
+         box = cv.boxPoints(rect)
+         box = np.intp(box)
+         cv.drawContours(img, [box], 0, (0, 255, 255), 2)
          # shift = int( 0.1 * rect[1][0])
          coords.append((x,y, cnt))
       # elif val > 3:
@@ -158,23 +186,27 @@ def contours(img):
    print(f'total_cells: {total_cells}')
    if total_cells != 400:
       return None
-   sorter = lambda x: (x[1], x[0])
-   coords_sorted = sorted(coords, key=sorter)
-   
+   # print(minmax_arr)
+
    safe_cells = []
-   i, j = 1, 1
    mean_delta = 30
-   for x, y, cnt in coords_sorted:
+   img1 = img.copy()
+   counter = 0
+   for x, y, cnt in coords:
+      i, j = get_cell_coords(x, y, minmax_arr)
+      cv.putText(img,f'{j}-{i}', 
+         (x+10, y+20), 
+         font, 
+         fontScale,
+         fontColor,
+         thickness,
+         lineType)      
+      # print(y, x)
       mask = np.zeros(imgray.shape,np.uint8)
-      cv.drawContours(mask,[cnt],0,255,-1)      
-      mean_color = cv.mean(img, mask)
-      print(mean_color)
+      cv.drawContours(mask,[cnt],0,255,-1)
+      mean_color = cv.mean(img1, mask)
       if abs(sum(mean_color) - 128) <= mean_delta and (abs(mean_color[1] - 128) <= mean_delta or abs(mean_color[0] - 128) <= mean_delta):
          safe_cells.append((j, i))
-      i += 1
-      if i > 20:
-         j += 1
-         i = 1
    return safe_cells
 
 def grey_filter(img):
@@ -255,8 +287,8 @@ if __name__ == '__main__':
    #       continue
    #    img = cv.imread(file_path)
    #    run(img, file_name)
-   img = cv.imread('test_img_scan/IMG_8250.png')
-   run(img, 'image.png')
+   img = cv.imread('test_img_scan/Screenshot_20240428-223514.png')
+   run(img, 'Screenshot_20240428-223514.png')
 
    # img = cv.imread('test_img_scan/test_screen.png')
    # # img = cv.cvtColor(np.array(img), cv.COLOR_RGB2BGR)

@@ -12,7 +12,7 @@ from model import Model, get_last_monday
 from view import View
 from controller import Controller
 
-from const import scan_allowed_channel_ids, allowed_channel_ids, UserRole as ur
+from const import UserRole as ur
 from report import Report
 from reaction import process_reactions, Reactions
 from parser import Parser
@@ -26,6 +26,9 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+
+scan_allowed_channel_ids = [int(x) for x in os.getenv('SCAN_ALLOWED_CHANNEL_IDS').split(',')]
+allowed_channel_ids = [int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS').split(',')]
 
 class MyBot(commands.Bot):
    async def on_command_error(self, ctx, error):

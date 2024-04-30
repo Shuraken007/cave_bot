@@ -29,11 +29,31 @@ def only_cv_colour(img):
    img[np.where(total_mask==0)] = 0
    return img
 
+def get_cell_coords(x, y, minmax_arr):
+   w = minmax_arr[2] - minmax_arr[0]
+   h = minmax_arr[3] - minmax_arr[1]
+   cell_w = int(w / (MAP_SIZE[0] - 1))
+   cell_y = int(h / (MAP_SIZE[1] - 1))
+
+   i = round((x - minmax_arr[0]) / cell_w) + 1
+   j = round((y - minmax_arr[1]) / cell_y) + 1
+   return i, j
+
+def min_max_coords(x, y, arr = None):
+   if arr is None:
+      arr = [x, y, x, y]
+   arr[0] = min(arr[0], x)
+   arr[1] = min(arr[1], y)
+   arr[2] = max(arr[2], x)
+   arr[3] = max(arr[3], y)
+   return arr
+
 def contours(img, report):
    imgray  = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
    contours, _ = cv.findContours(imgray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
    
    coords = []
+   minmax_arr = None
    total_cells = 0
    for cnt in contours:
       area = int(cv.contourArea(cnt))
@@ -50,28 +70,23 @@ def contours(img, report):
       fill_rect = float(area)/rect_area
       if val > 3 and 0.9 <= aspect_ratio <= 1.3 and 0.6 <= fill_rect:
          total_cells += 1
-         coords.append((x,y, cnt))
+         minmax_arr = min_max_coords(x, y, minmax_arr)
+         coords.append((x, y, cnt))
      
    if total_cells != 400:
       report.add_reaction(r.user_data_wrong)
       report.add_error(f'detected {total_cells}/400, required 400')
       return None
-   sorter = lambda x: (x[1], x[0])
-   coords_sorted = sorted(coords, key=sorter)
    
    safe_cells = []
-   i, j = 1, 1
    mean_delta = 30
-   for x, y, cnt in coords_sorted:
+   for x, y, cnt in coords:
+      i, j = get_cell_coords(x, y, minmax_arr)
       mask = np.zeros(imgray.shape,np.uint8)
       cv.drawContours(mask,[cnt],0,255,-1)      
       mean_color = cv.mean(img, mask)
       if abs(sum(mean_color) - 128) <= mean_delta and (abs(mean_color[1] - 128) <= mean_delta or abs(mean_color[0] - 128) <= mean_delta):
          safe_cells.append((j, i))
-      i += 1
-      if i > 20:
-         j += 1
-         i = 1
    return safe_cells
 
 def is_cube(n):
