@@ -202,7 +202,6 @@ async def postprocess(ctx):
       await process_reactions(reactions, ctx.message, ctx.report)
 
    total_msg = ["```ansi"]
-
    for key in r.get_keys():
       key_msg = []
       msg_prefix = None

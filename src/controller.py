@@ -143,7 +143,7 @@ class Controller:
       
       cell = self.view.get_cell(*coords)
       cell_type_most = cell.get_most_cell_type()
-      if cell_type_most != cell_type_new:
+      if cell_type_most not in [ct.unknown, ct.safe] and cell_type_most != cell_type_new:
          cell_type_most_counter = cell.get_cell_type_counter(cell_type_most)
          cell_type_new_counter = cell.get_cell_type_counter(cell_type_new)
          msg = 'adding wrong item: coords: {}, popular item: {} added {} times, you add item: {} added {} times'

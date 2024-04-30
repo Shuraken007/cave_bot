@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 color_scheme = {
    ct.unknown              : None,
    ct.empty                : 'green',
+   ct.safe                 : 'yellow',
    ct.demon_hands          : 'red',
    ct.demon_head           : 'red',
    ct.demon_tail           : 'red',
@@ -28,7 +29,7 @@ map_colour_alias_to_rgb = {
    "green": (83, 255, 77, 50),
    "orange": (255, 153, 51, 255),
    "epic": (153, 51, 255, 255),
-   "yellow": (255, 255, 0, 125),
+   "yellow": (255, 255, 0, 50),
    "blue": (133, 179, 255, 50),
    "white": (255, 255, 255, 125),
    "grey": (140, 140, 140, 125),
@@ -115,6 +116,7 @@ class RenderImage():
          images[alias] = img
 
       images[ct.empty] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
+      images[ct.safe] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
 
       return images
 
@@ -202,7 +204,7 @@ class RenderImage():
             cell_type = bot.view.get_cell_type(i+1, j+1)
 
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
-               cell_type = ct.unknown
+               cell_type = ct.empty
 
             img = self.images.get(ct(cell_type))
             

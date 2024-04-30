@@ -1,21 +1,22 @@
 import enum
 
 class CellType(enum.IntEnum):
-   unknown = 0,
-   empty = 1,
-   demon_hands = 2
-   demon_head = 3
-   demon_tail = 4
-   spider = 5
-   idle_reward = 6
-   summon_stone = 7
-   amulet_of_fear = 8
-   demon_skull = 9
-   golden_compass = 10
-   lucky_bones = 11
-   scepter_of_domination = 12
-   spiral_of_time = 13
-   token_of_memories = 14
+   unknown               = 0,
+   safe                  = 1,
+   empty                 = 2,
+   demon_hands           = 3
+   demon_head            = 4
+   demon_tail            = 5
+   spider                = 6
+   idle_reward           = 7
+   summon_stone          = 8
+   amulet_of_fear        = 9
+   demon_skull           = 10
+   golden_compass        = 11
+   lucky_bones           = 12
+   scepter_of_domination = 13
+   spiral_of_time        = 14
+   token_of_memories     = 15
 
 ct = CellType
 
@@ -29,6 +30,7 @@ cell_description = {
 cell_aliases_config = {
    ct.unknown              : ["u", "unknown"],
    ct.empty                : ["e", "empty"],
+   ct.safe                 : ["s", "safe"],
    ct.demon_hands          : ["dh", "demon's hand"],
    ct.demon_head           : ["d", "demon"],
    ct.demon_tail           : ["dt", "demon's tail"],
@@ -51,9 +53,12 @@ for k, v in cell_aliases_config.items():
    for alias in v:
       cell_aliases[alias] = k
 
-# scan_allowed = [1231401015228497981]
-scan_allowed_channel_ids = [1214291351945093120]
-allowed_channel_ids = [1214291351945093120, 1231401015228497981]
+
+scan_allowed_channel_ids = [1231401015228497981]
+allowed_channel_ids = [1231401015228497981]
+
+# scan_allowed_channel_ids = [1214291351945093120]
+# allowed_channel_ids = [1231401015228497981, 1214291351945093120]
 
 MAP_SIZE = [20, 20]
 
