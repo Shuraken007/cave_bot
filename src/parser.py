@@ -108,5 +108,8 @@ class Parser:
          return
       for coords in safe_cells:
          cell_type = bot.view.get_cell_type(*coords)
-         if cell_type == ct.unknown:
-            bot.controller.add(ct.safe, coords, ctx)
+         if not self.should_user_report_cell_type(cell_type):
+            cell_type_to_add = ct.safe
+            if cell_type.value > ct.safe:
+               cell_type_to_add = cell_type
+            bot.controller.add(cell_type_to_add, coords, ctx)

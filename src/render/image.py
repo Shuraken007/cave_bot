@@ -219,7 +219,7 @@ class RenderImage():
                shift = [coords[0]/self.bg_w * 100, coords[1]/self.bg_w * 100]
                add_img(back, img, "TOPLEFT", shift, foregound_on_background=True)
 
-            if cell_type in [ct.unknown, ct.empty ]:
+            if cell_type in [ct.unknown, ct.empty, ct.safe ]:
                pos_spec = { 
                   'coords': coords.copy(), 
                   'align': "CENTER",
