@@ -142,10 +142,17 @@ def get_cell_coords(x, y, minmax_arr):
 
    i = round((x - minmax_arr[0]) / cell_w) + 1
    j = round((y - minmax_arr[1]) / cell_y) + 1
-   print(w, h, cell_w, cell_y, x, y, i, j)
+   # print(w, h, cell_w, cell_y, x, y, i, j)
    return i, j
 
+def is_color_red_green_or_blue(mean_color, delta):
+   return abs(sum(mean_color) - 128) <= delta
+
+def is_color_green_or_blue(mean_color, delta):
+   return (abs(mean_color[1] - 128) <= delta or abs(mean_color[0] - 128) <= delta)
+      
 def contours(img):
+   img1 = img.copy()
    imgray  = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
    contours, hierarchy = cv.findContours(imgray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
    coords = []
@@ -165,6 +172,12 @@ def contours(img):
       rect_area = w * h
       fill_rect = float(area)/rect_area
       if val > 3 and 0.9 <= aspect_ratio <= 1.3 and 0.6 <= fill_rect:
+         mask = np.zeros(imgray.shape,np.uint8)
+         cv.drawContours(mask,[cnt],0,255,-1)
+         mean_color = cv.mean(img1, mask)
+         if not is_color_red_green_or_blue(mean_color):
+            continue
+
          total_cells += 1
          minmax_arr = min_max_coords(x, y, minmax_arr)
 
@@ -173,7 +186,7 @@ def contours(img):
          box = np.intp(box)
          cv.drawContours(img, [box], 0, (0, 255, 255), 2)
          # shift = int( 0.1 * rect[1][0])
-         coords.append((x,y, cnt))
+         coords.append((x,y, cnt, mean_color))
       # elif val > 3:
       #    msg = 'aspect_ratio_rect: {:.2f}, area/perimeter: {:.2f}, fill_rect: {:.2f}' \
       #       .format(aspect_ratio, val, fill_rect)
@@ -189,10 +202,7 @@ def contours(img):
    # print(minmax_arr)
 
    safe_cells = []
-   mean_delta = 30
-   img1 = img.copy()
-   counter = 0
-   for x, y, cnt in coords:
+   for x, y, cnt, mean_color in coords:
       i, j = get_cell_coords(x, y, minmax_arr)
       cv.putText(img,f'{j}-{i}', 
          (x+10, y+20), 
@@ -202,10 +212,7 @@ def contours(img):
          thickness,
          lineType)      
       # print(y, x)
-      mask = np.zeros(imgray.shape,np.uint8)
-      cv.drawContours(mask,[cnt],0,255,-1)
-      mean_color = cv.mean(img1, mask)
-      if abs(sum(mean_color) - 128) <= mean_delta and (abs(mean_color[1] - 128) <= mean_delta or abs(mean_color[0] - 128) <= mean_delta):
+      if is_color_green_or_blue(mean_color):
          safe_cells.append((j, i))
    return safe_cells
 
@@ -287,8 +294,8 @@ if __name__ == '__main__':
    #       continue
    #    img = cv.imread(file_path)
    #    run(img, file_name)
-   img = cv.imread('test_img_scan/Screenshot_20240428-223514.png')
-   run(img, 'Screenshot_20240428-223514.png')
+   img = cv.imread('test_img_scan/problem1.jpg')
+   run(img, 'problem1.jpg')
 
    # img = cv.imread('test_img_scan/test_screen.png')
    # # img = cv.cvtColor(np.array(img), cv.COLOR_RGB2BGR)

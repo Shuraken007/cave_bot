@@ -48,7 +48,15 @@ def min_max_coords(x, y, arr = None):
    arr[3] = max(arr[3], y)
    return arr
 
+def is_color_red_green_or_blue(mean_color, delta):
+   return abs(sum(mean_color) - 128) <= delta
+
+def is_color_green_or_blue(mean_color, delta):
+   return (abs(mean_color[1] - 128) <= delta or abs(mean_color[0] - 128) <= delta)
+
 def contours(img, report):
+   img1 = img.copy()
+
    imgray  = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
    contours, _ = cv.findContours(imgray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
    
@@ -69,9 +77,16 @@ def contours(img, report):
       rect_area = w * h
       fill_rect = float(area)/rect_area
       if val > 3 and 0.9 <= aspect_ratio <= 1.3 and 0.6 <= fill_rect:
+         mask = np.zeros(imgray.shape,np.uint8)
+         cv.drawContours(mask,[cnt],0,255,-1)
+         mean_color = cv.mean(img1, mask)
+
+         if not is_color_red_green_or_blue(mean_color, 30):
+            continue
+
          total_cells += 1
          minmax_arr = min_max_coords(x, y, minmax_arr)
-         coords.append((x, y, cnt))
+         coords.append((x, y, mean_color))
      
    if total_cells != 400:
       report.add_reaction(r.user_data_wrong)
@@ -79,13 +94,9 @@ def contours(img, report):
       return None
    
    safe_cells = []
-   mean_delta = 30
-   for x, y, cnt in coords:
+   for x, y, mean_color in coords:
       i, j = get_cell_coords(x, y, minmax_arr)
-      mask = np.zeros(imgray.shape,np.uint8)
-      cv.drawContours(mask,[cnt],0,255,-1)      
-      mean_color = cv.mean(img, mask)
-      if abs(sum(mean_color) - 128) <= mean_delta and (abs(mean_color[1] - 128) <= mean_delta or abs(mean_color[0] - 128) <= mean_delta):
+      if is_color_green_or_blue(mean_color, 30):
          safe_cells.append((j, i))
    return safe_cells
 
