@@ -22,7 +22,7 @@ class Cell:
       # safe priority is lower, than idle
       if most_cell_type == ct.safe and arr[prev_most_i] > 0:
          prev_cell_type = ct(prev_most_i)
-         if not is_cell_type_mandatory(prev_cell_type):
+         if prev_cell_type != ct.unknown:
             most_cell_type = prev_cell_type
 
       return most_cell_type
