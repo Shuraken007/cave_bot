@@ -1,8 +1,10 @@
 import numpy as np
 import cv2 as cv
+from PIL import Image
 from const import MAP_SIZE
 from reaction import Reactions as r
 import requests
+import json
 
 masks = {
    'red': {
@@ -70,13 +72,13 @@ def contours(img, report):
       perimeter = int(cv.arcLength(cnt, True))
       if not perimeter > 0:
          continue
-      val = area / perimeter
+      area_to_perimeter = area / perimeter
 
       x,y,w,h = cv.boundingRect(cnt)
-      aspect_ratio = float(w)/h      
+      box_ratio = float(w)/h      
       rect_area = w * h
       fill_rect = float(area)/rect_area
-      if val > 3 and 0.9 <= aspect_ratio <= 1.3 and 0.6 <= fill_rect:
+      if area_to_perimeter > 3 and 0.9 <= box_ratio <= 1.3 and 0.6 <= fill_rect:
          mask = np.zeros(imgray.shape,np.uint8)
          cv.drawContours(mask,[cnt],0,255,-1)
          mean_color = cv.mean(img1, mask)
@@ -86,19 +88,40 @@ def contours(img, report):
 
          total_cells += 1
          minmax_arr = min_max_coords(x, y, minmax_arr)
-         coords.append((x, y, mean_color))
+         dbg = {'cnt': cnt, 'box_ratio': box_ratio, 'fill_rect': fill_rect, 'area_to_perimeter': area_to_perimeter}
+         coords.append((x, y, mean_color, dbg))
      
    if total_cells != 400:
       report.add_reaction(r.user_data_wrong)
       report.add_error(f'detected {total_cells}/400, required 400')
+
+      add_failed_answer(img, coords, report)
       return None
    
    safe_cells = []
-   for x, y, mean_color in coords:
+   for x, y, mean_color, _ in coords:
       i, j = get_cell_coords(x, y, minmax_arr)
       if is_color_green_or_blue(mean_color, 30):
          safe_cells.append((j, i))
    return safe_cells
+
+def add_failed_answer(img, coords, report):
+   dbg_data = []
+   for x, y, mean_color, dbg in coords:
+      cnt = dbg['cnt']
+      rect = cv.minAreaRect(cnt)
+      box = cv.boxPoints(rect)
+      box = np.intp(box)
+      cv.drawContours(img, [box], 0, (0, 255, 255), 2)
+      # data = {'coords': [x, y], 'mean_color': mean_color, 'box_ratio': dbg['box_ratio'], 'fill_rect': dbg['fill_rect'], 'area_to_perimeter': dbg['area_to_perimeter']}
+      # dbg_data.append(data)
+
+   # prepared_msg = json.dumps(dbg_data, indent=4, ensure_ascii=False)
+   report.add_error(f'here are cells, that I founded:')
+   # report.add_message(prepared_msg)
+   img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+   pil_img = Image.fromarray(img)
+   report.add_image(pil_img)
 
 def is_cube(n):
     cbrt = np.cbrt(n)

@@ -28,6 +28,9 @@ class Report:
 
       self.log[self.key].update(data)
 
+   def add_image(self, image):
+      self.images.append(image)
+
    def get_log(self, key):
       if self.off:
          return None
@@ -72,6 +75,9 @@ class Report:
          return self.reactions
       return None
 
+   def get_images(self):
+      return self.images
+
    def set_key(self, key):
       self.key = key
       if key in self.keys:
@@ -94,3 +100,4 @@ class Report:
       self.log = {}
       self.off = False
       self.keys = []
+      self.images = []

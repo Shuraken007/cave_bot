@@ -232,6 +232,13 @@ async def postprocess(ctx):
       total_msg.append('```')
       await ctx.message.channel.send("\n".join(total_msg))
    
+   for image in r.get_images():
+      with io.BytesIO() as image_binary:
+         image.save(image_binary, 'PNG')
+         image_binary.seek(0)
+         await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+
+
 class SuperAdminCmd(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -350,13 +357,7 @@ async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Option
       if ascii:
          bot.render_ascii.render(me, bot, ctx)
       else:
-         image = bot.render_image.render(me, bright, bot, ctx)
-
-   if image:
-      with io.BytesIO() as image_binary:
-         image.save(image_binary, 'PNG')
-         image_binary.seek(0)
-         await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+         bot.render_image.render(me, bright, bot, ctx)
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 bot.run(TOKEN)

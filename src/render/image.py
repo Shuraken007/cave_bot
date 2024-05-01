@@ -240,7 +240,7 @@ class RenderImage():
 
                self.add_text(back, text_spec, pos_spec)
 
-      return back
+      ctx.report.add_image(back)
 
 if __name__ == '__main__':
    render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'])
