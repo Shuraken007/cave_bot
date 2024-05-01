@@ -16,6 +16,8 @@ class Cell:
          if arr[most_i] < arr[i]:
             prev_most_i = most_i
             most_i = i
+         elif arr[most_i] > arr[i] > arr[prev_most_i]:
+            prev_most_i = i
 
       most_cell_type = ct(most_i)
 

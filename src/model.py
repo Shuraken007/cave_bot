@@ -56,7 +56,11 @@ class Model():
          self.week.cursor.execute('BEGIN')
 
          self.week.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS cells(x INT, y INT, {})
+            CREATE TABLE IF NOT EXISTS cells(
+               x INT, y INT, 
+               {},
+               UNIQUE(x, y)
+            );
          '''.format(self.cell_type_str))
 
          for i in range(1, MAP_SIZE[0] + 1):
