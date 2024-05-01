@@ -342,7 +342,7 @@ async def cell(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr
 @strict_channels()
 @strict_users(ur.nobody)
 @bot.command(aliases=['m'], brief = "render map as image or text", description = help['map_description'])
-async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii']):
+async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii'], bright: Optional[Literal['b', 'bright']] = help['bright_descr']):
    image = None
    if me:
       me = ctx.message.author.id
@@ -350,7 +350,7 @@ async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Option
       if ascii:
          bot.render_ascii.render(me, bot, ctx)
       else:
-         image = bot.render_image.render(me, bot, ctx)
+         image = bot.render_image.render(me, bright, bot, ctx)
 
    if image:
       with io.BytesIO() as image_binary:

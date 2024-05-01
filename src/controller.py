@@ -185,34 +185,6 @@ class Controller:
          if is_cell_type_changed:
             ctx.report.add_reaction(r.cell_update)
 
-
-
-   # def report(self, is_compact, ctx):
-   #    user_id = ctx.message.author.id
-   #    msg_arr = []
-   #    compact = {}
-
-   #    for i in range(0, MAP_SIZE[0]):
-   #       for j in range(0, MAP_SIZE[1]):
-   #          cell_type = self.model.get_user_record(user_id, i+1, j+1)
-   #          if cell_type is None:
-   #             continue
-
-   #          coords_as_str = f'{i+1}-{j+1}'
-   #          msg_arr.append(f'{coords_as_str} : {cell_type.name}')
-
-   #          if not cell_type.name in compact:
-   #             compact[cell_type.name] = []
-   #          compact[cell_type.name].append(coords_as_str)
-
-   #    if is_compact:
-   #       msg_arr = []
-   #       for key, value in compact.items():
-   #          val_as_str = ' | '.join(value)
-   #          msg_arr.append(f'{key} : {val_as_str}')
-
-   #    msg = '\n'.join(msg_arr)
-   #    ctx.report.add_message(msg)
    def report(self, user, is_compact, ctx):
       author_role = self.get_user_role(ctx.message.author)
       if user.id != ctx.message.author.id and \

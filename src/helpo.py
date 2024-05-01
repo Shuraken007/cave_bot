@@ -39,6 +39,7 @@ help = {
 'what_descr': what_descr,
 'coord_descr': commands.parameter(description="x-y: 1-2 11-9"),
 'me_descr': commands.parameter(description="don't render what you reported, it's easier to find rest items"),
+'bright_descr': commands.parameter(description="make all colors bright, turn of transparency"),
 'ascii': commands.parameter(description="use text map instead of image"),
 'compact_descr': commands.parameter(description="make report Compact"),
 'map_description': """
@@ -46,6 +47,8 @@ help = {
    !map me
    !map ascii
    !map me ascii
+   !map bright | !map b
+   !map me bright | !map me b
 """,
 'addadmin_description': """
    add user with admin role - more commands available

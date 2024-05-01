@@ -2,6 +2,7 @@ import re
 from const import cell_aliases, MAP_SIZE, CellType as ct
 from reaction import Reactions as r
 from image_scaner import get_safe_cells, url_to_image
+from utils import is_cell_type_mandatory
 
 MATCH_REPORT = re.compile(r"(\d+\-\d+) : ([\w' ]+)")
 
@@ -79,18 +80,13 @@ class Parser:
          except Exception as e:
             print(e)
             ctx.report.add_log({f'exception attachment {counter}': str(e)})
-   
-   def should_user_report_cell_type(self, cell_type):
-      if cell_type <= ct.empty or cell_type == ct.idle_reward:
-         return False
-      return True
 
    def validate_safe_cells_by_user(self, safe_cells, ctx, bot, user_cell_type_arr):
       for coords in safe_cells:
          cell_type = bot.view.get_cell_type(*coords)
          user_cell_type = bot.model.get_user_record(ctx.message.author.id, *coords)
          user_cell_type_arr.append(user_cell_type)
-         if not self.should_user_report_cell_type(cell_type) :
+         if not is_cell_type_mandatory(cell_type):
             continue
          if user_cell_type is not None:
             continue
@@ -113,7 +109,5 @@ class Parser:
       for coords in safe_cells:
          user_cell_type = user_cell_type_arr[counter]
          if user_cell_type is None:
-            user_cell_type = ct.unknown
-         if user_cell_type == ct.unknown:
             bot.controller.add(ct.safe, coords, ctx)
          counter += 1

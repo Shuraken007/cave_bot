@@ -35,7 +35,7 @@ cell_aliases_config = {
    ct.demon_head           : ["d", "demon"],
    ct.demon_tail           : ["dt", "demon's tail"],
    ct.spider               : ["s", "spider"],
-   ct.idle_reward          : ["i", "idle reward"],
+   ct.idle_reward          : ["i", "idle reward", "idle rewards"],
    ct.summon_stone         : ["ss", "summoning stone", "summon stone"],
    ct.amulet_of_fear       : ["af", "amulet of fear"],
    ct.demon_skull          : ["ds", "demon skull"],

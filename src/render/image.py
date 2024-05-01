@@ -1,12 +1,12 @@
 from const import CellType as ct, MAP_SIZE
-from utils import build_path
+from utils import build_path, is_cell_type_mandatory
 
 # from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
 
 color_scheme = {
    ct.unknown              : None,
-   ct.empty                : 'green',
+   ct.empty                : 'brightblue',
    ct.safe                 : 'yellow',
    ct.demon_hands          : 'red',
    ct.demon_head           : 'red',
@@ -26,7 +26,8 @@ color_scheme = {
 map_colour_alias_to_rgb = {
    "white": (255, 255, 255, 125),
    "red": (255, 0, 0, 50),
-   "green": (83, 255, 77, 125),
+   "green": (83, 255, 77, 50),
+   "brightblue": (95, 135, 255, 50),
    "orange": (255, 153, 51, 255),
    "epic": (153, 51, 255, 255),
    "yellow": (255, 255, 0, 50),
@@ -181,9 +182,6 @@ class RenderImage():
       align = pos_spec.get('align')
       color = text_spec.get("color")
 
-      if color:
-         color = map_colour_alias_to_rgb[color]
-
       if align is not None:
          if align == 'CENTER' and width is not None:
             (_, _, w, _) = self.font.getbbox(text)
@@ -195,22 +193,30 @@ class RenderImage():
       img.draw.text(coords, text, font=self.font, fill=color)
       return
 
-   def render(self, user_id, bot, ctx):
+   def get_color_by_name(self, color_name, is_bright, cell_type, is_text = False):
+      color = list(map_colour_alias_to_rgb[color_name])
+      if is_bright and not is_cell_type_mandatory(cell_type):
+         color[-1] = is_text and 170 or 125
+      return color
+
+   def render(self, user_id, bright, bot, ctx):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
-      
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
             cell_type = bot.view.get_cell_type(i+1, j+1)
 
+            color_name = None
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
                cell_type = ct.empty
+               color_name = 'green'
 
             img = self.images.get(ct(cell_type))
             
-            if img and ct(cell_type) in color_scheme:
-               color_name = color_scheme[ct(cell_type)]
-               color = map_colour_alias_to_rgb[color_name]
+            if img and (color_name or ct(cell_type) in color_scheme):
+               if not color_name:
+                  color_name = color_scheme[ct(cell_type)]
+               color = self.get_color_by_name(color_name, bright, cell_type)
                img = img.copy()
                self.change_color(img, (0, 0, 0, 0), color)
 
@@ -226,9 +232,10 @@ class RenderImage():
                   'width': self.sizes['cell_width'],
                   'height': self.sizes['cell_width'],
                }
+               color = self.get_color_by_name('grey', bright, cell_type, is_text=True)
                text_spec = { 
                   'text': f'{i+1}-{j+1}',
-                  'color': 'grey'
+                  'color': tuple(color)
                }
 
                self.add_text(back, text_spec, pos_spec)
