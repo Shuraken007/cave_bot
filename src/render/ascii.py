@@ -3,11 +3,12 @@ from const import MAP_SIZE, CellType as ct
 
 color_scheme = {
    ct.unknown              : None,
+   ct.safe                 : ['green', None],
    ct.demon_hands          : ['red', None],
    ct.demon_head           : ['red', None],
    ct.demon_tail           : ['red', None],
    ct.spider               : ['red', None],
-   ct.idle_reward          : ['green', None],
+   ct.idle_reward          : ['blue', None],
    ct.summon_stone         : ['cyan', None],
    ct.amulet_of_fear       : ['yellow', None],
    ct.demon_skull          : ['yellow', None],
@@ -22,6 +23,7 @@ cell_to_ascii = {
      ct.unknown              : ["░", "▒"],
    # ct.unknown              : ["░", "⍣", "◆"],
      ct.empty                : "▁",
+     ct.safe                 : "🬁",
      ct.demon_hands          : '▇',
      ct.demon_head           : '▇',
      ct.demon_tail           : '▇',
@@ -68,8 +70,8 @@ class RenderAscii:
          if i % 10 == 0 and i > 0:
             arr.append("")
          for j in range(0, MAP_SIZE[1]):
-            if j % 5 == 0 and j > 0:
-               line += " "
+            # if j % 5 == 0 and j > 0:
+            #    line += " "
             cell_type = bot.view.get_cell_type(i+1, j+1)
             if user_id and bot.model.get_user_record(user_id, i+1, j+1) is not None:
                cell_type = ct.unknown
