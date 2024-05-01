@@ -4,7 +4,6 @@ from PIL import Image
 from const import MAP_SIZE
 from reaction import Reactions as r
 import requests
-import json
 
 masks = {
    'red': {
@@ -56,6 +55,17 @@ def is_color_red_green_or_blue(mean_color, delta):
 def is_color_green_or_blue(mean_color, delta):
    return (abs(mean_color[1] - 128) <= delta or abs(mean_color[0] - 128) <= delta)
 
+def filter_coords_by_areas(coords, areas, k=0.1):
+   median_area = sum(areas) / len(areas)
+   delta = median_area * k
+   new_coords = []
+   minmax_arr = None
+   for coord in coords:
+      if abs(coord[3]['area'] - median_area) < delta:
+         minmax_arr = min_max_coords(coord[0], coord[1], minmax_arr)
+         new_coords.append(coord)
+   return new_coords, minmax_arr
+
 def contours(img, report):
    img1 = img.copy()
 
@@ -64,7 +74,7 @@ def contours(img, report):
    
    coords = []
    minmax_arr = None
-   total_cells = 0
+   areas = []
    for cnt in contours:
       area = int(cv.contourArea(cnt))
       if not area > 0:
@@ -86,14 +96,17 @@ def contours(img, report):
          if not is_color_red_green_or_blue(mean_color, 30):
             continue
 
-         total_cells += 1
+         areas.append(area)
          minmax_arr = min_max_coords(x, y, minmax_arr)
-         dbg = {'cnt': cnt, 'box_ratio': box_ratio, 'fill_rect': fill_rect, 'area_to_perimeter': area_to_perimeter}
-         coords.append((x, y, mean_color, dbg))
-     
-   if total_cells != 400:
+         info = {'cnt': cnt, 'area': area}
+         coords.append((x, y, mean_color, info))
+   
+   if len(coords) > 400:
+      coords, minmax_arr = filter_coords_by_areas(coords, areas, k=0.2)
+
+   if len(coords) != 400:
       report.add_reaction(r.user_data_wrong)
-      report.add_error(f'detected {total_cells}/400, required 400')
+      report.add_error(f'detected {len(coords)}/400, required 400')
 
       add_failed_answer(img, coords, report)
       return None
@@ -106,19 +119,14 @@ def contours(img, report):
    return safe_cells
 
 def add_failed_answer(img, coords, report):
-   dbg_data = []
-   for x, y, mean_color, dbg in coords:
-      cnt = dbg['cnt']
+   for _, _, _, info in coords:
+      cnt = info['cnt']
       rect = cv.minAreaRect(cnt)
       box = cv.boxPoints(rect)
       box = np.intp(box)
       cv.drawContours(img, [box], 0, (0, 255, 255), 2)
-      # data = {'coords': [x, y], 'mean_color': mean_color, 'box_ratio': dbg['box_ratio'], 'fill_rect': dbg['fill_rect'], 'area_to_perimeter': dbg['area_to_perimeter']}
-      # dbg_data.append(data)
 
-   # prepared_msg = json.dumps(dbg_data, indent=4, ensure_ascii=False)
    report.add_error(f'here are cells, that I founded:')
-   # report.add_message(prepared_msg)
    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
    pil_img = Image.fromarray(img)
    report.add_image(pil_img)
