@@ -48,13 +48,13 @@ cell_aliases_config = {
 
 cell_max_amount = {
    ct.demon_head : 4,
-   ct.demon_tail : 4,
-   ct.demon_hands : 8,
-   ct.spider : 40,
+   ct.demon_tail : 20,
+   ct.demon_hands : 20,
+   ct.spider : 20,
    'artifact' : 5,
    ct.summon_stone : 10,
    ct.empty : 100,
-   ct.idle_reward : 400 - 100 - 40 - 10 - 8 - 5 - 4 - 4,
+   ct.idle_reward : 400 - 100 - 20 - 20 - 20 - 10 - 5 - 4,
 }
 
 # build reverted cell_aliases: "u" : ct.unknown
