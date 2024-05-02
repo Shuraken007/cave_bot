@@ -57,8 +57,8 @@ cell_max_amount = {
    ct.spider : 20,
    'artifact' : 5,
    ct.summon_stone : 10,
-   ct.empty : 100,
-   ct.idle_reward : 400 - 100 - 20 - 20 - 20 - 10 - 5 - 4,
+   ct.empty : 120,
+   ct.idle_reward : 400 - 120 - 20 - 20 - 20 - 10 - 5 - 4,
 }
 
 # build reverted cell_aliases: "u" : ct.unknown
