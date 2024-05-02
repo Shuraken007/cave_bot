@@ -229,10 +229,12 @@ class RenderImage():
       if is_known:
          color_name = 'green'
       elif self.is_cleaned(clean, cell_type):
-            if self.is_hide_on_clean(cell_type):
-               color_name = None
-            else:
-               color_name = 'yellow'         
+         if self.is_hide_on_clean(cell_type):
+            color_name = None
+         else:
+            color_name = 'yellow'
+      elif clean >= clean.enemy and cell_type == ct.unknown:
+         color_name = 'blue'
       else:
          color_name = color_scheme.get(cell_type)
 
@@ -245,7 +247,7 @@ class RenderImage():
       if is_known:
          return self.images['blank']
       
-      if cell_type in [ct.empty, ct.safe]:
+      if cell_type in [ct.unknown, ct.empty, ct.safe]:
          return self.images['blank']
       
       if self.is_cleaned(clean, cell_type):
