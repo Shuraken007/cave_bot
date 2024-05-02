@@ -25,6 +25,10 @@ cell_description = {
    ct.spider     : "Run back to previous room",
    ct.demon_tail : "Next direction will be random",
    ct.demon_head : "Loose all remaining turns",
+   'artifact' : "Any of 7 artifacts",
+   ct.summon_stone : "future gacha",
+   ct.idle_reward : "30 min of farming",
+   ct.empty : "no rewards, better avoid",
 }
 
 cell_aliases_config = {

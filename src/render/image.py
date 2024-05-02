@@ -24,18 +24,18 @@ color_scheme = {
 }
 
 map_colour_alias_to_rgb = {
-   "white": (255, 255, 255, 125),
-   "black": (0, 0, 0, 125),
-   "red": (255, 0, 0, 50),
-   "green": (83, 255, 77, 50),
-   "brightblue": (95, 135, 255, 50),
-   "orange": (255, 153, 51, 255),
-   "epic": (153, 51, 255, 255),
-   "yellow": (255, 255, 0, 50),
-   "blue": (133, 179, 255, 50),
-   "white": (255, 255, 255, 125),
-   "grey": (140, 140, 140, 125),
-   "light_yellow": (255, 255, 153, 125),
+   "white": [255, 255, 255, 125],
+   "black": [0, 0, 0, 125],
+   "red": [255, 0, 0, 50],
+   "green": [83, 255, 77, 50],
+   "brightblue": [95, 135, 255, 50],
+   "orange": [255, 153, 51, 255],
+   "epic": [153, 51, 255, 255],
+   "yellow": [255, 255, 0, 50],
+   "blue": [133, 179, 255, 50],
+   "white": [255, 255, 255, 125],
+   "grey": [140, 140, 140, 125],
+   "light_yellow": [255, 255, 153, 125],
 }
 
 def add_img(background, foreground, align, shift=None, foregound_on_background=True):
@@ -180,29 +180,29 @@ class RenderImage():
       height = pos_spec.get('height')
       align = pos_spec.get('align')
       color = text_spec.get("color")
-
+      (_, _, w, h) = self.font.getmask(text).getbbox()
       if align is not None:
          if align == 'CENTER' and width is not None:
-            (_, _, w, _) = self.font.getbbox(text)
-            coords[0] += (width - w) / 2
+            coords[0] += int((width - w) / 2)
          if align == 'CENTER' and height is not None:
-            (_, h1, _, h2) = self.font.getbbox(text)
-            coords[1] += (height - h2) / 2
+            # coords[1] += (height - h) / 2
+            coords[1] += int((height) / 2) - h
+            pass
 
-      img.draw.text(coords, text, font=self.font, fill=color)
-      (_, h1, _, h2) = self.font.getbbox(text)
-      return h2 - h1
+      img.draw.text(coords, text, font=self.font, fill=tuple(color))
+      return (w, h)
 
-   def get_text_color(self, img, x, y, is_bright):
-      pixel_color = img.getpixel((x, y))
-      color_name = is_text_black(pixel_color) and 'black' or 'grey'
-      color = list(map_colour_alias_to_rgb[color_name])
+   def get_text_color(self, img, coords, color_name=None, is_bright=False):
+      pixel_color = img.getpixel(tuple(coords))
+      if color_name is None:
+         color_name = is_text_black(pixel_color) and 'black' or 'grey'
+      color = map_colour_alias_to_rgb[color_name].copy()
       if is_bright:
          color[-1] = 170
       return color
 
    def get_color_by_name(self, color_name, is_bright, cell_type):
-      color = list(map_colour_alias_to_rgb[color_name])
+      color = map_colour_alias_to_rgb[color_name].copy()
       if is_bright and not is_cell_type_mandatory(cell_type):
          color[-1] = 125
       return color
@@ -246,10 +246,11 @@ class RenderImage():
          'height': self.sizes['cell_width'],
       }
       shift = self.sizes['cell_width'] / 2
-      color = self.get_text_color(back, coords[0] + shift, coords[1] + shift, bright)
+      pixel_coords = [coords[0] + shift, coords[1] + shift]
+      color = self.get_text_color(back, pixel_coords, color_name = None, is_bright=bright)
       text_spec = { 
          'text': text,
-         'color': tuple(color)
+         'color': color
       }
 
       self.add_text(back, text_spec, pos_spec)
@@ -269,7 +270,7 @@ class RenderImage():
             self.add_img_by_cell(coords, img, color, back)
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright)
 
-      self.add_descriptions(back, user_id, bot)
+      self.add_descriptions(back, user_id, bot, bright)
 
       ctx.report.add_image(back)
 
@@ -287,7 +288,7 @@ class RenderImage():
 
    def get_description_text(self, cell_type_name, user_id, bot):
       founded, total, description, name = None, None, None, None
-
+      text = []
       if cell_type_name == 'artifact':
          total = cell_max_amount.get(cell_type_name)
 
@@ -296,46 +297,59 @@ class RenderImage():
             found_arr.append(bot.controller.get_total_cells(art, user_id))
          founded = sum(found_arr)
 
+         description = cell_description.get(cell_type_name, "")
          name = cell_type_name
       else:
          cell_type = ct[cell_type_name]
          
          founded = bot.controller.get_total_cells(cell_type, user_id)
          total = cell_max_amount.get(cell_type, 0)
-         description = cell_description.get(cell_type, "").lower()
+         description = cell_description.get(cell_type, "")
          name = max(cell_aliases_config[cell_type], key=len)
 
-      msg = f'{founded}/{total}  {name}'
+      msg1 = f'{founded}/{total}'
+      msg1_color =  'green' if founded >= total else 'red'
+      text.append({'text': msg1.lower(), 'color': msg1_color})
+
+      msg2 = f'  {name}'
       if description:
-         msg += f'  [{description}]'      
+         msg2 += f'  [{description}]'      
+      text.append({'text': msg2.lower()})
 
-      return msg
+      return text
 
-   def add_description_text(self, description_text, coords, back):
+   def add_description_text(self, description_text, coords, back, is_bright):
       icon_width = self.sizes['cell_width']
       shift = icon_width * 1.2
-      text_coords = (coords[0] + shift, coords[1])
-      pos_spec = { 
-         'coords': list(text_coords), 
-         'align': "CENTER",
-         'height': icon_width
-      }
-      color = self.get_text_color(back, *text_coords, True)
-      text_spec = { 
-         'text': description_text,
-         'color': tuple(color)
-      }
+      coords[0] += shift
 
-      self.add_text(back, text_spec, pos_spec)
+      for text_config in description_text:
+         text = text_config['text']
+         color_name = text_config.get('color', None)
 
-   def add_description(self, cell_type_name, coords, back, user_id, bot):
+         color = self.get_text_color(back, coords, color_name, is_bright=is_bright)
+
+         pos_spec = { 
+            'coords': coords.copy(), 
+            'align': "CENTER",
+            'height': icon_width
+         }
+         text_spec = { 
+            'text': text,
+            'color': color
+         }
+
+         w, _ = self.add_text(back, text_spec, pos_spec)
+         coords[0] += w*1.1
+
+   def add_description(self, cell_type_name, coords, back, user_id, bot, is_bright):
       img = self.get_description_image(cell_type_name)
       description_text = self.get_description_text(cell_type_name, user_id, bot)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
-      self.add_description_text(description_text, coords, back)
+      self.add_description_text(description_text, coords, back, is_bright)
       return self.sizes['cell_width']
 
-   def add_descriptions(self, back, user_id, bot):
+   def add_descriptions(self, back, user_id, bot, is_bright):
       base_coords = self.get_cell_coords(MAP_SIZE[0], 1)
       shift = self.sizes['cell_width']
       base_coords[1] += shift
@@ -343,14 +357,14 @@ class RenderImage():
       coords = base_coords.copy()
       
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
-         shift_y = self.add_description(cell_type.name, coords, back, user_id, bot)
+         shift_y = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright)
          coords[1] += shift_y * 1.1
 
       coords = base_coords.copy()
       coords[0] += int(self.bg_w / 2)
 
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
-         shift_y = self.add_description(cell_type_name, coords, back, user_id, bot)
+         shift_y = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright)
          coords[1] += shift_y * 1.1
 
 if __name__ == '__main__':
