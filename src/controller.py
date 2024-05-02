@@ -112,6 +112,17 @@ class Controller:
       msg = "\n".join(role_report)
       report.add_message(msg)
 
+   def get_total_cells(self, cell_type, user_id):
+      amount = 0
+      if not user_id:
+         amount = self.view.get_cell_type_amount(cell_type)
+      else:
+         records = self.model.get_user_records_by_cell_type(user_id, cell_type)
+         if records is not None:
+            amount = len(records)
+      return amount
+
+
    def add(self, what, coords, ctx):
 
       user_id = ctx.message.author.id

@@ -204,6 +204,17 @@ class Model():
       ).fetchall()
 
       return data
+   
+   def get_user_records_by_cell_type(self, user_id, cell_type):
+      data = self.week.cursor.execute(
+         '''SELECT x, y FROM user_request 
+            WHERE user_id == ? AND cell_type == ? 
+            ORDER BY x ASC, y ASC;
+         ''',
+         (user_id, cell_type)
+      ).fetchall()
+
+      return data
 
    def get_users_and_types_by_coords(self, x, y):
       data = self.week.cursor.execute(

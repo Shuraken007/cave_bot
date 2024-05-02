@@ -51,3 +51,14 @@ def color_msg(msg, fg_color_alias, bg_color_alias):
    open_code = get_open_code(fg_color_alias, bg_color_alias)
    close_code = get_close_code()
    return open_code + msg + close_code
+
+def is_text_black(bg):
+   r = bg[0]
+   g = bg[1]
+   b = bg[2]
+   t = bg[3]
+   nThreshold = 50
+   bgDelta = r*0.299 + g*0.587 + b*0.114
+   if bgDelta > nThreshold:
+      return True
+   return False

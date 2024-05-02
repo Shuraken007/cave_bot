@@ -107,8 +107,8 @@ def contours(img, report):
    if len(coords) != 400:
       report.add_reaction(r.user_data_wrong)
       report.add_error(f'detected {len(coords)}/400, required 400')
-
-      add_failed_answer(img, coords, report)
+      if len(coords) > 0:
+         add_failed_answer(img, coords, report)
       return None
    
    safe_cells = []

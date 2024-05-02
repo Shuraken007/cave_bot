@@ -8,8 +8,14 @@ class Cell:
          cell_type_counters = [0] * len(ct)
       
       self.val = cell_type_counters
+      self.most = None
 
    def get_most_cell_type(self):
+      if self.most is None:
+         self.most = self.calc_cell_type()
+      return self.most
+   
+   def calc_cell_type(self):
       most_i, prev_most_i = 0, 0
       arr = self.val
       for i in range(0, len(self.val)):
@@ -27,6 +33,8 @@ class Cell:
          if prev_cell_type != ct.unknown:
             most_cell_type = prev_cell_type
 
+      self.most = most_cell_type
+
       return most_cell_type
    
    def get_cell_type_counter(self, cell_type):
@@ -34,6 +42,7 @@ class Cell:
    
    def update(self, cell_type_counters):
       self.val = cell_type_counters
+      self.most = self.calc_cell_type()
       
 class View:
    def update_cell(self, x, y, cell_type_counters):
@@ -44,6 +53,15 @@ class View:
    
    def get_cell_type(self, x, y):
       return self.cells[x-1][y-1].get_most_cell_type()
+
+   def get_cell_type_amount(self, cell_type):
+      counter = 0
+      for i in range(0, MAP_SIZE[0]):
+         for j in range(0, MAP_SIZE[1]):
+            if self.get_cell_type(i, j) == cell_type:
+               counter += 1
+
+      return counter
 
    def __init__(self, model):
       cells = []

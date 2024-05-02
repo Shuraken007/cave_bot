@@ -67,8 +67,8 @@ class RenderAscii:
       # arr.append(color_util.ansi_message_start())
       for i in range(0, MAP_SIZE[0]):
          line = ""
-         if i % 10 == 0 and i > 0:
-            arr.append("")
+         # if i % 10 == 0 and i > 0:
+         #    arr.append("")
          for j in range(0, MAP_SIZE[1]):
             # if j % 5 == 0 and j > 0:
             #    line += " "
