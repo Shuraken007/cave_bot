@@ -59,7 +59,7 @@ class Parser:
          else:
             ctx.report.add_log({'error': f'not match'})
 
-      self.parse_attachments(ctx, bot)
+      # self.parse_attachments(ctx, bot)
 
    def parse_attachments(self, ctx, bot):
       attachments = ctx.message.attachments
