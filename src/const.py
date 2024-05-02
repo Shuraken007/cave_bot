@@ -71,6 +71,17 @@ for k, v in cell_aliases_config.items():
 
 MAP_SIZE = [20, 20]
 
+class CleanMap(enum.IntEnum):
+   no_clean = 0,
+   c = 1,
+   clean = 1,
+   idle = 1,
+   cc = 2,
+   enemy = 2,
+   ccc = 3,
+   ss_arts = 3,
+
+
 class UserRole(enum.IntEnum):
    banned = 0,
    nobody = 1,

@@ -12,7 +12,7 @@ from model import Model, get_last_monday
 from view import View
 from controller import Controller
 
-from const import UserRole as ur
+from const import UserRole as ur, CleanMap
 from report import Report
 from reaction import process_reactions, Reactions
 from parser import Parser
@@ -349,15 +349,17 @@ async def cell(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_descr
 @strict_channels()
 @strict_users(ur.nobody)
 @bot.command(aliases=['m'], brief = "render map as image or text", description = help['map_description'])
-async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii'], bright: Optional[Literal['b', 'bright']] = help['bright_descr']):
-   image = None
+async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii'], bright: Optional[Literal['b', 'bright']] = help['bright_descr'], clean: Optional[Literal['c', 'clean', 'cc', 'ccc']] = help['clean_descr']):
+   if clean is None:
+      clean = 'no_clean'
+   clean = CleanMap[clean]
    if me:
       me = ctx.message.author.id
    async with ctx.typing():
       if ascii:
          bot.render_ascii.render(me, bot, ctx)
       else:
-         bot.render_image.render(me, bright, bot, ctx)
+         bot.render_image.render(me, bright, clean, bot, ctx)
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 bot.run(TOKEN)

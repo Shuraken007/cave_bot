@@ -207,24 +207,51 @@ class RenderImage():
          color[-1] = 125
       return color
 
-   def get_color_by_cell(self, cell_type, is_bright, is_known):
+   def is_cleaned(self, clean, cell_type):
+      if clean >= clean.idle and cell_type in [ct.empty, ct.idle_reward]:
+         return True
+      
+      if clean >= clean.enemy and cell_type in [ct.demon_hands ,ct.demon_head ,ct.demon_tail ,ct.spider]: 
+         return True
+
+      if clean >= clean.ss_arts and cell_type in [ct.summon_stone, ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories]: 
+         return True
+      
+      return False
+   
+   def is_hide_on_clean(self, cell_type):
+      if cell_type in [ct.empty, ct.demon_hands ,ct.demon_head ,ct.demon_tail ,ct.spider]:
+         return True
+      return False
+
+   def get_color_by_cell(self, cell_type, is_bright, is_known, clean):
       color_name = None
       if is_known:
          color_name = 'green'
+      elif self.is_cleaned(clean, cell_type):
+            if self.is_hide_on_clean(cell_type):
+               color_name = None
+            else:
+               color_name = 'yellow'         
       else:
          color_name = color_scheme.get(cell_type)
+
       if not color_name:
          return None
 
       return self.get_color_by_name(color_name, is_bright, cell_type)
 
-   def get_img_by_cell(self, cell_type, is_known):
-      img = None
-      if is_known or cell_type in [ct.empty, ct.safe]:
-         img = self.images['blank']
-      else:         
-         img = self.images.get(cell_type)
-      return img
+   def get_img_by_cell(self, cell_type, is_known, clean):
+      if is_known:
+         return self.images['blank']
+      
+      if cell_type in [ct.empty, ct.safe]:
+         return self.images['blank']
+      
+      if self.is_cleaned(clean, cell_type):
+         return self.images['blank']
+     
+      return self.images.get(cell_type)
 
    def add_img_by_cell(self, coords, img, color, back):
       if not img:
@@ -256,7 +283,7 @@ class RenderImage():
       self.add_text(back, text_spec, pos_spec)
 
 
-   def render(self, user_id, bright, bot, ctx):
+   def render(self, user_id, bright, clean, bot, ctx):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
 
@@ -264,8 +291,8 @@ class RenderImage():
          for j in range(0, MAP_SIZE[1]):
             is_known = user_id and bot.model.get_user_record(user_id, i+1, j+1)
             cell_type = bot.view.get_cell_type(i+1, j+1)
-            img = self.get_img_by_cell(cell_type, is_known)
-            color = self.get_color_by_cell(cell_type, bright, is_known)
+            img = self.get_img_by_cell(cell_type, is_known, clean)
+            color = self.get_color_by_cell(cell_type, bright, is_known, clean)
             coords = self.get_cell_coords(i, j)
             self.add_img_by_cell(coords, img, color, back)
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright)

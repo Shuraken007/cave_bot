@@ -39,6 +39,8 @@ help = {
 'what_descr': what_descr,
 'coord_descr': commands.parameter(description="x-y: 1-2 11-9"),
 'me_descr': commands.parameter(description="don't render what you reported, it's easier to find rest items"),
+'clean_descr': commands.parameter( description=
+   """c:hide idle+empty, cc:and enemies, ccc:also summon stones and arts, useful=yellow"""),
 'bright_descr': commands.parameter(description="make all colors bright, turn of transparency"),
 'ascii': commands.parameter(description="use text map instead of image"),
 'compact_descr': commands.parameter(description="make report Compact"),
