@@ -1,6 +1,7 @@
 #!python3
 from const import MAP_SIZE, CellType as ct
 from utils import is_cell_type_mandatory
+import numpy
 
 class Cell:
    def __init__(self, cell_type_counters = None):
@@ -16,26 +17,19 @@ class Cell:
       return self.most
    
    def calc_cell_type(self):
-      most_i, prev_most_i = 0, 0
-      arr = self.val
-      for i in range(0, len(self.val)):
-         if arr[most_i] < arr[i]:
-            prev_most_i = most_i
-            most_i = i
-         elif arr[most_i] > arr[i] > arr[prev_most_i]:
-            prev_most_i = i
+      sorted_val_index = numpy.argsort(self.val)
+      most_i, second_most_i = sorted_val_index[-1], sorted_val_index[-2]
+      if self.val[most_i] == 0:
+         most_i = 0
+      if self.val[second_most_i] == 0:
+         second_most_i = 0
 
-      most_cell_type = ct(most_i)
+      most_ct, second_most_ct = ct(most_i), ct(second_most_i)
 
-      # safe priority is lower, than idle
-      if most_cell_type == ct.safe and arr[prev_most_i] > 0:
-         prev_cell_type = ct(prev_most_i)
-         if prev_cell_type != ct.unknown:
-            most_cell_type = prev_cell_type
+      if most_ct == ct.safe and self.val[second_most_i] > 0:
+         most_ct = second_most_ct
 
-      self.most = most_cell_type
-
-      return most_cell_type
+      return most_ct
    
    def get_cell_type_counter(self, cell_type):
       return self.val[cell_type.value]

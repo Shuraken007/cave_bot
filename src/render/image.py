@@ -1,4 +1,4 @@
-from const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config
+from const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
 from utils import build_path, is_cell_type_mandatory
 from color_util import is_text_black
 
@@ -301,12 +301,14 @@ class RenderImage():
 
       ctx.report.add_image(back)
 
-   def get_description_image(self, cell_type_name):
+   def get_description_image(self, cell_type_name, is_bright):
       cell_type = None
       if cell_type_name == 'artifact':
          img = self.images[ct.scepter_of_domination]
       elif cell_type_name == 'empty':
-         img = self.images['cell']
+         img = self.images['cell'].copy()
+         color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean)
+         self.change_color(img, (0, 0, 0, 0), color)
       else:
          cell_type = ct[cell_type_name]
          img = self.images.get(cell_type)
@@ -370,7 +372,7 @@ class RenderImage():
          coords[0] += w*1.1
 
    def add_description(self, cell_type_name, coords, back, user_id, bot, is_bright):
-      img = self.get_description_image(cell_type_name)
+      img = self.get_description_image(cell_type_name, is_bright)
       description_text = self.get_description_text(cell_type_name, user_id, bot)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
       self.add_description_text(description_text, coords, back, is_bright)
