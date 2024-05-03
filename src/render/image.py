@@ -1,5 +1,5 @@
 from const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
-from utils import build_path, is_cell_type_mandatory
+from utils import build_path
 from color_util import is_text_black
 from img_storage import ImageStorage
 
@@ -8,7 +8,6 @@ from PIL import Image, ImageDraw, ImageFont
 color_scheme = {
    ct.unknown              : None,
    ct.empty                : 'brightblue',
-   ct.safe                 : 'yellow',
    ct.demon_hands          : 'red',
    ct.demon_head           : 'red',
    ct.demon_tail           : 'red',
@@ -252,7 +251,7 @@ class RenderImage():
       if is_known:
          return self.images['blank']
       
-      if cell_type in [ct.unknown, ct.empty, ct.safe]:
+      if cell_type in [ct.unknown, ct.empty]:
          return self.images['blank']
       
       if self.is_cleaned(clean, cell_type):
@@ -270,7 +269,7 @@ class RenderImage():
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
 
    def add_text_by_cell(self, text, cell_type, coords, back, bright):
-      if cell_type not in [ct.unknown, ct.empty, ct.safe ]:
+      if cell_type not in [ct.unknown, ct.empty]:
          return
       
       pos_spec = { 

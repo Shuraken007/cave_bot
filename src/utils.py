@@ -13,9 +13,3 @@ def build_path(path_arr, file_name=None, mkdir=False):
 def my_assert(val):
   assert val, 'value not exists'
   return val
-
-def is_cell_type_mandatory(cell_type):
-   if cell_type in [ct.unknown, ct.empty, ct.safe, ct.idle_reward]:
-      return False
-   else:
-      return True

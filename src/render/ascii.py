@@ -3,7 +3,6 @@ from const import MAP_SIZE, CellType as ct
 
 color_scheme = {
    ct.unknown              : None,
-   ct.safe                 : ['green', None],
    ct.demon_hands          : ['red', None],
    ct.demon_head           : ['red', None],
    ct.demon_tail           : ['red', None],
@@ -23,7 +22,6 @@ cell_to_ascii = {
      ct.unknown              : ["░", "▒"],
    # ct.unknown              : ["░", "⍣", "◆"],
      ct.empty                : "▁",
-     ct.safe                 : "🬁",
      ct.demon_hands          : '▇',
      ct.demon_head           : '▇',
      ct.demon_tail           : '▇',
