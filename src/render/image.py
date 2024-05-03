@@ -1,6 +1,7 @@
 from const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
 from utils import build_path, is_cell_type_mandatory
 from color_util import is_text_black
+from img_storage import ImageStorage
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -70,11 +71,12 @@ def add_img(background, foreground, align, shift=None, foregound_on_background=T
    background.paste(img, (width, height))
 
 class RenderImage():
-   def __init__(self, background_width, img_dir, output_dir, font_path):
+   def __init__(self, background_width, img_dir, output_dir, font_path, bot):
       self.bg_w = background_width
       self.img_dir = img_dir
       self.out_dir = output_dir
-      self.font = ImageFont.truetype(build_path(font_path), 30)
+      font_size = self.get_font_size(self.bg_w)
+      self.font = ImageFont.truetype(build_path(font_path), font_size)
 
       cell_config = {
          'border_pct': 4,
@@ -83,7 +85,11 @@ class RenderImage():
       self.sizes = self.get_sizes_spec(cell_config)
       self.images = self.get_common_images()
       self.add_cells()
-   #   self.font_storage = FontStorage("{}/Font".format(self.dir))
+      bot.view.set_update_tracker('image_map')
+      self.storage = ImageStorage()
+
+   def get_font_size(self, bg_w):
+      return int(bg_w * (3/200))
 
    def get_common_images(self):
       image_names = {
@@ -185,7 +191,6 @@ class RenderImage():
          if align == 'CENTER' and width is not None:
             coords[0] += int((width - w) / 2)
          if align == 'CENTER' and height is not None:
-            # coords[1] += (height - h) / 2
             coords[1] += int((height) / 2) - h
             pass
 
@@ -203,7 +208,7 @@ class RenderImage():
 
    def get_color_by_name(self, color_name, is_bright, cell_type):
       color = map_colour_alias_to_rgb[color_name].copy()
-      if is_bright and not is_cell_type_mandatory(cell_type):
+      if is_bright and color[-1] < 125:
          color[-1] = 125
       return color
 
@@ -284,8 +289,7 @@ class RenderImage():
 
       self.add_text(back, text_spec, pos_spec)
 
-
-   def render(self, user_id, bright, clean, bot, ctx):
+   def generate_map(self, user_id, bright, clean, bot, ctx):
       back = self.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
 
@@ -300,8 +304,28 @@ class RenderImage():
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright)
 
       self.add_descriptions(back, user_id, bot, bright)
+      return back
 
-      ctx.report.add_image(back)
+   def render(self, user_id, bright, clean, bot, ctx):
+      img, using_save = None, False
+      
+      is_view_updated = bot.view.get_update_tracker('image_map')
+      if is_view_updated:
+         bot.view.set_update_tracker('image_map')
+         self.storage.reset()
+
+      if not user_id and not is_view_updated:
+         img = self.storage.get_image([bright, clean])
+         if img:
+            using_save = True
+
+      if not img:
+         img = self.generate_map(user_id, bright, clean, bot, ctx)
+      
+      ctx.report.add_image(img)
+      
+      if not using_save and not user_id:
+         self.storage.add_image([bright, clean], img)
 
    def get_description_image(self, cell_type_name, is_bright):
       cell_type = None

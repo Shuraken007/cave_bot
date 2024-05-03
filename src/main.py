@@ -73,7 +73,7 @@ async def restart():
    bot.parser = Parser()
    bot.logger = Logger('output')
    bot.render_ascii = RenderAscii()
-   bot.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'])
+   bot.render_image = RenderImage(500, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'], bot)
    await spawn_scan()
 
 @tasks.loop(hours=1)

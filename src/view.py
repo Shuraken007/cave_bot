@@ -36,11 +36,21 @@ class Cell:
    
    def update(self, cell_type_counters):
       self.val = cell_type_counters
+      most_was = self.most
+      
       self.most = self.calc_cell_type()
+      
+      if self.most != most_was:
+         return True
+      
+      return False
       
 class View:
    def update_cell(self, x, y, cell_type_counters):
-      self.cells[x-1][y-1].update(cell_type_counters)
+      is_update = self.cells[x-1][y-1].update(cell_type_counters)
+      if is_update:
+         self.update_tracker()
+
 
    def get_cell(self, x, y):
       return self.cells[x-1][y-1]
@@ -57,12 +67,24 @@ class View:
 
       return counter
 
-   def __init__(self, model):
-      cells = []
+   def update_tracker(self):
+      for k in self.tracker.keys():
+         self.tracker[k] += 1
+
+   def set_update_tracker(self, key):
+      self.tracker[key] = 0
+
+   def get_update_tracker(self, key):
+      return self.tracker[key]
+
+   def init_grid(self):
       for i in range(0, MAP_SIZE[0]):
          row = []
          for j in range(0, MAP_SIZE[1]):
             row.append(Cell())
-         cells.append(row)
-      
-      self.cells = cells
+         self.cells.append(row)
+
+   def __init__(self, model):
+      self.cells = []
+      self.init_grid()
+      self.tracker = {}

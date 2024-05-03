@@ -13,18 +13,11 @@ class Controller:
       pass
 
    def update_cell(self, coords):
-      was_cell_type = self.view.get_cell_type(*coords)
-
+      self.view.set_update_tracker('up')
       new_cell_type_counters = self.model.get_cell_type_counters(*coords)
       self.view.update_cell(*coords, new_cell_type_counters)
-      
-      new_cell_type = self.view.get_cell_type(*coords)
-
-      if was_cell_type == new_cell_type:
-         return False
-
-      return True
-
+      return self.view.get_update_tracker('up')
+   
    def init_view(self):
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
