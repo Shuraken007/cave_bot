@@ -15,7 +15,8 @@ class Cell:
       return self.most
    
    def calc_cell_type(self):
-      return self.val.index(max(self.val))
+      max_index = self.val.index(max(self.val))
+      return ct(max_index)
    
    def get_cell_type_counter(self, cell_type):
       return self.val[cell_type.value]

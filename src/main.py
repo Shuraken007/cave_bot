@@ -56,7 +56,15 @@ class MyBot(commands.Bot):
       
       ctx.report = self.create_report(ctx.args)
 
-bot = MyBot(command_prefix='!', intents=intents)
+class MyNewHelp(commands.MinimalHelpCommand):
+    async def send_pages(self):
+        destination = self.get_destination()
+        for page in self.paginator.pages:
+            emby = discord.Embed(description=page)
+            await destination.send(embed=emby)
+
+bot = MyBot(command_prefix='!', intents=intents, help_command=commands.DefaultHelpCommand())
+bot.help_command = MyNewHelp()
 bot.model = None
 bot.view = None
 bot.parser = None
