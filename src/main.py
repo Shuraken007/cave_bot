@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from model import Model, get_last_monday
 from view import View
 from controller import Controller
-
+from myhelp import MyHelp
 from const import UserRole as ur, CleanMap
 from report import Report
 from reaction import process_reactions, Reactions
@@ -32,7 +32,7 @@ allowed_channel_ids = [int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS').split(',
 
 class MyBot(commands.Bot):
    async def on_command_error(self, ctx, error):
-      if isinstance(error, (commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
+      if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
          self.init_ctx(ctx)
          if len(str(error)) > 0:
             ctx.report.add_error(str(error))
@@ -56,15 +56,8 @@ class MyBot(commands.Bot):
       
       ctx.report = self.create_report(ctx.args)
 
-class MyNewHelp(commands.MinimalHelpCommand):
-    async def send_pages(self):
-        destination = self.get_destination()
-        for page in self.paginator.pages:
-            emby = discord.Embed(description=page)
-            await destination.send(embed=emby)
-
 bot = MyBot(command_prefix='!', intents=intents, help_command=commands.DefaultHelpCommand())
-bot.help_command = MyNewHelp()
+bot.help_command = MyHelp(width=1000)
 bot.model = None
 bot.view = None
 bot.parser = None
@@ -110,8 +103,12 @@ def strict_channels():
 def strict_users(min_role):
    def predicate(ctx):
       bot.init_ctx(ctx)
-      if not bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report):
-         raise commands.CheckFailure()
+      is_role_ok, err_msg = bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
+      if not is_role_ok:
+         raise commands.CommandError(err_msg)
+         # ctx.report.add_error(err_msg)
+         # ctx.report.add_reaction(Reactions.fail)
+         return False
       return True
    return commands.check(predicate)
 

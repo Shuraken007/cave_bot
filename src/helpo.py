@@ -1,13 +1,17 @@
 from discord.ext import commands
-from const import cell_aliases
+from const import cell_aliases_config
 
-def grouped(iterable, n):
-    return zip(*[iter(iterable)]*n)
-what_str = []
-for a1, a2, a3, a4, a5, a6, a7, a8 in grouped(cell_aliases.keys(), 8):
-   what_str.append(' | '.join([a1, a2, a3, a4, a5, a6, a7, a8]))
-what_str = "\n".join(what_str)
-what_descr = commands.parameter(description=what_str)
+# def grouped(iterable, n):
+#     return zip(*[iter(iterable)]*n)
+# what_str = []
+# for a1, a2, a3, a4, a5, a6, a7, a8 in grouped(cell_aliases.keys(), 8):
+#    what_str.append(' | '.join([a1, a2, a3, a4, a5, a6, a7, a8]))
+# what_str = "\n".join(what_str)
+what_str = ['']
+for k, v in cell_aliases_config.items():
+   what = f'\t\t{k.name}: ' + ', '.join(v)
+   what_str.append(what)
+what_descr = commands.parameter(description="\n".join(what_str))
 
 help = {
 

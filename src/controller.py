@@ -39,10 +39,8 @@ class Controller:
       if user_role < min_role:
          err_msg = "required {} privilige, while {} have {}" \
             .format(min_role.name, user.name, user_role.name)
-         report.add_reaction(r.fail)
-         report.add_error(err_msg)
-         return False
-      return True
+         return False, err_msg
+      return True, None
 
    def user_have_role_less_than(self, user, max_role, report):
       user_role = self.get_user_role(user)

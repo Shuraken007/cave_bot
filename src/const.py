@@ -55,9 +55,14 @@ cell_max_amount = {
    ct.spider : 20,
    'artifact' : 5,
    ct.summon_stone : 10,
-   ct.empty : 120,
-   ct.idle_reward : 400 - 120 - 20 - 20 - 20 - 10 - 5 - 4,
+   ct.empty : 125,
 }
+
+all_items_total = 0
+for _, v in cell_max_amount.items():
+   all_items_total += v
+
+cell_max_amount[ct.idle_reward] = 400 - all_items_total
 
 # build reverted cell_aliases: "u" : ct.unknown
 
