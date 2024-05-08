@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 class Controller:
    def __init__(self, model, view):
-      self.model = model
+      self.db_process = model
       self.view = view
       self.user_roles = {}
       self.init_view()
@@ -14,7 +14,7 @@ class Controller:
 
    def update_cell(self, coords):
       self.view.set_update_tracker('up')
-      new_cell_type_counters = self.model.get_cell_type_counters(*coords)
+      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords)
       self.view.update_cell(*coords, new_cell_type_counters)
       return self.view.get_update_tracker('up')
    
@@ -24,9 +24,9 @@ class Controller:
             self.update_cell([i+1, j+1])
 
    def init_user_roles(self):
-      roles = self.model.get_user_roles()
-      for (user_id, user_role) in roles:
-         self.user_roles[user_id] = ur(user_role)
+      user_roles = self.db_process.get_user_roles()
+      for user_role in user_roles:
+         self.user_roles[user_role.id] = ur(user_role.role)
    
    def get_user_role(self, user):
       if not user.id in self.user_roles:
@@ -67,7 +67,7 @@ class Controller:
             ctx.report.add_reaction(r.user_data_changed)
             ctx.report.add_message(f'user {user.name}: {have_role.name} -> {user_role.name}')
       
-      self.model.add_user_role(user.id, user_role)
+      self.db_process.add_user_role(user.id, user_role)
       ctx.report.add_reaction(r.ok)
       self.user_roles[user.id] = user_role
 
@@ -79,16 +79,19 @@ class Controller:
          ctx.report.add_message(f'user {user.name} has no privileges')
          return
       
-      self.model.delete_user_role(user.id)
+      self.db_process.delete_user_role(user.id)
       ctx.report.add_reaction(r.ok)
       del self.user_roles[user.id]
 
    async def get_user_name_by_id(self, user_id, bot):
       user_id = int(user_id)
-
+      
       user = bot.get_user(user_id)
       if user is None:
-         user = await bot.fetch_user(user_id)
+         try:
+            user = await bot.fetch_user(user_id)
+         except:
+            pass
       if user is None:
          return f'unknown name ({user_id} id)'
 
@@ -108,7 +111,7 @@ class Controller:
       if not user_id:
          amount = self.view.get_cell_type_amount(cell_type)
       else:
-         records = self.model.get_user_records_by_cell_type(user_id, cell_type)
+         records = self.db_process.get_user_records_by_cell_type(user_id, cell_type)
          if records is not None:
             amount = len(records)
       return amount
@@ -118,7 +121,7 @@ class Controller:
 
       user_id = ctx.message.author.id
       cell_type_new = what
-      cell_type_was = self.model.get_user_record(user_id, *coords)
+      cell_type_was = self.db_process.get_user_record(user_id, *coords)
 
       if cell_type_was is not None and cell_type_was == cell_type_new:
          ctx.report.add_reaction(r.user_data_equal)
@@ -126,10 +129,10 @@ class Controller:
 
       is_cell_type_changed = False
       if cell_type_was:
-         self.model.update_cell(*coords, cell_type_was, -1)
+         self.db_process.update_cell(*coords, cell_type_was, -1)
          is_cell_type_changed |= self.update_cell(coords)
 
-      self.model.update_user_record_and_cell(user_id, coords, cell_type_new)
+      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new)
       is_cell_type_changed |= self.update_cell(coords)
 
       if cell_type_was is None:
@@ -159,13 +162,13 @@ class Controller:
          not self.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      cell_type_was = self.model.get_user_record(user.id, *coords)
+      cell_type_was = self.db_process.get_user_record(user.id, *coords)
 
       if cell_type_was is None:
          ctx.report.add_reaction(r.user_data_equal)
          return
 
-      self.model.delete_user_record_and_update_cell(user.id, coords, cell_type_was)
+      self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was)
       ctx.report.add_reaction(r.user_data_deleted)
       is_cell_type_changed = self.update_cell(coords)
 
@@ -178,10 +181,14 @@ class Controller:
          not self.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      data = self.model.get_all_user_record(user.id)
+      user_records = self.db_process.get_all_user_record(user.id)
 
-      for (x, y, cell_type_val) in data:
-         self.model.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val))
+      for user_record in user_records:
+         x             = user_record.x
+         y             = user_record.y
+         cell_type_val = user_record.cell_type
+
+         self.db_process.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val))
          ctx.report.add_reaction(r.user_data_deleted)
          is_cell_type_changed = self.update_cell([x, y])
          if is_cell_type_changed:
@@ -196,9 +203,12 @@ class Controller:
       msg_arr = []
       compact = {}
 
-      data = self.model.get_all_user_record(user.id)
+      user_records = self.db_process.get_all_user_record(user.id)
+      for user_record in user_records:
+         x             = user_record.x
+         y             = user_record.y
+         cell_type_val = user_record.cell_type
 
-      for (x, y, cell_type_val) in data:
          coords_as_str = f'{x}-{y}'
          ct_name = ct(cell_type_val).name
          msg_arr.append(f'{coords_as_str} : {ct_name}')
@@ -217,7 +227,7 @@ class Controller:
       ctx.report.add_message(msg)
 
    async def report_cell(self, coords, ctx, bot):
-      users_and_types_by_coords = self.model.get_users_and_types_by_coords(*coords)
+      users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords)
       map_ct_to_usernames = OrderedDict()
       for (cell_type_val, user_id) in users_and_types_by_coords:
          if cell_type_val not in map_ct_to_usernames:
@@ -234,5 +244,8 @@ class Controller:
             .format(ct(key).name, cell.get_cell_type_counter(ct(key)))
          msg_arr.append(f'{key_as_str} : {val_as_str}')
 
+      if len(msg_arr) == 0:
+         msg_arr.append('nobody reported')
+         
       msg = '\n'.join(msg_arr)
       ctx.report.add_message(msg)

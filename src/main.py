@@ -8,7 +8,9 @@ import os
 import io
 from datetime import datetime, timezone
 
-from model import Model, get_last_monday
+from utils import get_last_monday
+from db_init import Db
+from db_process import DbProcess
 from view import View
 from controller import Controller
 from myhelp import MyHelp
@@ -58,7 +60,8 @@ class MyBot(commands.Bot):
 
 bot = MyBot(command_prefix='!', intents=intents, help_command=commands.DefaultHelpCommand())
 bot.help_command = MyHelp(width=1000)
-bot.model = None
+bot.db = None
+bot.db_process = None
 bot.view = None
 bot.parser = None
 bot.logger = None
@@ -66,11 +69,12 @@ bot.render_ascii = None
 bot.render_image = None
 
 async def restart():
-   if hasattr(bot, 'model') and hasattr(bot.model, 'tmp') and hasattr(bot.model.tmp, 'connection'):
-      bot.model.tmp.connection.close()
-   bot.model = Model('db', const_db_name='const', admin_id = os.getenv('ADMIN_ID'))
-   bot.view = View(bot.model)
-   bot.controller = Controller(bot.model, bot.view)
+   if hasattr(bot, 'model') and hasattr(bot.db_process, 'tmp') and hasattr(bot.db_process.tmp, 'connection'):
+      bot.db_process.tmp.connection.close()
+   bot.db = Db('db', const_db_name='const', admin_id = os.getenv('ADMIN_ID'))
+   bot.db_process = DbProcess(bot.db)
+   bot.view = View(bot.db_process)
+   bot.controller = Controller(bot.db_process, bot.view)
    bot.parser = Parser()
    bot.logger = Logger('output')
    bot.render_ascii = RenderAscii()
@@ -148,7 +152,7 @@ async def scan(ctx, limit=2000):
    ctx.report.off = True
 
    event_start = get_last_monday()
-   last_scan = bot.model.get_last_scan() or event_start
+   last_scan = bot.db_process.get_last_scan() or event_start
    after = max([event_start, last_scan])
 
    messages = [message async for message in ctx.channel.history(limit=limit, after=after)]
@@ -162,7 +166,7 @@ async def scan(ctx, limit=2000):
       last_msg_datetime = msg.created_at
 
    if last_msg_datetime:
-      bot.model.set_last_scan(last_msg_datetime)
+      bot.db_process.set_last_scan(last_msg_datetime)
 
    ctx.report.off = False
    msg = f'scanned {len(messages)} from {after}'
@@ -209,7 +213,7 @@ async def postprocess(ctx):
    if reactions:= r.get_reactions():
       await process_reactions(reactions, ctx.message, ctx.report)
 
-   total_msg = ["```ansi"]
+   total_msg = []
    for key in r.get_keys():
       key_msg = []
       msg_prefix = None
@@ -233,9 +237,10 @@ async def postprocess(ctx):
       if log:= r.get_log(key):
          bot.logger.dump_msg(log, 'log', mode='dump')
 
-   if len(total_msg) > 1:
-      total_msg.append('```')
-      await ctx.message.channel.send("\n".join(total_msg))
+   total_msg_str = "\n".join(total_msg)
+   if len(total_msg_str) > 0:
+      wrapped_msg = ["```ansi", total_msg_str, '```']
+      await ctx.message.channel.send("\n".join(wrapped_msg))
    
    for image in r.get_images():
       with io.BytesIO() as image_binary:

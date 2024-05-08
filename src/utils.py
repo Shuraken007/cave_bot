@@ -1,6 +1,6 @@
 from pathlib import Path
-from const import CellType as ct
 import os
+from datetime import datetime, timezone, timedelta
 
 def build_path(path_arr, file_name=None, mkdir=False):
    path = os.path.join(os.path.dirname( __file__ ), '..', *path_arr)
@@ -13,3 +13,10 @@ def build_path(path_arr, file_name=None, mkdir=False):
 def my_assert(val):
   assert val, 'value not exists'
   return val
+
+def get_last_monday():
+   utc = timezone.utc
+   now = datetime.now(tz=utc)
+   monday = now + timedelta(days=-now.weekday(), weeks=0)
+   monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+   return monday

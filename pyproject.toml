@@ -10,6 +10,8 @@ python = "^3.10"
 discord-py = "^2.3.2"
 python-dotenv = "^1.0.1"
 pillow = "^10.3.0"
+sqlalchemy = "^2.0.30"
+pytest = "^8.2.0"
 
 [tool.poetry.scripts]
 start = "src:main"
@@ -17,3 +19,8 @@ start = "src:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]

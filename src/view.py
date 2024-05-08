@@ -15,10 +15,16 @@ class Cell:
       return self.most
    
    def calc_cell_type(self):
+      if not self.val:
+         return ct.unknown
+
       max_index = self.val.index(max(self.val))
       return ct(max_index)
    
    def get_cell_type_counter(self, cell_type):
+      if not self.val:
+         return 0
+
       return self.val[cell_type.value]
    
    def update(self, cell_type_counters):

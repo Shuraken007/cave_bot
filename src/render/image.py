@@ -294,7 +294,7 @@ class RenderImage():
 
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
-            is_known = user_id and bot.model.get_user_record(user_id, i+1, j+1)
+            is_known = user_id and bot.db_process.get_user_record(user_id, i+1, j+1)
             cell_type = bot.view.get_cell_type(i+1, j+1)
             img = self.get_img_by_cell(cell_type, is_known, clean)
             color = self.get_color_by_cell(cell_type, bright, is_known, clean)
