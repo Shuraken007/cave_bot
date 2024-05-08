@@ -7,6 +7,7 @@ from db_process import DbProcess
 from db_init import Db
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from utils import anaware_time_to_aware
 
 @pytest.fixture()
 def db_process():
@@ -73,11 +74,6 @@ def anaware_time():
 
 def is_time_anaware(dt):
    return not dt.strftime('%Z') == 'UTC'
-
-def anaware_time_to_aware(dt):
-   local_timezone = datetime.now().astimezone().tzinfo
-   dt = dt.replace(tzinfo=local_timezone)
-   return dt
 
 def test_get_last_scan_if_not_set(db_process):
    last_scan = db_process.get_last_scan()

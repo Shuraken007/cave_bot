@@ -43,10 +43,12 @@ class DbProcess:
 
    def get_last_scan(self):
       with self.db.Session() as s:
-         last_scan = s.query(LastScan.last_scan).first()
+         last_scan_record = s.query(LastScan).first()
 
-         if last_scan is not None:
-            return last_scan[0]
+         if last_scan_record is not None:
+            last_scan = last_scan_record.last_scan
+
+            return last_scan
          return None
 
    def set_last_scan(self, last_scan):

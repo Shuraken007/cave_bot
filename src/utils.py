@@ -23,3 +23,8 @@ def get_last_monday():
 
 def get_weekly_db_name():
    return get_last_monday().strftime('%d_%m_%Y')
+
+def anaware_time_to_aware(dt):
+   local_timezone = datetime.now().astimezone().tzinfo
+   dt = dt.replace(tzinfo=local_timezone)
+   return dt
