@@ -30,14 +30,15 @@ def get_db_connection_str():
    return conn_str
 
 DB_CONNECTION = get_db_connection_str()
+print(DB_CONNECTION)
 
 def get_engine(db_name, sqlitedb_dir):
    db_file_path = db_name + '.db'
    if dialect == 'sqlite' and sqlitedb_dir is not None:
       db_file_path = build_path([sqlitedb_dir], db_name + '.db', mkdir=True)
    
-   engine = sa.create_engine(DB_CONNECTION+db_file_path)
-   # engine = sa.create_engine(DB_CONNECTION+db_file_path, echo = True)
+   # engine = sa.create_engine(DB_CONNECTION+db_file_path)
+   engine = sa.create_engine(DB_CONNECTION+db_file_path, echo = True)
    if not database_exists(engine.url): create_database(engine.url)
    return engine
 
