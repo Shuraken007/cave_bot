@@ -1,7 +1,6 @@
 __pycache__/
 db/
 *.pyc
-.env
 output/
+.env
 tmp
-test_img_scan/

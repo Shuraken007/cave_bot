@@ -3,12 +3,11 @@ import discord
 from typing import Literal, Optional
 from discord.ext import tasks, commands
 
-from dotenv import load_dotenv
 import os
 import io
 from datetime import datetime, timezone
 
-from utils import get_last_monday
+from utils import get_last_monday, get_weekly_db_name
 from db_init import Db
 from db_process import DbProcess
 from view import View
@@ -23,6 +22,7 @@ from logger import Logger
 from render.ascii import RenderAscii
 from render.image import RenderImage
 
+from dotenv import load_dotenv
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -71,7 +71,7 @@ bot.render_image = None
 async def restart():
    if hasattr(bot, 'model') and hasattr(bot.db_process, 'tmp') and hasattr(bot.db_process.tmp, 'connection'):
       bot.db_process.tmp.connection.close()
-   bot.db = Db('db', const_db_name='const', admin_id = os.getenv('ADMIN_ID'))
+   bot.db = Db(const_db_name='const', week_db_name=get_weekly_db_name(), admin_id = os.getenv('ADMIN_ID'))
    bot.db_process = DbProcess(bot.db)
    bot.view = View(bot.db_process)
    bot.controller = Controller(bot.db_process, bot.view)

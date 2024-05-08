@@ -1,29 +1,57 @@
 from const import UserRole as ur
-from utils import build_path, get_last_monday
-
+from utils import build_path
+import os
 import sqlalchemy as sa
+from sqlalchemy_utils import database_exists, create_database, drop_database
 
 from model import Week, Const, UserRole
 
-DB_CONNECTION = 'sqlite:///'
+from dotenv import load_dotenv
+load_dotenv()
 
-def get_engine(db_name, db_dir):
-   db_file_path = build_path([db_dir], db_name + '.db', mkdir=True)
+dialect = 'postgresql'
+driver = 'psycopg2'
+db_username = os.getenv('DB_USERNAME')
+db_pwd = os.getenv('DB_PWD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT', default = None)
+
+def get_db_connection_str():
+   dialect_driver = dialect
+   if driver is not None:
+      dialect_driver = '{}+{}'.format(dialect, driver)
+
+   conn_str = '{}://{}:{}@{}'.format(
+      dialect_driver, db_username, db_pwd, db_host
+   )
+   if db_port:
+      conn_str = '{}:{}'.format(conn_str, db_port)
+   conn_str += '/'
+   return conn_str
+
+DB_CONNECTION = get_db_connection_str()
+
+def get_engine(db_name, sqlitedb_dir):
+   db_file_path = db_name + '.db'
+   if dialect == 'sqlite' and sqlitedb_dir is not None:
+      db_file_path = build_path([sqlitedb_dir], db_name + '.db', mkdir=True)
+   
    engine = sa.create_engine(DB_CONNECTION+db_file_path)
    # engine = sa.create_engine(DB_CONNECTION+db_file_path, echo = True)
+   if not database_exists(engine.url): create_database(engine.url)
    return engine
 
-def get_uniq_db_name():
-   return get_last_monday().strftime('%d_%m_%Y')
-
 class Db:
-   def __init__(self, db_dir, const_db_name, admin_id=None):
-      tmp_db_name = get_uniq_db_name()
-      week_engine = get_engine(tmp_db_name, db_dir)
-      const_engine = get_engine(const_db_name, db_dir)
+   def __init__(self, const_db_name = None, week_db_name = None, admin_id=None, sqlitedb_dir = None):
+      self.week_engine = get_engine(week_db_name, sqlitedb_dir)
+      self.const_engine = get_engine(const_db_name, sqlitedb_dir)
       
-      self.Session = self.get_session(week_engine, const_engine)
+      self.Session = self.get_session(self.week_engine, self.const_engine)
       self.add_admin(admin_id)
+
+   def drop_db(self):
+      drop_database(self.week_engine.url)
+      drop_database(self.const_engine.url)
 
    def add_admin(self, admin_id):
       if admin_id is None:

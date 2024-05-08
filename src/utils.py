@@ -20,3 +20,6 @@ def get_last_monday():
    monday = now + timedelta(days=-now.weekday(), weeks=0)
    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
    return monday
+
+def get_weekly_db_name():
+   return get_last_monday().strftime('%d_%m_%Y')

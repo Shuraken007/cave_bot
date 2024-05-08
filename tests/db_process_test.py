@@ -1,4 +1,5 @@
 import pytest
+import uuid
 
 from const import CellType as ct, UserRole as ur
 from model import Cell, LastScan, UserRecord, UserRole
@@ -8,10 +9,13 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
 @pytest.fixture()
-def db_process(tmp_path):
-   db = Db(tmp_path, const_db_name='const')
+def db_process():
+   const_name = str(uuid.uuid4())
+   week_db_name = str(uuid.uuid4())
+   db = Db(const_db_name=const_name, week_db_name=week_db_name)
    db_process = DbProcess(db)
    yield db_process
+   db.drop_db()
 
 def test_get_cell_type_counters(db_process):
    x, y, idle_reward_counter, demon_head_counter = 3, 4, 5, 2
@@ -89,6 +93,8 @@ def test_get_last_scan(db_process, local_time, global_time, anaware_time):
       last_scan = db_process.get_last_scan()
       if is_time_anaware(time):
          time = anaware_time_to_aware(time)
+      print(last_scan)
+      print(time)
       assert last_scan == time
 
 def test_set_last_scan(db_process, local_time, global_time, anaware_time):

@@ -12,6 +12,9 @@ python-dotenv = "^1.0.1"
 pillow = "^10.3.0"
 sqlalchemy = "^2.0.30"
 pytest = "^8.2.0"
+psycopg2 = "^2.9.9"
+sqlalchemy-utils = "^0.41.2"
+pytest-xdist = "^3.6.1"
 
 [tool.poetry.scripts]
 start = "src:main"
