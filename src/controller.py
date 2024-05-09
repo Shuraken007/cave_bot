@@ -1,7 +1,7 @@
-from const import cell_aliases, CellType as ct, UserRole as ur
-from reaction import Reactions as r
-from const import MAP_SIZE
 from collections import OrderedDict
+
+from .const import cell_aliases, CellType as ct, UserRole as ur, MAP_SIZE
+from .reaction import Reactions as r
 
 class Controller:
    def __init__(self, model, view):

@@ -3,4 +3,4 @@ db/
 *.pyc
 output/
 .env
-tmp
+todo

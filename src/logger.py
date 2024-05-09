@@ -1,6 +1,7 @@
 import os
 import json
-from utils import build_path
+
+from .utils import build_path
 
 class Logger:
     def dump_msg(self, msg, file_name, mode=None):

@@ -1,10 +1,10 @@
-from const import UserRole as ur
-from utils import build_path
 import os
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists, create_database, drop_database
 
-from model import Week, Const, UserRole
+from .const import UserRole as ur
+from .utils import build_path
+from .model import Week, Const, UserRole
 
 from dotenv import load_dotenv
 load_dotenv()

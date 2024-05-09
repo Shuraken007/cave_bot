@@ -1,5 +1,4 @@
-#!python3
-from const import MAP_SIZE, CellType as ct
+from .const import MAP_SIZE, CellType as ct
 
 class Cell:
    def __init__(self, cell_type_counters = None):

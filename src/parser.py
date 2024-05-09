@@ -1,6 +1,7 @@
 import re
-from const import cell_aliases, MAP_SIZE, CellType as ct
-from reaction import Reactions as r
+
+from .const import cell_aliases, MAP_SIZE, CellType as ct
+from .reaction import Reactions as r
 
 MATCH_REPORT = re.compile(r"(\d+\-\d+) : ([\w' ]+)")
 

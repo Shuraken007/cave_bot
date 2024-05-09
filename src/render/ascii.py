@@ -1,5 +1,5 @@
-import color_util
-from const import MAP_SIZE, CellType as ct
+from .. import color_util
+from ..const import MAP_SIZE, CellType as ct
 
 color_scheme = {
    ct.unknown              : None,

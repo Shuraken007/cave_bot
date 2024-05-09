@@ -1,9 +1,10 @@
-from const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
-from utils import build_path
-from color_util import is_text_black
-from img_storage import ImageStorage
-
 from PIL import Image, ImageDraw, ImageFont
+
+from ..const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
+from ..utils import build_path
+from ..color_util import is_text_black
+from ..img_storage import ImageStorage
+
 
 color_scheme = {
    ct.unknown              : None,

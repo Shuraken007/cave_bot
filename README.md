@@ -86,13 +86,13 @@ required:
       give required permissions, bot created databases himself
 
 # run project & scripts
-   * run main.py via poetry: 
-   `poetry run python3 src/main.py`
+   * start bot: 
+   `poetry run python3 -m src.scripts.start`
    * drop databases
-   `poetry run python3 src/db_drop.py`
+   `poetry run python3 -m src.scripts.db_drop`
    * run tests
    `poetry run pytest`
    * run tests parallel
    `poetry run pytest -n auto`
    * run specific test
-   `poetry run pytest -k 'delete'`
+   `poetry run pytest -k 'partial_name_of_test'`

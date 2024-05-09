@@ -1,5 +1,6 @@
 from discord.ext import commands
-from const import cell_aliases_config
+
+from .const import cell_aliases_config
 
 # def grouped(iterable, n):
 #     return zip(*[iter(iterable)]*n)

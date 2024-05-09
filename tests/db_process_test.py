@@ -1,13 +1,13 @@
 import pytest
 import uuid
-
-from const import CellType as ct, UserRole as ur
-from model import Cell, LastScan, UserRecord, UserRole
-from db_process import DbProcess
-from db_init import Db
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from utils import time_to_local_timezone
+
+from src.const import CellType as ct, UserRole as ur
+from src.model import Cell, LastScan, UserRecord, UserRole
+from src.db_process import DbProcess
+from src.db_init import Db
+from src.utils import time_to_local_timezone
 
 @pytest.fixture()
 def db_process():

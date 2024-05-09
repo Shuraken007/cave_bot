@@ -7,20 +7,20 @@ import os
 import io
 from datetime import datetime, timezone
 
-from utils import get_last_monday, get_weekly_db_name
-from db_init import Db
-from db_process import DbProcess
-from view import View
-from controller import Controller
-from myhelp import MyHelp
-from const import UserRole as ur, CleanMap
-from report import Report
-from reaction import process_reactions, Reactions
-from parser import Parser
-from helpo import help
-from logger import Logger
-from render.ascii import RenderAscii
-from render.image import RenderImage
+from .utils import get_last_monday, get_weekly_db_name
+from .db_init import Db
+from .db_process import DbProcess
+from .view import View
+from .controller import Controller
+from .myhelp import MyHelp
+from .const import UserRole as ur, CleanMap
+from .report import Report
+from .reaction import process_reactions, Reactions
+from .parser import Parser
+from .helpo import help
+from .logger import Logger
+from .render.ascii import RenderAscii
+from .render.image import RenderImage
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -371,5 +371,6 @@ async def map(ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Option
       else:
          bot.render_image.render(me, bright, clean, bot, ctx)
 
-TOKEN = os.getenv('DISCORD_TOKEN')
-bot.run(TOKEN)
+def run():
+   TOKEN = os.getenv('DISCORD_TOKEN')
+   bot.run(TOKEN)

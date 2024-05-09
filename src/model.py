@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Integer, Column, DateTime, BigInteger
 
-from const import CellType
+from .const import CellType
 
 class Week(DeclarativeBase):
     pass
