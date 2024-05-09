@@ -1,6 +1,7 @@
 from datetime import timezone
 from const import CellType, MAP_SIZE, UserRole as ur
 from model import Cell, UserRecord, LastScan, UserRole
+from utils import time_to_local_timezone
 
 def get_array_of_cell_orm_cell_type_fields():
    arr = []
@@ -48,10 +49,17 @@ class DbProcess:
          if last_scan_record is not None:
             last_scan = last_scan_record.last_scan
 
+            # sqlite database don't works with utc correctly, while postgress works
+            # depends on engine dialect+driver
+            last_scan = time_to_local_timezone(last_scan)
             return last_scan
          return None
 
    def set_last_scan(self, last_scan):
+      # sqlite database don't works with utc correctly, while postgress works
+      # depends on engine dialect+driver
+      last_scan = time_to_local_timezone(last_scan)
+
       with self.db.Session() as s:
          record = LastScan(id = 1, last_scan = last_scan)
          s.merge(record)

@@ -7,7 +7,7 @@ from db_process import DbProcess
 from db_init import Db
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from utils import anaware_time_to_aware
+from utils import time_to_local_timezone
 
 @pytest.fixture()
 def db_process():
@@ -72,25 +72,23 @@ def global_time():
 def anaware_time():
    return datetime.now()
 
-def is_time_anaware(dt):
-   return not dt.strftime('%Z') == 'UTC'
-
 def test_get_last_scan_if_not_set(db_process):
    last_scan = db_process.get_last_scan()
    assert last_scan is None
 
-def test_get_last_scan(db_process, local_time, global_time, anaware_time):
-   for time in [local_time, global_time, anaware_time]:
+
+def test_get_last_scan(db_process, local_time, anaware_time):
+   # global_time test have not sence, should be set via set_last_scan to have effect
+   for time in [local_time, anaware_time]:
       with db_process.db.Session() as s:
          last_scan = LastScan(id=1, last_scan = time)
          s.merge(last_scan)
          s.commit()
 
       last_scan = db_process.get_last_scan()
-      if is_time_anaware(time):
-         time = anaware_time_to_aware(time)
-      print(last_scan)
-      print(time)
+      time = time_to_local_timezone(time)
+      # print(last_scan)
+      # print(time)
       assert last_scan == time
 
 def test_set_last_scan(db_process, local_time, global_time, anaware_time):
@@ -98,10 +96,15 @@ def test_set_last_scan(db_process, local_time, global_time, anaware_time):
       db_process.set_last_scan(time)
 
       with db_process.db.Session() as s:
-         last_scan = s.query(LastScan).one()
-         if is_time_anaware(time):
-            time = anaware_time_to_aware(time)
-         assert last_scan.last_scan == time
+         last_scan_record = s.query(LastScan).one()
+         last_scan = last_scan_record.last_scan
+
+         # sqlite return anaware, while postgres - aware
+         last_scan = time_to_local_timezone(last_scan)         
+         time = time_to_local_timezone(time)
+         # print(last_scan)
+         # print(time)
+         assert last_scan == time
 
 
 def test_add_user_role_if_not_set(db_process):

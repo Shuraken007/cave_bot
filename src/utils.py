@@ -8,6 +8,8 @@ def build_path(path_arr, file_name=None, mkdir=False):
       Path(path).mkdir(parents=True, exist_ok=True)
    if file_name:
       path = os.path.join(path, file_name)
+   elif not path.endswith(os.path.sep):
+      path += os.path.sep
    return path
 
 def my_assert(val):
@@ -24,7 +26,10 @@ def get_last_monday():
 def get_weekly_db_name():
    return get_last_monday().strftime('%d_%m_%Y')
 
-def anaware_time_to_aware(dt):
+def is_time_anaware(dt):
+   return not dt.strftime('%Z') == 'UTC'
+
+def time_to_local_timezone(dt):
    local_timezone = datetime.now().astimezone().tzinfo
    dt = dt.replace(tzinfo=local_timezone)
    return dt

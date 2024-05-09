@@ -36,20 +36,29 @@
    channels, where bot can scan and parse messages
 
 ## database environment
-   bot works with postgress database
-   install it and create user + password
-   see below
-
-   * DB_USERNAME = "jonny"
-   * DB_PWD = "12345"
-   * DB_HOST = "localhost"
-   * DB_PORT = 5632
+   * first way - user sqlite3 - lightweight db, fastest easiest way
+   ```
+      DB_DIALECT = "sqlite"
+      DB_DIR = "db"
+   ```
+   where DB_DIR - relative path to folder, where files would store
+   "db" - this folder would located near `README`
+   * Second way - use postgres. Install postgres server and create user + password,
+   see below.
+   ```
+   DB_DIALECT = "postgresql"
+   DB_DRIVER = "psycopg2"
+   DB_USERNAME = "jonny"
+   DB_PWD = "12345"
+   DB_HOST = "localhost"
+   DB_PORT = 5632
+   ```
    <!-- port not required - optionally -->
 
 # setup project on your system
 required: 
 
-   * postgresql
+   * postgresql if you not selected sqlite3
    [https://www.postgresql.org/download/]
       - ubuntu install: `sudo apt-get install postgresql`
    * python 3.9+

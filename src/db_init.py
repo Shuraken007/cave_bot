@@ -9,33 +9,45 @@ from model import Week, Const, UserRole
 from dotenv import load_dotenv
 load_dotenv()
 
-dialect = 'postgresql'
-driver = 'psycopg2'
-db_username = os.getenv('DB_USERNAME')
-db_pwd = os.getenv('DB_PWD')
-db_host = os.getenv('DB_HOST')
-db_port = os.getenv('DB_PORT', default = None)
-
 def get_db_connection_str():
-   dialect_driver = dialect
-   if driver is not None:
-      dialect_driver = '{}+{}'.format(dialect, driver)
+   dialect = os.getenv('DB_DIALECT')
+   driver = os.getenv('DB_DRIVER', default = None)
+   username = os.getenv('DB_USERNAME', default = None)
+   pwd = os.getenv('DB_PWD', default = None)
+   host = os.getenv('DB_HOST', default = None)
+   port = os.getenv('DB_PORT', default = None)
+   dir = os.getenv('DB_DIR', default = None)
 
-   conn_str = '{}://{}:{}@{}'.format(
-      dialect_driver, db_username, db_pwd, db_host
+   dialect_driver = dialect
+   if driver:
+      dialect_driver += f'+{driver}'
+
+   username_pwd = ''
+   if username:
+      username_pwd += username
+   if pwd:
+      username_pwd += f':{pwd}'
+   
+   host_port = ''
+   if host:
+      host_port = f'@{host}'
+   if port:
+      host_port += f':{port}'
+
+   dir_path = ''
+   if dir:
+      dir_path = build_path([dir], None, mkdir=True)
+
+   conn_str = '{}://{}{}/{}'.format(
+      dialect_driver, username_pwd, host_port, dir_path
    )
-   if db_port:
-      conn_str = '{}:{}'.format(conn_str, db_port)
-   conn_str += '/'
+   
    return conn_str
 
 DB_CONNECTION = get_db_connection_str()
 
-def get_engine(db_name, sqlitedb_dir):
-   db_file_path = db_name + '.db'
-   if dialect == 'sqlite' and sqlitedb_dir is not None:
-      db_file_path = build_path([sqlitedb_dir], db_name + '.db', mkdir=True)
-   
+def get_engine(db_name):
+   db_file_path = db_name + '.db'   
    engine = sa.create_engine(DB_CONNECTION+db_file_path)
    print(f'created engine {engine.url}')
    # engine = sa.create_engine(DB_CONNECTION+db_file_path, echo = True)
@@ -43,9 +55,9 @@ def get_engine(db_name, sqlitedb_dir):
    return engine
 
 class Db:
-   def __init__(self, const_db_name = None, week_db_name = None, admin_id=None, sqlitedb_dir = None):
-      self.week_engine = get_engine(week_db_name, sqlitedb_dir)
-      self.const_engine = get_engine(const_db_name, sqlitedb_dir)
+   def __init__(self, const_db_name = None, week_db_name = None, admin_id=None):
+      self.week_engine = get_engine(week_db_name)
+      self.const_engine = get_engine(const_db_name)
       
       self.Session = self.get_session(self.week_engine, self.const_engine)
       self.add_admin(admin_id)
