@@ -40,9 +40,11 @@
    ```
       DB_DIALECT = "sqlite"
       DB_DIR = "db"
+      DB_NAME = "bot_cave_db"
    ```
    where DB_DIR - relative path to folder, where files would store
    "db" - this folder would located near `README`
+   DB_NAME - optional
    * Second way - use postgres. Install postgres server and create user + password,
    see below.
    ```
@@ -52,9 +54,12 @@
    DB_PWD = "12345"
    DB_HOST = "localhost"
    DB_PORT = 5632
+   DB_NAME = "cave3487"
    ```
    <!-- port not required - optionally -->
-
+   DB_NAME - already created db
+      if not created - give user (jonny) ROLE - CREATEDB
+      then bot will create db himself
 # setup project on your system
 required: 
 
@@ -88,7 +93,7 @@ required:
 # run project & scripts
    * start bot: 
    `poetry run python3 -m src.scripts.start`
-   * drop databases
+   * drop tables
    `poetry run python3 -m src.scripts.db_drop`
    * run tests
    `poetry run pytest`

@@ -23,7 +23,7 @@ def get_last_monday():
    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
    return monday
 
-def get_weekly_db_name():
+def get_week_start_as_str():
    return get_last_monday().strftime('%d_%m_%Y')
 
 def is_time_anaware(dt):

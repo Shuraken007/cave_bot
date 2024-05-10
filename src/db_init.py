@@ -1,10 +1,9 @@
 import os
 import sqlalchemy as sa
-from sqlalchemy_utils import database_exists, create_database, drop_database
+from sqlalchemy_utils import database_exists, create_database
 
-from .const import UserRole as ur
+from .const import UserRole as ur, DEFAULT_DB_NAME
 from .utils import build_path
-from .model import Week, Const, UserRole
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,6 +16,7 @@ def get_db_connection_str():
    host = os.getenv('DB_HOST', default = None)
    port = os.getenv('DB_PORT', default = None)
    dir = os.getenv('DB_DIR', default = None)
+   db_name = os.getenv('DB_NAME', default = DEFAULT_DB_NAME)
 
    dialect_driver = dialect
    if driver:
@@ -38,47 +38,45 @@ def get_db_connection_str():
    if dir:
       dir_path = build_path([dir], None, mkdir=True)
 
-   conn_str = '{}://{}{}/{}'.format(
-      dialect_driver, username_pwd, host_port, dir_path
+   conn_str = '{}://{}{}/{}{}'.format(
+      dialect_driver, username_pwd, host_port, dir_path, db_name
    )
    
    return conn_str
 
 DB_CONNECTION = get_db_connection_str()
 
-def get_engine(db_name):
-   db_file_path = db_name + '.db'   
-   engine = sa.create_engine(DB_CONNECTION+db_file_path)
+def get_engine():
+   engine = sa.create_engine(DB_CONNECTION)
+   # engine = sa.create_engine(DB_CONNECTION, echo = True)
    print(f'created engine {engine.url}')
-   # engine = sa.create_engine(DB_CONNECTION+db_file_path, echo = True)
    if not database_exists(engine.url): create_database(engine.url)
    return engine
 
 class Db:
-   def __init__(self, const_db_name = None, week_db_name = None, admin_id=None):
-      self.week_engine = get_engine(week_db_name)
-      self.const_engine = get_engine(const_db_name)
+   def __init__(self, models, admin_id=None):
+      self.m = models
+      self.engine = get_engine()
       
-      self.Session = self.get_session(self.week_engine, self.const_engine)
+      self.Session = self.get_session()
       self.add_admin(admin_id)
 
-   def drop_db(self):
-      drop_database(self.week_engine.url)
-      drop_database(self.const_engine.url)
+   def drop_tables(self):
+      self.m.Base.metadata.drop_all(bind = self.engine)
 
    def add_admin(self, admin_id):
       if admin_id is None:
          return
       with self.Session() as s:
-         admin = UserRole(id = admin_id, role = ur.super_admin.value)
+         admin = self.m.Role(id = admin_id, role = ur.super_admin.value)
          s.merge(admin)
          s.commit()
 
-   def get_session(self, engine1, engine2):
+   def get_session(self):
       Session = sa.orm.sessionmaker()
-      Session.configure(binds={Week:engine1, Const:engine2})
-      Week.metadata.create_all(engine1)
-      Const.metadata.create_all(engine2)
+      Session.configure(bind=self.engine)
+
+      self.m.Base.metadata.create_all(self.engine)
       return Session
 
 if __name__ == '__main__':

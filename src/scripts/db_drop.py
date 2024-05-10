@@ -1,7 +1,9 @@
 from ..db_init import Db
-from ..utils import get_weekly_db_name
+from ..model import generate_models, get_table_names
 
 if __name__ == '__main__':
-   db = Db(const_db_name='const', week_db_name=get_weekly_db_name())
-   db.drop_db()
+   table_names = get_table_names()
+   models = generate_models(table_names)
+   db = Db(models)
+   db.drop_tables()
    print('dropped')

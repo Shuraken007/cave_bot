@@ -109,6 +109,7 @@ class UserRole(enum.IntEnum):
          return ct
       return cls(v)
 
+DEFAULT_DB_NAME = 'cave.db'
 
 if __name__ == '__main__':
    CellType.print()

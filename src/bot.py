@@ -7,7 +7,8 @@ import os
 import io
 from datetime import datetime, timezone
 
-from .utils import get_last_monday, get_weekly_db_name
+from .utils import get_last_monday
+from .model import generate_models, get_table_names
 from .db_init import Db
 from .db_process import DbProcess
 from .view import View
@@ -69,9 +70,9 @@ bot.render_ascii = None
 bot.render_image = None
 
 async def restart():
-   if hasattr(bot, 'model') and hasattr(bot.db_process, 'tmp') and hasattr(bot.db_process.tmp, 'connection'):
-      bot.db_process.tmp.connection.close()
-   bot.db = Db(const_db_name='const', week_db_name=get_weekly_db_name(), admin_id = os.getenv('ADMIN_ID'))
+   table_names = get_table_names()
+   models = generate_models(table_names)
+   bot.db = Db(models, admin_id = os.getenv('ADMIN_ID'))
    bot.db_process = DbProcess(bot.db)
    bot.view = View(bot.db_process)
    bot.controller = Controller(bot.db_process, bot.view)

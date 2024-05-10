@@ -1,22 +1,22 @@
-from .const import CellType, MAP_SIZE, UserRole as ur
-from .model import Cell, UserRecord, LastScan, UserRole
+from .const import CellType, MAP_SIZE
 from .utils import time_to_local_timezone
 
-def get_array_of_cell_orm_cell_type_fields():
-   arr = []
-   for ct in CellType:
-      arr.append(getattr(Cell, ct.name))
-   return arr
 
 class DbProcess:
    def __init__(self, db):
       self.db = db
-      self.cell_query_fields = get_array_of_cell_orm_cell_type_fields()
+      self.cell_query_fields = self.get_array_of_cell_orm_cell_type_fields()
+
+   def get_array_of_cell_orm_cell_type_fields(self):
+      arr = []
+      for ct in CellType:
+         arr.append(getattr(self.db.m.Cell, ct.name))
+      return arr
 
    def get_cell_type_counters(self, x, y):
       with self.db.Session() as s:
          cell = s.query(*self.cell_query_fields).filter(
-            Cell.x == x, Cell.y == y).first()
+            self.db.m.Cell.x == x, self.db.m.Cell.y == y).first()
          if cell is not None:
             return cell
 
@@ -25,9 +25,9 @@ class DbProcess:
       if session is None:
          s = self.db.Session()
 
-      cell = s.query(Cell).filter(Cell.x == x, Cell.y == y).first()
+      cell = s.query(self.db.m.Cell).filter(self.db.m.Cell.x == x, self.db.m.Cell.y == y).first()
       if cell is None:
-         cell = Cell(x = x, y = y)
+         cell = self.db.m.Cell(x = x, y = y)
          setattr(cell, cell_type.name, 0)
 
       val = getattr(cell, cell_type.name)
@@ -43,7 +43,7 @@ class DbProcess:
 
    def get_last_scan(self):
       with self.db.Session() as s:
-         last_scan_record = s.query(LastScan).first()
+         last_scan_record = s.query(self.db.m.LastScan).first()
 
          if last_scan_record is not None:
             last_scan = last_scan_record.last_scan
@@ -60,40 +60,40 @@ class DbProcess:
       last_scan = time_to_local_timezone(last_scan)
 
       with self.db.Session() as s:
-         record = LastScan(id = 1, last_scan = last_scan)
+         record = self.db.m.LastScan(id = 1, last_scan = last_scan)
          s.merge(record)
          s.commit()
 
    def add_user_role(self, user_id, role):
       with self.db.Session() as s:
-         user_role = UserRole(id = user_id, role = role)
+         user_role = self.db.m.Role(id = user_id, role = role)
          s.merge(user_role)
          s.commit()
 
    def delete_user_role(self, user_id):
       with self.db.Session() as s:
-         s.query(UserRole).filter(
-            UserRole.id == user_id).delete()
+         s.query(self.db.m.Role).filter(
+            self.db.m.Role.id == user_id).delete()
          s.commit()
 
    def get_user_role(self, user_id):
       with self.db.Session() as s:
-         user_role = s.query(UserRole).filter(
-            UserRole.id == user_id).first()
+         user_role = s.query(self.db.m.Role).filter(
+            self.db.m.Role.id == user_id).first()
          if user_role is None:
             return None
          return user_role.role
 
    def get_user_roles(self):
       with self.db.Session() as s:
-         return s.query(UserRole).all()
+         return s.query(self.db.m.Role).all()
 
    def get_user_record(self, user_id, x, y):
       with self.db.Session() as s:
-         cell_type = s.query(UserRecord.cell_type).filter(
-            UserRecord.x == x, 
-            UserRecord.y == y, 
-            UserRecord.user_id == user_id
+         cell_type = s.query(self.db.m.UserRecord.cell_type).filter(
+            self.db.m.UserRecord.x == x, 
+            self.db.m.UserRecord.y == y, 
+            self.db.m.UserRecord.user_id == user_id
          ).first()
          
          if cell_type is not None:
@@ -103,30 +103,30 @@ class DbProcess:
 
    def get_all_user_record(self, user_id):
       with self.db.Session() as s:
-         return s.query(UserRecord).filter(
-            UserRecord.user_id == user_id
-         ).order_by(UserRecord.x, UserRecord.y).all()
+         return s.query(self.db.m.UserRecord).filter(
+            self.db.m.UserRecord.user_id == user_id
+         ).order_by(self.db.m.UserRecord.x, self.db.m.UserRecord.y).all()
 
    def get_user_records_by_cell_type(self, user_id, cell_type):
       with self.db.Session() as s:
-         return s.query(UserRecord).filter(
-            UserRecord.user_id == user_id,
-            UserRecord.cell_type == cell_type.value
-         ).order_by(UserRecord.x, UserRecord.y).all()
+         return s.query(self.db.m.UserRecord).filter(
+            self.db.m.UserRecord.user_id == user_id,
+            self.db.m.UserRecord.cell_type == cell_type.value
+         ).order_by(self.db.m.UserRecord.x, self.db.m.UserRecord.y).all()
 
    def get_users_and_types_by_coords(self, x, y):
       with self.db.Session() as s:
-         return s.query(UserRecord.cell_type, UserRecord.user_id).filter(
-            UserRecord.x == x,
-            UserRecord.y == y
-         ).order_by(UserRecord.cell_type).all()
+         return s.query(self.db.m.UserRecord.cell_type, self.db.m.UserRecord.user_id).filter(
+            self.db.m.UserRecord.x == x,
+            self.db.m.UserRecord.y == y
+         ).order_by(self.db.m.UserRecord.cell_type).all()
 
    def update_user_record(self, user_id, x, y, cell_type, session = None):
       s = session
       if s is None:
          s = self.db.Session()
 
-      user_record = UserRecord(
+      user_record = self.db.m.UserRecord(
          user_id = user_id, x = x, y = y, cell_type = cell_type)
       s.merge(user_record)
 
@@ -139,10 +139,10 @@ class DbProcess:
       if s is None:
          s = self.db.Session()
 
-      user_record = s.query(UserRecord).filter(
-         UserRecord.user_id == user_id, 
-         UserRecord.x == x, 
-         UserRecord.y == y
+      user_record = s.query(self.db.m.UserRecord).filter(
+         self.db.m.UserRecord.user_id == user_id, 
+         self.db.m.UserRecord.x == x, 
+         self.db.m.UserRecord.y == y
       ).first()
 
       if user_record is not None:
