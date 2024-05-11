@@ -49,13 +49,13 @@ cell_aliases_config = {
 }
 
 cell_max_amount = {
-   ct.demon_head : 4,
+   ct.demon_head : 2,
    ct.demon_tail : 20,
    ct.demon_hands : 20,
    ct.spider : 20,
    'artifact' : 5,
    ct.summon_stone : 10,
-   ct.empty : 125,
+   ct.empty : 124,
 }
 
 all_items_total = 0
