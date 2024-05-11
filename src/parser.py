@@ -1,9 +1,10 @@
-import re
+import re, regex
 
 from .const import cell_aliases, MAP_SIZE, CellType as ct
 from .reaction import Reactions as r
 
 MATCH_REPORT = re.compile(r"(\d+\-\d+) : ([\w' ]+)")
+MATCH_COMPACT_REPORT = regex.compile(r"([\w' ]+)\s*:\s*(\d+\-\d+\s*)+")
 
 class Parser:
    def validate_coords(self, coords, report):
@@ -37,7 +38,17 @@ class Parser:
          report.reaction.add(r.fail)
          return
       return ct(cell_aliases[what])
-   
+
+   def validate_and_add(self, what, coords, bot, ctx):
+      what = self.validate_what(what, ctx.report)
+      coords = self.validate_coords(coords, ctx.report)
+
+      if what is None or coords is None:
+         return
+      
+      bot.controller.add(what, coords, ctx)
+
+
    def parse_msg(self, ctx, bot):
       arr = ctx.message.content.split("\n")
       i = 1
@@ -47,13 +58,12 @@ class Parser:
          if match := MATCH_REPORT.match(e):
             coords = match.group(1)
             what = match.group(2).strip()
-
-            what = self.validate_what(what, ctx.report)
-            coords = self.validate_coords(coords, ctx.report)
-
-            if what is None or coords is None:
-               continue
-            
-            bot.controller.add(what, coords, ctx)
+            self.validate_and_add(what, coords, bot, ctx)
+         elif match:= MATCH_COMPACT_REPORT.match(e):
+            what = match.group(1).strip()
+            coords_arr = match.captures(2)
+            for coords in coords_arr:
+               coords = coords.strip()
+               self.validate_and_add(what, coords, bot, ctx)
          else:
             ctx.report.log.add({'error': f'not match'})
