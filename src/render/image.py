@@ -322,7 +322,7 @@ class RenderImage():
       if not img:
          img = self.generate_map(user_id, bright, clean, bot, ctx)
       
-      ctx.report.add_image(img)
+      ctx.report.image.add(img)
       
       if not using_save and not user_id:
          self.storage.add_image([bright, clean], img)

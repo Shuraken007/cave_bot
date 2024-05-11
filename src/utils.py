@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import datetime, timezone, timedelta
+from .const import MSG_CONSTRAINT
 
 def build_path(path_arr, file_name=None, mkdir=False):
    path = os.path.join(os.path.dirname( __file__ ), '..', *path_arr)
@@ -33,3 +34,25 @@ def time_to_local_timezone(dt):
    local_timezone = datetime.now().astimezone().tzinfo
    dt = dt.replace(tzinfo=local_timezone)
    return dt
+
+def build_sending_msg_arr_consider_constraint(arr):
+   new_arr = []
+   start_idx, end_idx = 0, 0
+   cur_len = 0
+   for e in arr:
+      if cur_len + len(e) + (end_idx - start_idx) > MSG_CONSTRAINT:
+         joined = '\n'.join(arr[start_idx:end_idx])
+         if joined:
+            new_arr.append(joined)
+         start_idx = end_idx
+         cur_len = 0
+
+      cur_len += len(e)
+      end_idx += 1
+
+   if not end_idx > len(arr):
+      joined = '\n'.join(arr[start_idx:end_idx])
+      if joined:
+         new_arr.append(joined)
+
+   return new_arr

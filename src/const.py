@@ -110,6 +110,7 @@ class UserRole(enum.IntEnum):
       return cls(v)
 
 DEFAULT_DB_NAME = 'cave.db'
+MSG_CONSTRAINT = 2000 - len("```ansi\n\n```")
 
 if __name__ == '__main__':
    CellType.print()

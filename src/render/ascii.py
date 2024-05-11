@@ -80,4 +80,4 @@ class RenderAscii:
          arr.append(line)
       
       # arr.append(color_util.ansi_message_end())
-      ctx.report.add_message('\n'.join(arr))
+      ctx.report.msg.add(arr)

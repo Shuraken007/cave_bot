@@ -48,8 +48,8 @@ class Controller:
       if max_role <= user_role:
          err_msg = "{} have role {}, but must be less than {}" \
             .format(user.name, user_role.name, max_role.name)
-         report.add_reaction(r.fail)
-         report.add_error(err_msg)
+         report.reaction.add(r.fail)
+         report.err.add(err_msg)
          return False
       return True
 
@@ -60,15 +60,15 @@ class Controller:
       if have_role:= self.user_roles.get(user.id):
          have_role = ur(have_role)
          if have_role == user_role:
-            ctx.report.add_reaction(r.user_data_equal)
-            ctx.report.add_message(f'user {user.name} already have role {user_role.name}')
+            ctx.report.reaction.add(r.user_data_equal)
+            ctx.report.msg.add(f'user {user.name} already have role {user_role.name}')
             return
          else:
-            ctx.report.add_reaction(r.user_data_changed)
-            ctx.report.add_message(f'user {user.name}: {have_role.name} -> {user_role.name}')
+            ctx.report.reaction.add(r.user_data_changed)
+            ctx.report.msg.add(f'user {user.name}: {have_role.name} -> {user_role.name}')
       
       self.db_process.add_user_role(user.id, user_role)
-      ctx.report.add_reaction(r.ok)
+      ctx.report.reaction.add(r.ok)
       self.user_roles[user.id] = user_role
 
    def delete_user_role(self, user, ctx):
@@ -76,11 +76,11 @@ class Controller:
       if not self.user_have_role_less_than(user, author_role, ctx.report):
          return
       if not user.id in self.user_roles:
-         ctx.report.add_message(f'user {user.name} has no privileges')
+         ctx.report.msg.add(f'user {user.name} has no privileges')
          return
       
       self.db_process.delete_user_role(user.id)
-      ctx.report.add_reaction(r.ok)
+      ctx.report.reaction.add(r.ok)
       del self.user_roles[user.id]
 
    async def get_user_name_by_id(self, user_id, bot):
@@ -103,8 +103,7 @@ class Controller:
          user_name = await self.get_user_name_by_id(user_id, bot)
          role_report.append(f'{user_name} : {user_role.name}')
 
-      msg = "\n".join(role_report)
-      report.add_message(msg)
+      report.msg.add(role_report)
 
    def get_total_cells(self, cell_type, user_id):
       amount = 0
@@ -124,7 +123,7 @@ class Controller:
       cell_type_was = self.db_process.get_user_record(user_id, *coords)
 
       if cell_type_was is not None and cell_type_was == cell_type_new:
-         ctx.report.add_reaction(r.user_data_equal)
+         ctx.report.reaction.add(r.user_data_equal)
          return
 
       is_cell_type_changed = False
@@ -136,15 +135,15 @@ class Controller:
       is_cell_type_changed |= self.update_cell(coords)
 
       if cell_type_was is None:
-         ctx.report.add_reaction(r.user_data_new)
+         ctx.report.reaction.add(r.user_data_new)
       else:
-         ctx.report.add_reaction(r.user_data_changed)
+         ctx.report.reaction.add(r.user_data_changed)
 
       if is_cell_type_changed:
          if cell_type_was is None:
-            ctx.report.add_reaction(r.cell_new)
+            ctx.report.reaction.add(r.cell_new)
          else:
-            ctx.report.add_reaction(r.cell_update)
+            ctx.report.reaction.add(r.cell_update)
       
       cell = self.view.get_cell(*coords)
       cell_type_most = cell.get_most_cell_type()
@@ -153,8 +152,8 @@ class Controller:
          cell_type_new_counter = cell.get_cell_type_counter(cell_type_new)
          msg = 'adding wrong item: coords: {}, popular item: {} added {} times, you add item: {} added {} times'
          error = msg.format(coords, cell_type_most.name, cell_type_most_counter, cell_type_new.name, cell_type_new_counter - 1)
-         ctx.report.add_error(error)
-         ctx.report.add_reaction(r.user_data_wrong)
+         ctx.report.err.add(error)
+         ctx.report.reaction.add(r.user_data_wrong)
 
    def delete(self, coords, user, ctx):
       author_role = self.get_user_role(ctx.message.author)
@@ -165,15 +164,15 @@ class Controller:
       cell_type_was = self.db_process.get_user_record(user.id, *coords)
 
       if cell_type_was is None:
-         ctx.report.add_reaction(r.user_data_equal)
+         ctx.report.reaction.add(r.user_data_equal)
          return
 
       self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was)
-      ctx.report.add_reaction(r.user_data_deleted)
+      ctx.report.reaction.add(r.user_data_deleted)
       is_cell_type_changed = self.update_cell(coords)
 
       if is_cell_type_changed:
-         ctx.report.add_reaction(r.cell_update)
+         ctx.report.reaction.add(r.cell_update)
 
    def deleteall(self, user, ctx):
       author_role = self.get_user_role(ctx.message.author)
@@ -189,10 +188,10 @@ class Controller:
          cell_type_val = user_record.cell_type
 
          self.db_process.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val))
-         ctx.report.add_reaction(r.user_data_deleted)
+         ctx.report.reaction.add(r.user_data_deleted)
          is_cell_type_changed = self.update_cell([x, y])
          if is_cell_type_changed:
-            ctx.report.add_reaction(r.cell_update)
+            ctx.report.reaction.add(r.cell_update)
 
    def report(self, user, is_compact, ctx):
       author_role = self.get_user_role(ctx.message.author)
@@ -222,9 +221,7 @@ class Controller:
          for key, value in compact.items():
             val_as_str = ' | '.join(value)
             msg_arr.append(f'{key} : {val_as_str}')
-
-      msg = '\n'.join(msg_arr)
-      ctx.report.add_message(msg)
+      ctx.report.msg.add(msg_arr)
 
    async def report_cell(self, coords, ctx, bot):
       users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords)
@@ -247,5 +244,4 @@ class Controller:
       if len(msg_arr) == 0:
          msg_arr.append('nobody reported')
          
-      msg = '\n'.join(msg_arr)
-      ctx.report.add_message(msg)
+      ctx.report.msg.add(msg_arr)

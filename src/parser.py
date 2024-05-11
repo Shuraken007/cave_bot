@@ -12,8 +12,8 @@ class Parser:
 
          if len(extracted_coords) != 2:
             err_msg = f'error: only {len(extracted_coords)} coords {extracted_coords}'
-            report.add_error(err_msg)
-            report.add_reaction(r.fail)
+            report.err.add(err_msg)
+            report.reaction.add(r.fail)
             return
 
          x = int(extracted_coords[0])
@@ -21,20 +21,20 @@ class Parser:
 
          if x < 1 or x > MAP_SIZE[0] or y < 1 or y > MAP_SIZE[1]:
             err_msg = f'error: x - {x} or y - {y} failed bounds'
-            report.add_error(err_msg)
-            report.add_reaction(r.fail)
+            report.err.add(err_msg)
+            report.reaction.add(r.fail)
             return
       
          return [x, y]
       except Exception as e:
-         report.add_log({'exception': str(e)})
+         report.log.add({'exception': str(e)})
 
    def validate_what(self, what, report):
       what = what.lower()
       if not what in cell_aliases:
          err_msg = f'error: unknown "what" {what}'
-         report.add_error(err_msg)
-         report.add_reaction(r.fail)
+         report.err.add(err_msg)
+         report.reaction.add(r.fail)
          return
       return ct(cell_aliases[what])
    
@@ -56,4 +56,4 @@ class Parser:
             
             bot.controller.add(what, coords, ctx)
          else:
-            ctx.report.add_log({'error': f'not match'})
+            ctx.report.log.add({'error': f'not match'})

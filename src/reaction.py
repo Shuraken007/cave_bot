@@ -40,7 +40,8 @@ allowed_value = [r.cell_new]
 def number_to_digits(number):
    return [str(x) for x in str(number)]
 
-async def process_reactions(reactions, message, report):
+def process_reactions(reactions, report):
+   emoji_arr = []
    for reaction, value in reactions.items():
       if value > 1:
          add_reaction_to_report(reaction, value, report)
@@ -48,18 +49,19 @@ async def process_reactions(reactions, message, report):
       if value > 1 and reaction not in allowed_value:
          value = 1
       
-      await add_reaction(reaction, value, message)
+      reaction_emoji_arr = build_emoji_arr(reaction, value)
+      emoji_arr.extend(reaction_emoji_arr)
+
+   return emoji_arr
 
 def add_reaction_to_report(reaction, value, report):
-   report.set_key('reactions')
    msg = '{} ({}) - {}' \
       .format(emoji[reaction], value, reaction.name)
-   report.add_message(msg)
+   report.reaction_msg.add(msg)
 
-async def add_reaction(reaction, value, message):
+def build_emoji_arr(reaction, value):
    reactions = [reaction]
    if value > 1:
       reactions += number_to_digits(value) 
    
-   for reaction in reactions:
-      await message.add_reaction(emoji[reaction])
+   return [emoji[x] for x in reactions]

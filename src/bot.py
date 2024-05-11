@@ -7,7 +7,7 @@ import os
 import io
 from datetime import datetime, timezone
 
-from .utils import get_last_monday
+from .utils import get_last_monday, build_sending_msg_arr_consider_constraint
 from .model import generate_models, get_table_names
 from .db_init import Db
 from .db_process import DbProcess
@@ -16,7 +16,7 @@ from .controller import Controller
 from .myhelp import MyHelp
 from .const import UserRole as ur, CleanMap
 from .report import Report
-from .reaction import process_reactions, Reactions
+from .reaction import process_reactions
 from .parser import Parser
 from .helpo import help
 from .logger import Logger
@@ -38,8 +38,8 @@ class MyBot(commands.Bot):
       if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
          self.init_ctx(ctx)
          if len(str(error)) > 0:
-            ctx.report.add_error(str(error))
-            ctx.report.add_log({'exception': str(error)})
+            ctx.report.err.add(str(error))
+            ctx.report.log.add({'exception': str(error)})
 
          await postprocess(ctx)
       else:
@@ -47,9 +47,8 @@ class MyBot(commands.Bot):
 
    def create_report(self, args = None):
       report = Report()
-      report.set_key('default')
       if args is not None and len(args) > 1:
-         report.add_log({'args': args[1:]})
+         report.log.add({'args': args[1:]})
 
       return report
 
@@ -111,8 +110,8 @@ def strict_users(min_role):
       is_role_ok, err_msg = bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
       if not is_role_ok:
          raise commands.CommandError(err_msg)
-         # ctx.report.add_error(err_msg)
-         # ctx.report.add_reaction(Reactions.fail)
+         # ctx.report.err.add(err_msg)
+         # ctx.report.reaction.add(Reactions.fail)
          return False
       return True
    return commands.check(predicate)
@@ -172,7 +171,7 @@ async def scan(ctx, limit=2000):
    ctx.report.off = False
    msg = f'scanned {len(messages)} from {after}'
    print(msg)
-   ctx.report.add_message(msg)
+   ctx.report.msg.add(msg)
 
 class CoordsConverter(commands.Converter):
    async def convert(self, ctx: commands.Context, coords: str):
@@ -205,50 +204,28 @@ async def postprocess(ctx):
       return
    
    r = ctx.report
-   report_keys = r.get_keys()
-   keys_len = len(report_keys)
-   if 'reactions' in report_keys:
-      keys_len -= 1
-   if 'default' in report_keys:
-      keys_len -= 1
-   if reactions:= r.get_reactions():
-      await process_reactions(reactions, ctx.message, ctx.report)
 
-   total_msg = []
-   for key in r.get_keys():
-      key_msg = []
-      msg_prefix = None
-      if keys_len > 1:
-         msg_prefix = key + ': '
-         if key == 'reactions':
-            msg_prefix = ""
+   # process reactions first, cause they add messages
+   if reactions:= r.reaction.get():
+      emoji_arr = process_reactions(reactions, ctx.report)
+      for emoji in emoji_arr:
+         await ctx.message.add_reaction(emoji)
 
-      if messages:= r.get_messages(key):
-         key_msg.extend(messages)
-      if errors:= r.get_errors(key):
-         key_msg.extend(errors)
-      if len(key_msg) > 0:
-         if msg_prefix is not None:
-            total_msg.append(msg_prefix)
-            if key != 'reactions':
-               key_msg = ["\t" + msg for msg in key_msg]
+   msg_arr = r.build_msg_arr()
+   send_msg_arr = build_sending_msg_arr_consider_constraint(msg_arr)
 
-         total_msg.extend(key_msg)
-
-      if log:= r.get_log(key):
-         bot.logger.dump_msg(log, 'log', mode='dump')
-
-   total_msg_str = "\n".join(total_msg)
-   if len(total_msg_str) > 0:
-      wrapped_msg = ["```ansi", total_msg_str, '```']
-      await ctx.message.channel.send("\n".join(wrapped_msg))
+   for msg in send_msg_arr:
+      wrapped_msg = "```ansi\n" + msg + "\n```"
+      await ctx.message.channel.send(wrapped_msg)
    
-   for image in r.get_images():
-      with io.BytesIO() as image_binary:
-         image.save(image_binary, 'PNG')
-         image_binary.seek(0)
-         await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+   if image_arr:= r.image.get():
+      for image in image_arr:
+         with io.BytesIO() as image_binary:
+            image.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
 
+   r.dump_to_logger(bot.logger)
 
 class SuperAdminCmd(commands.Cog):
     def __init__(self, bot):
@@ -312,7 +289,7 @@ async def delete(ctx, coords: commands.Greedy[CoordsConverter] = help['coord_des
 @strict_users(ur.nobody)
 @bot.command(aliases=['da'], brief = "deletes all your record")
 async def deleteall(ctx):
-   ctx.report.add_message(f'Removed coords:')
+   ctx.report.msg.add(f'Removed coords:')
    bot.controller.report(ctx.message.author, 'c', ctx)
    bot.controller.deleteall(ctx.message.author, ctx)
 
@@ -331,7 +308,7 @@ async def deleteuser(ctx, users: commands.Greedy[discord.User], coords: commands
 async def deletealluser(ctx, users: commands.Greedy[discord.User]):
    for user in users:
       ctx.report.set_key(f'{user.name}')
-      ctx.report.add_message(f'Removed coords:')
+      ctx.report.msg.add(f'Removed coords:')
       bot.controller.report(user, 'c', ctx)
       bot.controller.deleteall(user, ctx)
 
