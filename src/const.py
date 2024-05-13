@@ -48,6 +48,9 @@ cell_aliases_config = {
    ct.token_of_memories    : ["tm", "token of memories"],
 }
 
+for k,v in cell_aliases_config.items():
+   v.append(k.name)
+
 cell_max_amount = {
    ct.demon_head : 2,
    ct.demon_tail : 20,
