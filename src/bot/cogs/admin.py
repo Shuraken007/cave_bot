@@ -62,5 +62,11 @@ class AdminCog(commands.Cog, name='Admin', description = "Admin commands - manip
             ctx.report.set_key(f'{user.name}')
             self.bot.controller.report(user, c, ctx)
 
+    @strict_channels()
+    @strict_users(ur.admin)
+    @commands.command(aliases=['re'], brief = "reset week", description=help['reset_description'])
+    async def reset(self, ctx):
+        self.bot.reset(ctx)
+
 async def setup(bot):
     await bot.add_cog(AdminCog(bot))

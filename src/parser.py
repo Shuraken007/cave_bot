@@ -2,8 +2,10 @@ import re, regex
 
 from .const import cell_aliases, MAP_SIZE, CellType as ct
 from .reaction import Reactions as r
+from .bot.bot_util import strict_channels_f, strict_users_f
+from .const import UserRole as ur
 
-MATCH_REPORT = re.compile(r"(\d+\-\d+) : ([\w' ]+)")
+MATCH_REPORT = re.compile(r"(\d+\-\d+)\s*:\s*([\w' ]+)")
 MATCH_COMPACT_REPORT = regex.compile(r"([\w' ]+)\s*:\s*(\d+\-\d+\s*)+")
 
 def validate_coords(coords, report):
@@ -39,6 +41,13 @@ def validate_what(what, report):
    return ct(cell_aliases[what])
 
 def validate_and_add(what, coords, bot, ctx):
+   try:
+      strict_channels_f(ctx)
+      strict_users_f(ctx, ur.nobody)
+   except Exception as error:
+      ctx.report.err.add(str(error))
+      return
+
    what = validate_what(what, ctx.report)
    coords = validate_coords(coords, ctx.report)
 
@@ -47,8 +56,7 @@ def validate_and_add(what, coords, bot, ctx):
    
    bot.controller.add(what, coords, ctx)
 
-
-def parse_msg(ctx, bot):
+def parse_msg(ctx, bot):   
    arr = ctx.message.content.split("\n")
    i = 1
    for e in arr:

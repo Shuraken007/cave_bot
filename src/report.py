@@ -3,6 +3,10 @@ from collections import OrderedDict
 class BaseStorage():
    def __init__(self):
       self.off = False
+      self.amount = 0
+
+   def get_amount(self):
+      return self.amount
 
    def off(self):
       self.off = True
@@ -39,6 +43,7 @@ class KeyStorage(BaseStorage):
          entity = [entity]
       
       self.data[self.key].extend(entity)
+      self.amount += len(entity)
 
    def get(self, key):
       if self.off:
@@ -67,6 +72,7 @@ class ArrayStorage(BaseStorage):
          entity = [entity]
 
       self.data.extend(entity)
+      self.amount += len(entity)
 
    def get(self):
       if self.off:
@@ -94,6 +100,7 @@ class CounterStorage(BaseStorage):
             self.data[e] = 0
 
          self.data[e] += 1
+         self.amount += 1
 
    def get(self):
       if self.off:
@@ -144,7 +151,6 @@ class Report:
 
       return True
 
-
    def build_msg_arr(self):
       arr = []
       for key in self.keys:
@@ -164,6 +170,12 @@ class Report:
          arr.extend(reaction_data)
 
       return arr
+
+   def get_amount(self):
+      amount = 0
+      for storage in self.storages:
+         amount += storage.get_amount()
+      return amount
 
    def off(self):
       for storage in self.storages:

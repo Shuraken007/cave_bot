@@ -1,12 +1,12 @@
 #!python3
 import inspect
 import discord
-from discord.ext import tasks, commands
+from discord.ext import commands
 import os
 
-from .bot_util import init_ctx, get_mock_ctx, \
+from .bot_util import init_ctx, get_mock_class_with_attr, \
                      strict_channels, strict_users, response_by_report
-from ..utils import get_last_monday
+from ..utils import get_last_monday, get_week_start_as_str
 from ..model import generate_models, get_table_names
 from ..db_init import Db
 from ..db_process import DbProcess
@@ -21,7 +21,8 @@ from ..render.image import RenderImage
 
 async def preprocess(ctx):
    init_ctx(ctx)
-   
+   ctx.bot.reset(ctx)
+
 async def postprocess(ctx):
    await response_by_report(ctx)
 
@@ -31,10 +32,11 @@ class MyBot(commands.Bot):
       super(MyBot, self).run(self.config.token)
 
    def init_db(self):
-      table_names = get_table_names()
+      week_postfix, table_names = get_table_names()
       models = generate_models(table_names)
       self.db = Db(models, self.config.db_connection_str, admin_id = self.config.admin_id)
       self.db_process = DbProcess(self.db)
+      self.week_postfix = week_postfix
 
    def add_not_registered_self_commands(self):
       members = inspect.getmembers(self)
@@ -59,7 +61,7 @@ class MyBot(commands.Bot):
       self.db_process = None
       self.init_db()
 
-      self.view = View(self.db_process)
+      self.view = View()
       self.controller = Controller(self.db_process, self.view)
       self.logger = Logger('output')
       self.render_ascii = RenderAscii()
@@ -67,16 +69,23 @@ class MyBot(commands.Bot):
 
       self.initial_extensions = initial_extensions
 
+      # this part typically solved with decorators like `@bot.event`
+      # but it required MyBot instance, which is bad design
       self.on_ready = self.event(self.on_ready)
       self.on_message = self.event(self.on_message)
       self._before_invoke = preprocess
       self._after_invoke = postprocess
       self.add_not_registered_self_commands()
 
-   def reinit(self):
-      self.init_db()
-      self.controller.init_view()
-      self.render_image.reset_storage()
+   def reset(self, ctx):
+      if self.week_postfix != get_week_start_as_str():
+         self.db.engine.dispose()
+         self.init_db()
+         self.controller = Controller(self.db_process, self.view)
+
+         self.render_image.reset_storage()
+         ctx.report.set_key('Info')
+         ctx.report.msg.add('Restarted, reseted week!!!')
 
    async def on_command_error(self, ctx, error):
       if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
@@ -101,16 +110,27 @@ class MyBot(commands.Bot):
 
    async def on_ready(self):
       print(f'We have logged in as {self.user}')
-      # await self.loadcog()
       for extension in self.initial_extensions:
          await self.load_extension(extension)
 
       await self.spawn_scan()
 
+   async def on_message(self, message):
+      if message.author == self.user:
+         return
+      
+      mock_ctx = get_mock_class_with_attr({"channel": message.channel, 'message': message, 'bot': self})
+      await preprocess(mock_ctx)
+      
+      parser.parse_msg(mock_ctx, self)      
+      await postprocess(mock_ctx)
+
+      await self.process_commands(message)
+
    async def spawn_scan(self):
       for channel_id in self.config.scan_allowed_channel_ids:
          channel = self.get_channel(channel_id)
-         mock_ctx = get_mock_ctx({"channel": channel, 'message': None, 'bot': self})
+         mock_ctx = get_mock_class_with_attr({"channel": channel, 'message': None, 'bot': self, })
 
          await preprocess(mock_ctx)
          
@@ -119,7 +139,7 @@ class MyBot(commands.Bot):
 
          mock_ctx.report.off = True
          await postprocess(mock_ctx)
-
+        
    @strict_channels()
    @strict_users(ur.admin)
    @commands.command(hidden=True)
@@ -147,6 +167,7 @@ class MyBot(commands.Bot):
       ctx.report.off = False
       msg = f'scanned {len(messages)} from {after}'
       print(msg)
+      ctx.report.set_key('Info')
       ctx.report.msg.add(msg)
 
 

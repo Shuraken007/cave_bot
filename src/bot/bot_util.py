@@ -19,7 +19,7 @@ def create_report(args = None):
 
    return report
 
-def get_mock_ctx(attribute_dict):
+def get_mock_class_with_attr(attribute_dict):
    return type('',(object,),attribute_dict)()
 
 async def response_by_report(ctx):

@@ -76,7 +76,7 @@ class View:
             row.append(Cell())
          self.cells.append(row)
 
-   def __init__(self, model):
+   def __init__(self):
       self.cells = []
       self.init_grid()
       self.tracker = {}

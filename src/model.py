@@ -20,7 +20,7 @@ def get_table_names():
       'Cell': 'cell_' + week_postfix,
       'UserRecord': 'user_record_' + week_postfix,
    }
-   return table_names
+   return week_postfix, table_names
 
 def generate_models(table_names):
    class Base(DeclarativeBase):

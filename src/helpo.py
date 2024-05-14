@@ -100,4 +100,7 @@ help = {
    !ru @user1, @user2 c
       where c - compact
 """,
+'reset_description': """
+   if new monday detected - all data get and load to new db
+"""
 }
