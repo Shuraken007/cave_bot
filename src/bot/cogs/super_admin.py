@@ -5,7 +5,7 @@ from ...const import UserRole as ur
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
 
-class SuperAdminCog(commands.Cog):
+class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin commands - manipulate with other admins data"):
 
     def __init__(self, bot):
         self.bot = bot

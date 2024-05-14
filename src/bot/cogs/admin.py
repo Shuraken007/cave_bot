@@ -8,7 +8,7 @@ from ..converter import CoordsConverter
 from ..bot_util import strict_channels, strict_users
 
 
-class AdminCog(commands.Cog):
+class AdminCog(commands.Cog, name='Admin', description = "Admin commands - manipulate with other users data"):
 
     def __init__(self, bot):
         self.bot = bot

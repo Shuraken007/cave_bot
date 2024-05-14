@@ -54,25 +54,33 @@ async def response_by_report(ctx):
 
    r.dump_to_logger(bot.logger)
 
+def strict_channels_f(ctx):
+   init_ctx(ctx)
+   bot = ctx.bot
+   if not (
+         isinstance(ctx.channel, DMChannel) or
+         ctx.channel.id in bot.config.allowed_channel_ids
+      ):
+      channel_name = hasattr(ctx.channel, 'name') or type(ctx.channel).__name__
+      raise commands.CommandError(f"Channel {channel_name} not allowed!")
+   return True
+
+def strict_users_f(ctx, min_role):
+   bot = ctx.bot
+   init_ctx(ctx)
+   is_role_ok, err_msg = bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
+   if not is_role_ok:
+      raise commands.CommandError(err_msg)
+   return True
+
 def strict_channels():
    def predicate(ctx):
-      init_ctx(ctx)
-      bot = ctx.bot
-      if not (
-            isinstance(ctx.channel, DMChannel) or
-            ctx.channel.id in bot.config.allowed_channel_ids
-         ):
-         channel_name = hasattr(ctx.channel, 'name') or type(ctx.channel).__name__
-         raise commands.CheckFailure(f"Channel {channel_name} not allowed!")
-      return True
+      return strict_channels_f(ctx)
    return commands.check(predicate)
 
 def strict_users(min_role):
    def predicate(ctx):
-      bot = ctx.bot
-      init_ctx(ctx)
-      is_role_ok, err_msg = bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
-      if not is_role_ok:
-         raise commands.CommandError(err_msg)
-      return True
+      return strict_users_f(ctx, min_role)
    return commands.check(predicate)
+
+    

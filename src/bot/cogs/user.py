@@ -5,7 +5,8 @@ from ...const import UserRole as ur, CleanMap
 from ...helpo import help
 from ..converter import CoordsConverter, AliasConverter
 from ... import parser
-from ..bot_util import strict_channels, strict_users, get_mock_ctx, init_ctx, response_by_report
+from ..bot_util import strict_channels, strict_users, strict_channels_f, strict_users_f, \
+                        get_mock_ctx, init_ctx, response_by_report
 
 async def preprocess(ctx):
    init_ctx(ctx)
@@ -13,21 +14,29 @@ async def preprocess(ctx):
 async def postprocess(ctx):
    await response_by_report(ctx)
 
-class UserCog(commands.Cog):
+class UserCog(commands.Cog, name='User', description = "User commands - manipulate with your own data"):
 
     def __init__(self, bot):
         self.bot = bot
 
-
     @strict_channels()
+    @strict_users(ur.nobody)
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
             return
         
-        mock_ctx = get_mock_ctx({'message': message, 'bot': self.bot})
+        mock_ctx = get_mock_ctx({"channel": message.channel, 'message': message, 'bot': self.bot})
+
+        # mock_ctx = get_mock_ctx({'message': message, 'bot': self.bot})
         await preprocess(mock_ctx)
 
+        try:
+            strict_channels_f(mock_ctx)
+            strict_users_f(mock_ctx, ur.nobody)
+        except Exception as error:
+            return
+        
         parser.parse_msg(mock_ctx, self.bot)
         
         await postprocess(mock_ctx)

@@ -4,7 +4,7 @@ import discord
 from discord.ext import tasks, commands
 import os
 
-from .bot_util import init_ctx, create_report, get_mock_ctx, \
+from .bot_util import init_ctx, get_mock_ctx, \
                      strict_channels, strict_users, response_by_report
 from ..utils import get_last_monday
 from ..model import generate_models, get_table_names
@@ -12,9 +12,9 @@ from ..db_init import Db
 from ..db_process import DbProcess
 from ..view import View
 from ..controller import Controller
-from ..const import UserRole as ur, CleanMap
-from ..report import Report
+from ..const import UserRole as ur
 from .. import parser
+from ..helpo import help
 from ..logger import Logger
 from ..render.ascii import RenderAscii
 from ..render.image import RenderImage
@@ -48,7 +48,11 @@ class MyBot(commands.Bot):
                **kwargs):
       
       super(MyBot, self).__init__(*args, **kwargs)
-      self.help_command = commands.DefaultHelpCommand(width=1000)
+      self.help_command = commands.DefaultHelpCommand(
+         width=1000, 
+         no_category = 'Default',
+         command_attrs = {'aliases': ['h']}
+      )
       self.config = config
 
       self.db = None
@@ -85,15 +89,15 @@ class MyBot(commands.Bot):
       else:
          await super().on_command_error(ctx, error)  # вызывает изначальное поведение on_error_message
 
-   # async def loadcog(self):
-   #    for cog in os.listdir(".\cogs"):
-   #       if cog.endswith(".py"):
-   #             try:
-   #                cog = f"cogs.{cog.replace('.py', '')}"
-   #                await self.load_extension(cog)
-   #                print("Loaded:\t", cog)
-   #             except Exception as e:
-   #                print(f'An error occoured in the main file, {cog} cog, error {e}')
+   # override for help
+   # !h user | !h User
+   def get_cog(self, name):
+      all_keys = self.cogs.keys()
+      for k in all_keys:
+         if k.lower() == name.lower():
+            return super().get_cog(k)
+
+      return super().get_cog(name)
 
    async def on_ready(self):
       print(f'We have logged in as {self.user}')
