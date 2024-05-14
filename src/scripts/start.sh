@@ -1,4 +1,7 @@
 curl -sSL https://install.python-poetry.org | python
-~/.local/bin/poetry install --no-root
+p=~/.local/bin/poetry
+$p install --no-root
 cd ~
-~/.local/bin/poetry run python -m src.scripts.start
+$p run alembic upgrade head
+$p run pytest -n auto
+$p run python -m src.scripts.start

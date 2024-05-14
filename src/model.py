@@ -28,8 +28,9 @@ def generate_models(table_names):
 
    cell_spec = {
       '__tablename__': table_names['Cell'],
-      'x': Column(Integer, primary_key = True),
-      'y': Column(Integer, primary_key = True),   
+      'x'            : Column(Integer, primary_key = True),
+      'y'            : Column(Integer, primary_key = True),
+      'map_size'          : Column(Integer, default = 20, primary_key = True)
    }
    for cell_type in CellType:
       cell_spec[cell_type.name] = Column(Integer, default=0)
@@ -41,6 +42,7 @@ def generate_models(table_names):
       user_id       = Column(BigInteger, primary_key = True)
       x             = Column(Integer, primary_key = True)
       y             = Column(Integer, primary_key = True)
+      map_size           = Column(Integer, default = 20, primary_key = True)
       cell_type     = Column(Integer)
 
    class LastScan(Base):
@@ -53,5 +55,4 @@ def generate_models(table_names):
       id       = Column(BigInteger, primary_key = True)
       role     = Column(Integer)
    
-
    return Models(Cell, UserRecord, LastScan, Role, Base)

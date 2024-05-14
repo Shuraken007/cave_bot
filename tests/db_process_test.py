@@ -28,13 +28,13 @@ def db_process():
    db.drop_tables()
 
 def test_get_cell_type_counters(db_process):
-   x, y, idle_reward_counter, demon_head_counter = 3, 4, 5, 2
+   x, y, map_size, idle_reward_counter, demon_head_counter = 3, 4, 20, 5, 2
    with db_process.db.Session() as s:
-      cell = db_process.db.m.Cell(x = x, y = y, idle_reward = idle_reward_counter, demon_head = demon_head_counter)
+      cell = db_process.db.m.Cell(x = x, y = y, map_size = map_size, idle_reward = idle_reward_counter, demon_head = demon_head_counter)
       s.add(cell)
       s.commit()
 
-   counters = db_process.get_cell_type_counters(x, y)
+   counters = db_process.get_cell_type_counters(x, y, map_size)
 
    expected_counters = [0] * len(ct)
    expected_counters[ct.idle_reward.value] = idle_reward_counter
@@ -44,26 +44,34 @@ def test_get_cell_type_counters(db_process):
 
 @pytest.mark.parametrize("delta", [+1, -1])
 def test_update_cell_if_not_set(db_process, delta):
-   x, y = 3, 4
+   x, y, map_size = 3, 4, 20
 
-   db_process.update_cell(x, y, ct.demon_head, delta)
+   db_process.update_cell(x, y, ct.demon_head, map_size, delta)
 
    with db_process.db.Session() as s:
-      cell = s.query(db_process.db.m.Cell).filter(db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+      cell = s.query(db_process.db.m.Cell).filter(
+         db_process.db.m.Cell.x   == x,
+         db_process.db.m.Cell.y   == y,
+         db_process.db.m.Cell.map_size == map_size
+      ).one()
       assert cell.demon_head == max(delta, 0)
 
 @pytest.mark.parametrize("delta", [+1, -1])
 def test_update_cell_if_set(db_process, delta):
-   x, y, counter = 3, 4, 5
+   x, y, map_size, counter = 3, 4, 20, 5
    with db_process.db.Session() as s:
-      cell = db_process.db.m.Cell(x = x, y = y, demon_head = counter)
+      cell = db_process.db.m.Cell(x = x, y = y, demon_head = counter, map_size = map_size)
       s.add(cell)
       s.commit()
 
-   db_process.update_cell(x, y, ct.demon_head, delta)
+   db_process.update_cell(x, y, ct.demon_head, map_size, delta)
 
    with db_process.db.Session() as s:
-      cell = s.query(db_process.db.m.Cell).filter(db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+      cell = s.query(db_process.db.m.Cell).filter(
+         db_process.db.m.Cell.x == x, 
+         db_process.db.m.Cell.y == y,
+         db_process.db.m.Cell.map_size == map_size
+      ).one()
       assert cell.demon_head == counter + delta
 
 @pytest.fixture()
@@ -200,46 +208,49 @@ def test_get_user_roles_if_set(db_process):
       assert role_val == user_roles_config[id].value
 
 def test_get_user_record_if_not_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
+   x, y, user_id, map_size = 3, 4, 2879234928, 20
 
-   cell_type = db_process.get_user_record(user_id, x, y)
+   cell_type = db_process.get_user_record(user_id, x, y, map_size)
 
    assert cell_type is None
 
 def test_get_user_record_if_set(db_process):
-   x, y, user_id, expected_cell_type = 3, 4, 2879234928, ct.demon_head
+   x, y, user_id, expected_cell_type, map_size = 3, 4, 2879234928, ct.demon_head, 20
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y, 
-         user_id = user_id, cell_type = expected_cell_type.value)
+         user_id = user_id, cell_type = expected_cell_type.value,
+         map_size = map_size
+      )
       s.add(user_record)
       s.commit()
 
-   cell_type = db_process.get_user_record(user_id, x, y)
+   cell_type = db_process.get_user_record(user_id, x, y, map_size)
 
    assert cell_type == expected_cell_type
    
 
 def test_get_all_user_record_if_not_set(db_process):
-   user_id =2879234928
-   user_records = db_process.get_all_user_record(user_id)
+   user_id, map_size =2879234928, 20
+   user_records = db_process.get_all_user_record(user_id, map_size)
 
    assert len(user_records) == 0
 
 def test_get_all_user_record_if_set(db_process):
    set_user_id = 239485720
+   map_size = 20
    user_records_config = [
-      [3, 4, set_user_id, ct.demon_head],
-      [3, 2, set_user_id, ct.demon_tail],
-      [2, 2, set_user_id, ct.idle_reward],
-      [1, 2, set_user_id, ct.empty],
-      [1, 1, set_user_id + 10, ct.summon_stone],
+      [3, 4, set_user_id, ct.demon_head, map_size],
+      [3, 2, set_user_id, ct.demon_tail, map_size],
+      [2, 2, set_user_id, ct.idle_reward, map_size],
+      [1, 2, set_user_id, ct.empty, map_size],
+      [1, 1, set_user_id + 10, ct.summon_stone, map_size+5],
    ]
    expected_user_records_config = [
-      [1, 2, set_user_id, ct.empty],
-      [2, 2, set_user_id, ct.idle_reward],
-      [3, 2, set_user_id, ct.demon_tail],
-      [3, 4, set_user_id, ct.demon_head],
+      [1, 2, set_user_id, ct.empty, map_size],
+      [2, 2, set_user_id, ct.idle_reward, map_size],
+      [3, 2, set_user_id, ct.demon_tail, map_size],
+      [3, 4, set_user_id, ct.demon_head, map_size],
    ]
    with db_process.db.Session() as s:
       for config in user_records_config:
@@ -248,12 +259,12 @@ def test_get_all_user_record_if_set(db_process):
             y = config[1],
             user_id = config[2],
             cell_type = config[3].value,
-
+            map_size = config[4],
          )
          s.add(user_record)
       s.commit()
 
-   user_records = db_process.get_all_user_record(set_user_id)
+   user_records = db_process.get_all_user_record(set_user_id, map_size)
    assert len(user_records) == len(expected_user_records_config)
 
    counter = 0
@@ -264,28 +275,29 @@ def test_get_all_user_record_if_set(db_process):
       assert user_record.y == config[1]
       assert user_record.user_id == config[2]
       assert user_record.cell_type == config[3].value
+      assert user_record.map_size == config[4]
 
       counter += 1
 
 def test_get_user_records_by_cell_type_if_not_set(db_process):
-   user_id, cell_type = 2879234928, ct.demon_head
-   user_records = db_process.get_user_records_by_cell_type(user_id, cell_type)
+   user_id, cell_type, map_size = 2879234928, ct.demon_head, 20
+   user_records = db_process.get_user_records_by_cell_type(user_id, cell_type, map_size)
 
    assert len(user_records) == 0
 
 def test_get_user_records_by_cell_type_if_set(db_process):
-   request_user_id, request_cell_type = 239485720, ct.summon_stone
+   request_user_id, request_cell_type, map_size = 239485720, ct.summon_stone, 20
    user_records_config = [
-      [3, 4, request_user_id, ct.demon_head],
-      [3, 2, request_user_id, request_cell_type],
-      [2, 2, request_user_id, request_cell_type],
-      [1, 2, request_user_id, request_cell_type],
-      [1, 1, request_user_id + 10, ct.summon_stone],
+      [3, 4, request_user_id, ct.demon_head, map_size],
+      [3, 2, request_user_id, request_cell_type, map_size],
+      [2, 2, request_user_id, request_cell_type, map_size],
+      [1, 2, request_user_id, request_cell_type, map_size],
+      [1, 1, request_user_id + 10, ct.summon_stone, map_size],
    ]
    expected_user_records_config = [
-      [1, 2, request_user_id, request_cell_type],
-      [2, 2, request_user_id, request_cell_type],
-      [3, 2, request_user_id, request_cell_type],
+      [1, 2, request_user_id, request_cell_type, map_size],
+      [2, 2, request_user_id, request_cell_type, map_size],
+      [3, 2, request_user_id, request_cell_type, map_size],
    ]
    with db_process.db.Session() as s:
       for config in user_records_config:
@@ -294,11 +306,12 @@ def test_get_user_records_by_cell_type_if_set(db_process):
             y = config[1],
             user_id = config[2],
             cell_type = config[3].value,
+            map_size = config[4],
          )
          s.add(user_record)
       s.commit()
 
-   user_records = db_process.get_user_records_by_cell_type(request_user_id, request_cell_type)
+   user_records = db_process.get_user_records_by_cell_type(request_user_id, request_cell_type, map_size)
    assert len(user_records) == len(expected_user_records_config)
 
    counter = 0
@@ -309,23 +322,24 @@ def test_get_user_records_by_cell_type_if_set(db_process):
       assert user_record.y == config[1]
       assert user_record.user_id == config[2]
       assert user_record.cell_type == config[3].value
+      assert user_record.map_size == config[4]
 
       counter += 1
 
 def test_get_users_and_types_by_coords_if_not_set(db_process):
-   x, y = 2,3
-   user_records = db_process.get_users_and_types_by_coords(x, y)
+   x, y, map_size = 2, 3, 20
+   user_records = db_process.get_users_and_types_by_coords(x, y, map_size)
    assert len(user_records) == 0
 
 def test_get_users_and_types_by_coords_if_set(db_process):
    user1, user2, user3 = 3495873489, 817238172, 83745834
-   x, y = 4, 5
+   x, y, map_size = 4, 5, 20
    user_records_config = [
-      [x, y, user1, ct.demon_head],
-      [x, y, user2, ct.empty],
-      [x, y, user3, ct.idle_reward],
-      [x+1, y, user1, ct.summon_stone],
-      [x, y+1, user2, ct.summon_stone],
+      [x, y, user1, ct.demon_head, map_size],
+      [x, y, user2, ct.empty, map_size],
+      [x, y, user3, ct.idle_reward, map_size],
+      [x+1, y, user1, ct.summon_stone, map_size],
+      [x, y+1, user2, ct.summon_stone, map_size],
    ]
    expected_user_records_config = [
       [ct.empty, user2],
@@ -335,15 +349,16 @@ def test_get_users_and_types_by_coords_if_set(db_process):
    with db_process.db.Session() as s:
       for config in user_records_config:
          user_record = db_process.db.m.UserRecord(
-            x = config[0],
-            y = config[1],
-            user_id = config[2],
+            x         = config[0],
+            y         = config[1],
+            user_id   = config[2],
             cell_type = config[3].value,
+            map_size       = config[4],
          )
          s.add(user_record)
       s.commit()
 
-   user_records = db_process.get_users_and_types_by_coords(x, y)
+   user_records = db_process.get_users_and_types_by_coords(x, y, map_size)
    assert len(user_records) == len(expected_user_records_config)
 
    counter = 0
@@ -356,79 +371,97 @@ def test_get_users_and_types_by_coords_if_set(db_process):
       counter += 1
 
 def test_update_user_record_if_not_set(db_process):
-   x, y, user_id, expected_cell_type = 3, 4, 2879234928, ct.demon_head
-   db_process.update_user_record(user_id, x, y, expected_cell_type)
+   x, y, user_id, expected_cell_type, map_size = 3, 4, 2879234928, ct.demon_head, 20
+   db_process.update_user_record(user_id, x, y, expected_cell_type, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).one()
+         db_process.db.m.UserRecord.user_id == user_id,
+         db_process.db.m.UserRecord.map_size == map_size,
+      ).one()
       assert user_record.cell_type == expected_cell_type.value
 
 def test_update_user_record_if_set(db_process):
-   x, y, user_id, set_cell_type = 3, 4, 2879234928, ct.demon_head
+   x, y, user_id, set_cell_type, map_size = 3, 4, 2879234928, ct.demon_head, 56
    expected_cell_type = ct.empty
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y, 
-         user_id = user_id, cell_type = set_cell_type.value)
+         user_id = user_id, 
+         cell_type = set_cell_type.value,
+         map_size = map_size,
+      )
       s.add(user_record)
       s.commit()
 
-   db_process.update_user_record(user_id, x, y, expected_cell_type)
+   db_process.update_user_record(user_id, x, y, expected_cell_type, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).one()
+         db_process.db.m.UserRecord.user_id == user_id,
+         db_process.db.m.UserRecord.map_size == map_size
+      ).one()
       assert user_record.cell_type == expected_cell_type.value
 
 def test_delete_user_record_if_not_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
-   db_process.delete_user_record(user_id, x, y)
+   x, y, user_id, map_size = 3, 4, 2879234928, 20
+   db_process.delete_user_record(user_id, x, y, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).first()
+         db_process.db.m.UserRecord.user_id == user_id,
+         db_process.db.m.UserRecord.map_size == map_size,
+      ).first()
       assert user_record is None
 
 def test_delete_user_record_if_set(db_process):
-   x, y, user_id, set_cell_type = 3, 4, 2879234928, ct.demon_head
-   expected_cell_type = ct.empty
+   x, y, user_id, set_cell_type, map_size = 3, 4, 2879234928, ct.demon_head, 20
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y, 
-         user_id = user_id, cell_type = set_cell_type.value)
+         user_id = user_id, cell_type = set_cell_type.value,
+         map_size = map_size
+      )
       s.add(user_record)
       s.commit()
 
-   db_process.delete_user_record(user_id, x, y)
+   db_process.delete_user_record(user_id, x, y, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).first()
+         db_process.db.m.UserRecord.user_id == user_id,
+         db_process.db.m.UserRecord.map_size == map_size,
+      ).first()
       assert user_record is None
 
 def test_update_user_record_and_cell_if_not_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
+   x, y, user_id, map_size = 3, 4, 2879234928, 30
    user_cell_type_now = ct.empty
    cell_type_now_counter_expected = 1
 
-   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now)
+   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).one()
+         db_process.db.m.UserRecord.user_id == user_id, 
+         db_process.db.m.UserRecord.map_size == map_size,
+      ).one()
       cell = s.query(db_process.db.m.Cell).filter(
-         db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+         db_process.db.m.Cell.x == x, 
+         db_process.db.m.Cell.y == y,
+         map_size == map_size
+      ).one()
       assert user_record.cell_type == user_cell_type_now.value
       assert cell.empty == cell_type_now_counter_expected
+      assert cell.map_size == map_size
 
 def test_update_user_record_and_cell_if_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
+   x, y, user_id, map_size = 3, 4, 2879234928, 55
    user_cell_type_was = ct.demon_head
    user_cell_type_now = ct.empty
    cell_type_was_counter = 3
@@ -438,43 +471,54 @@ def test_update_user_record_and_cell_if_set(db_process):
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y,
-         user_id = user_id, cell_type = user_cell_type_was.value)
-      cell = db_process.db.m.Cell(x = x, y = y)
+         user_id = user_id, cell_type = user_cell_type_was.value,
+         map_size = map_size
+      )
+      cell = db_process.db.m.Cell(x = x, y = y, map_size = map_size)
       cell.demon_head = cell_type_was_counter
       s.add(cell)
       s.add(user_record)
       s.commit()
 
-   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now)
+   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
          db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).one()
+         db_process.db.m.UserRecord.user_id == user_id, map_size == map_size
+      ).one()
       cell = s.query(db_process.db.m.Cell).filter(
-         db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+         db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y, map_size == map_size
+      ).one()
       assert user_record.cell_type == user_cell_type_now.value
       assert cell.demon_head == cell_type_was_counter_expected
       assert cell.empty == cell_type_now_counter_expected
 
 def test_delete_user_record_and_update_cell_if_not_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
+   x, y, user_id, map_size = 3, 4, 2879234928, 42
 
-   db_process.delete_user_record_and_update_cell(user_id, [x, y], ct.empty)
+   db_process.delete_user_record_and_update_cell(user_id, [x, y], ct.empty, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
-         db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).first()
+         db_process.db.m.UserRecord.x == x, 
+         db_process.db.m.UserRecord.y == y,
+         db_process.db.m.UserRecord.user_id == user_id,
+         db_process.db.m.UserRecord.map_size == map_size
+      ).first()
       cell = s.query(db_process.db.m.Cell).filter(
-         db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+         db_process.db.m.Cell.x == x, 
+         db_process.db.m.Cell.y == y, 
+         db_process.db.m.Cell.map_size == map_size
+      ).one()
       assert user_record is None
       assert cell.x == x
       assert cell.y == y
       assert cell.empty == 0
+      assert cell.map_size == map_size
 
 def test_delete_user_record_and_update_cell_if_set(db_process):
-   x, y, user_id = 3, 4, 2879234928
+   x, y, user_id, map_size = 3, 4, 2879234928, 47
    user_cell_type_was = ct.demon_head
    cell_type_was_counter = 3
    cell_type_was_counter_expected = 2
@@ -482,20 +526,28 @@ def test_delete_user_record_and_update_cell_if_set(db_process):
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y,
-         user_id = user_id, cell_type = user_cell_type_was.value)
-      cell = db_process.db.m.Cell(x = x, y = y)
+         user_id = user_id, cell_type = user_cell_type_was.value,
+         map_size = map_size
+      )
+      cell = db_process.db.m.Cell(x = x, y = y, map_size = map_size)
       cell.demon_head = cell_type_was_counter
       s.add(cell)
       s.add(user_record)
       s.commit()
 
-   db_process.delete_user_record_and_update_cell(user_id, [x, y], user_cell_type_was)
+   db_process.delete_user_record_and_update_cell(user_id, [x, y], user_cell_type_was, map_size)
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
-         db_process.db.m.UserRecord.x == x, db_process.db.m.UserRecord.y == y, 
-         db_process.db.m.UserRecord.user_id == user_id).first()
+         db_process.db.m.UserRecord.x == x, 
+         db_process.db.m.UserRecord.y == y, 
+         db_process.db.m.UserRecord.user_id == user_id, 
+         map_size == map_size,
+      ).first()
       cell = s.query(db_process.db.m.Cell).filter(
-         db_process.db.m.Cell.x == x, db_process.db.m.Cell.y == y).one()
+         db_process.db.m.Cell.x   == x,
+         db_process.db.m.Cell.y   == y,
+         db_process.db.m.Cell.map_size == map_size
+      ).one()
       assert user_record is None
       assert cell.demon_head == cell_type_was_counter_expected

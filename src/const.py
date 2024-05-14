@@ -76,6 +76,7 @@ for k, v in cell_aliases_config.items():
 
 
 MAP_SIZE = [20, 20]
+DEFAULT_MAP_SIZE = 20
 
 class CleanMap(enum.IntEnum):
    no_clean = 0,

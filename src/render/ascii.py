@@ -1,5 +1,5 @@
 from . import color_util
-from ..const import MAP_SIZE, CellType as ct
+from ..const import MAP_SIZE, DEFAULT_MAP_SIZE, CellType as ct
 
 color_scheme = {
    ct.unknown              : None,
@@ -71,7 +71,7 @@ class RenderAscii:
             # if j % 5 == 0 and j > 0:
             #    line += " "
             cell_type = bot.view.get_cell_type(i+1, j+1)
-            if user_id and bot.db_process.get_user_record(user_id, i+1, j+1) is not None:
+            if user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_SIZE) is not None:
                cell_type = ct.unknown
 
             c = self.get_char(cell_type, i, j)

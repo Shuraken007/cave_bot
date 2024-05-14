@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from .const import cell_aliases, CellType as ct, UserRole as ur, MAP_SIZE
+from .const import cell_aliases, CellType as ct, UserRole as ur, MAP_SIZE, DEFAULT_MAP_SIZE
 from .reaction import Reactions as r
 
 class Controller:
@@ -14,7 +14,7 @@ class Controller:
 
    def update_cell(self, coords):
       self.view.set_update_tracker('up')
-      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords)
+      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords, DEFAULT_MAP_SIZE)
       self.view.update_cell(*coords, new_cell_type_counters)
       return self.view.get_update_tracker('up')
    
@@ -110,7 +110,7 @@ class Controller:
       if not user_id:
          amount = self.view.get_cell_type_amount(cell_type)
       else:
-         records = self.db_process.get_user_records_by_cell_type(user_id, cell_type)
+         records = self.db_process.get_user_records_by_cell_type(user_id, cell_type, DEFAULT_MAP_SIZE)
          if records is not None:
             amount = len(records)
       return amount
@@ -120,7 +120,7 @@ class Controller:
 
       user_id = ctx.message.author.id
       cell_type_new = what
-      cell_type_was = self.db_process.get_user_record(user_id, *coords)
+      cell_type_was = self.db_process.get_user_record(user_id, *coords, DEFAULT_MAP_SIZE)
 
       if cell_type_was is not None and cell_type_was == cell_type_new:
          ctx.report.reaction.add(r.user_data_equal)
@@ -128,10 +128,10 @@ class Controller:
 
       is_cell_type_changed = False
       if cell_type_was:
-         self.db_process.update_cell(*coords, cell_type_was, -1)
+         self.db_process.update_cell(*coords, cell_type_was, DEFAULT_MAP_SIZE, -1)
          is_cell_type_changed |= self.update_cell(coords)
 
-      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new)
+      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, DEFAULT_MAP_SIZE)
       is_cell_type_changed |= self.update_cell(coords)
 
       if cell_type_was is None:
@@ -161,13 +161,13 @@ class Controller:
          not self.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      cell_type_was = self.db_process.get_user_record(user.id, *coords)
+      cell_type_was = self.db_process.get_user_record(user.id, *coords, DEFAULT_MAP_SIZE)
 
       if cell_type_was is None:
          ctx.report.reaction.add(r.user_data_equal)
          return
 
-      self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was)
+      self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was, DEFAULT_MAP_SIZE)
       ctx.report.reaction.add(r.user_data_deleted)
       is_cell_type_changed = self.update_cell(coords)
 
@@ -180,14 +180,14 @@ class Controller:
          not self.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      user_records = self.db_process.get_all_user_record(user.id)
+      user_records = self.db_process.get_all_user_record(user.id, DEFAULT_MAP_SIZE)
 
       for user_record in user_records:
          x             = user_record.x
          y             = user_record.y
          cell_type_val = user_record.cell_type
 
-         self.db_process.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val))
+         self.db_process.delete_user_record_and_update_cell(user.id, [x, y], ct(cell_type_val), DEFAULT_MAP_SIZE)
          ctx.report.reaction.add(r.user_data_deleted)
          is_cell_type_changed = self.update_cell([x, y])
          if is_cell_type_changed:
@@ -202,7 +202,7 @@ class Controller:
       msg_arr = []
       compact = {}
 
-      user_records = self.db_process.get_all_user_record(user.id)
+      user_records = self.db_process.get_all_user_record(user.id, DEFAULT_MAP_SIZE)
       for user_record in user_records:
          x             = user_record.x
          y             = user_record.y
@@ -224,7 +224,7 @@ class Controller:
       ctx.report.msg.add(msg_arr)
 
    async def report_cell(self, coords, ctx, bot):
-      users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords)
+      users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords, DEFAULT_MAP_SIZE)
       map_ct_to_usernames = OrderedDict()
       for (cell_type_val, user_id) in users_and_types_by_coords:
          if cell_type_val not in map_ct_to_usernames:
