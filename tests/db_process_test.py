@@ -8,9 +8,12 @@ from src.model import generate_models
 from src.db_process import DbProcess
 from src.db_init import Db
 from src.utils import time_to_local_timezone
+from src.config import Config
 
 @pytest.fixture()
 def db_process():
+   config = Config()
+
    table_names = {
       'Role': str(uuid.uuid4()),
       'LastScan': str(uuid.uuid4()),
@@ -18,7 +21,7 @@ def db_process():
       'UserRecord': str(uuid.uuid4()),
    }
    models = generate_models(table_names)
-   db = Db(models)
+   db = Db(models, config.db_connection_str)
    db_process = DbProcess(db)
 
    yield db_process

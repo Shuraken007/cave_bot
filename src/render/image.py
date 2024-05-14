@@ -2,8 +2,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from ..const import CellType as ct, MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
 from ..utils import build_path
-from ..color_util import is_text_black
-from ..img_storage import ImageStorage
+from .color_util import is_text_black
+from .img_storage import ImageStorage
 
 
 color_scheme = {
@@ -87,6 +87,9 @@ class RenderImage():
       self.add_cells()
       bot.view.set_update_tracker('image_map')
       self.storage = ImageStorage()
+
+   def reset_storage(self):
+      self.storage.reset()
 
    def get_font_size(self, bg_w):
       return int(bg_w * (3/200))
@@ -421,7 +424,7 @@ class RenderImage():
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
          shift_y = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright)
          coords[1] += shift_y * 1.1
-
+   
 if __name__ == '__main__':
    render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'])
    from view import View

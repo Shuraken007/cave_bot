@@ -1,4 +1,4 @@
-from .. import color_util
+from . import color_util
 from ..const import MAP_SIZE, CellType as ct
 
 color_scheme = {

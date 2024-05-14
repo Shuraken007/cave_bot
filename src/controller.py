@@ -4,8 +4,8 @@ from .const import cell_aliases, CellType as ct, UserRole as ur, MAP_SIZE
 from .reaction import Reactions as r
 
 class Controller:
-   def __init__(self, model, view):
-      self.db_process = model
+   def __init__(self, db_process, view):
+      self.db_process = db_process
       self.view = view
       self.user_roles = {}
       self.init_view()
