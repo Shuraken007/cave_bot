@@ -14,8 +14,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from src.model import generate_models, get_table_names
-from src.config import Config
+from cave_bot.model import generate_models, get_table_names
+from cave_bot.config import Config
 secrets_config = Config()
 week_postfix, table_names = get_table_names()
 models = generate_models(table_names)

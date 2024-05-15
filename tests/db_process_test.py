@@ -3,12 +3,12 @@ import uuid
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-from src.const import CellType as ct, UserRole as ur
-from src.model import generate_models
-from src.db_process import DbProcess
-from src.db_init import Db
-from src.utils import time_to_local_timezone
-from src.config import Config
+from cave_bot.const import CellType as ct, UserRole as ur
+from cave_bot.model import generate_models
+from cave_bot.db_process import DbProcess
+from cave_bot.db_init import Db
+from cave_bot.utils import time_to_local_timezone
+from cave_bot.config import Config
 
 @pytest.fixture()
 def db_process():

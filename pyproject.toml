@@ -20,7 +20,8 @@ regex = "^2024.5.10"
 alembic = "^1.13.1"
 
 [tool.poetry.scripts]
-start = "python3 -m src.scripts.main"
+start = "cave_bot.scripts.start:main"
+drop = "cave_bot.scripts.db_drop:main"
 
 [build-system]
 requires = ["poetry-core"]
@@ -28,5 +29,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 pythonpath = [
-  "src"
+  "cave_bot"
 ]
