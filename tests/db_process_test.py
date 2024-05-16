@@ -551,3 +551,52 @@ def test_delete_user_record_and_update_cell_if_set(db_process):
       ).one()
       assert user_record is None
       assert cell.demon_head == cell_type_was_counter_expected
+
+def test_get_user_map_sizes_unique_amount_if_set(db_process):
+   set_user_id = 239485720
+   map_size1 = 20
+   map_size2 = 30
+   user_records_config = [
+      [3, 4, set_user_id, ct.demon_head, map_size1],
+      [3, 2, set_user_id, ct.demon_tail, map_size1],
+      [2, 2, set_user_id, ct.idle_reward, map_size2],
+      [1, 2, set_user_id, ct.empty, map_size2],
+      [5, 1, set_user_id, ct.empty, map_size2],
+      [1, 1, set_user_id + 10, ct.summon_stone, map_size1+5],
+   ]
+
+   with db_process.db.Session() as s:
+      for config in user_records_config:
+         user_record = db_process.db.m.UserRecord(
+            x = config[0],
+            y = config[1],
+            user_id = config[2],
+            cell_type = config[3].value,
+            map_size = config[4],
+         )
+         s.add(user_record)
+      s.commit()
+
+   map_sizes_amount = db_process.get_user_map_sizes_unique_amount(set_user_id)
+   assert map_sizes_amount == len([map_size1, map_size2])
+
+def test_get_user_map_sizes_unique_amount_if_not_set(db_process):
+   set_user_id = 239485720
+   user_records_config = [
+      [1, 1, set_user_id + 10, ct.summon_stone, 25],
+   ]
+
+   with db_process.db.Session() as s:
+      for config in user_records_config:
+         user_record = db_process.db.m.UserRecord(
+            x = config[0],
+            y = config[1],
+            user_id = config[2],
+            cell_type = config[3].value,
+            map_size = config[4],
+         )
+         s.add(user_record)
+      s.commit()   
+
+   map_sizes_amount = db_process.get_user_map_sizes_unique_amount(set_user_id)
+   assert map_sizes_amount == 0

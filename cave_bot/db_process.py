@@ -1,6 +1,6 @@
 from .const import CellType
 from .utils import time_to_local_timezone
-
+import sqlalchemy as sa
 
 class DbProcess:
    def __init__(self, db):
@@ -175,3 +175,15 @@ class DbProcess:
          self.delete_user_record(user_id, *coords, map_size, session=s)
          self.update_cell(*coords, cell_type, map_size, -1, session=s)
          s.commit()
+
+   def get_user_map_sizes_unique_amount(self, user_id):
+      with self.db.Session() as s:
+         return s.query(
+            self.db.m.UserRecord.map_size
+         ).filter(
+            self.db.m.UserRecord.user_id == user_id, 
+         ).group_by(
+            self.db.m.UserRecord.map_size
+         ).count()
+         
+      

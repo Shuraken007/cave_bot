@@ -5,4 +5,4 @@ cd ~
 echo 'upgraded'
 ~/.local/bin/poetry run pytest
 echo 'tests finished'
-~/.local/bin/poetry run python -m src.scripts.start
+~/.local/bin/poetry run start

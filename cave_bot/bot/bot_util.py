@@ -61,7 +61,7 @@ def strict_channels_f(ctx):
          isinstance(ctx.channel, DMChannel) or
          ctx.channel.id in bot.config.allowed_channel_ids
       ):
-      channel_name = hasattr(ctx.channel, 'name') or type(ctx.channel).__name__
+      channel_name = getattr(ctx.channel, 'name', type(ctx.channel).__name__)
       raise commands.CommandError(f"Channel {channel_name} not allowed!")
    return True
 

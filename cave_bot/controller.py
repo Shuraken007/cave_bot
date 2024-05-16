@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from .const import cell_aliases, CellType as ct, UserRole as ur, MAP_SIZE, DEFAULT_MAP_SIZE
+from .const import CellType as ct, UserRole as ur, MAP_SIZE, DEFAULT_MAP_SIZE
 from .reaction import Reactions as r
 
 class Controller:
@@ -27,7 +27,7 @@ class Controller:
       user_roles = self.db_process.get_user_roles()
       for user_role in user_roles:
          self.user_roles[user_role.id] = ur(user_role.role)
-   
+
    def get_user_role(self, user):
       if not user.id in self.user_roles:
          return ur.nobody

@@ -2,12 +2,6 @@ from discord.ext import commands
 
 from .const import cell_aliases_config
 
-# def grouped(iterable, n):
-#     return zip(*[iter(iterable)]*n)
-# what_str = []
-# for a1, a2, a3, a4, a5, a6, a7, a8 in grouped(cell_aliases.keys(), 8):
-#    what_str.append(' | '.join([a1, a2, a3, a4, a5, a6, a7, a8]))
-# what_str = "\n".join(what_str)
 what_str = ['']
 for k, v in cell_aliases_config.items():
    what = f'\t\t{k.name}: ' + ', '.join(v)
@@ -15,7 +9,7 @@ for k, v in cell_aliases_config.items():
 what_descr = commands.parameter(description="\n".join(what_str))
 
 help = {
-
+   
 'add_description' : """
    add item by coords:
    !a empty 3-5 | !a e 3-5
