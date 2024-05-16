@@ -1,4 +1,4 @@
-from .const import CellType as ct, DEFAULT_MAP_SIZE
+from .const import CellType as ct, DEFAULT_MAP_TYPE
 
 class Cell:
    def __init__(self, cell_type_counters = None):
@@ -51,8 +51,8 @@ class View:
 
    def get_cell_type_amount(self, cell_type):
       counter = 0
-      for i in range(0, self.map_size):
-         for j in range(0, self.map_size):
+      for i in range(0, self.map_type.value):
+         for j in range(0, self.map_type.value):
             if self.get_cell_type(i, j) == cell_type:
                counter += 1
 
@@ -69,14 +69,14 @@ class View:
       return self.tracker[key]
 
    def init_grid(self):
-      for i in range(0, self.map_size):
+      for i in range(0, self.map_type.value):
          row = []
-         for j in range(0, self.map_size):
+         for j in range(0, self.map_type.value):
             row.append(Cell())
          self.cells.append(row)
 
-   def __init__(self, map_size = DEFAULT_MAP_SIZE):
-      self.map_size = map_size
+   def __init__(self, map_type = DEFAULT_MAP_TYPE):
+      self.map_type = map_type
       self.cells = []
       self.init_grid()
       self.tracker = {}

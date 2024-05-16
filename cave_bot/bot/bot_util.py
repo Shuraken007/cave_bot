@@ -50,7 +50,8 @@ async def response_by_report(ctx):
             await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
 
    r.dump_to_logger(bot.logger)
-
+   ctx.report = Report()
+   
 def strict_channels_f(ctx):
    init_ctx(ctx)
    bot = ctx.bot

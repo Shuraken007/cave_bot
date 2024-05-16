@@ -20,3 +20,12 @@ class AliasConverter(Converter):
          raise BadArgument()
       
       return alias
+   
+class ConfigConverter(Converter):
+   async def convert(self, ctx, field: str):
+      init_ctx(ctx)
+      alias = validate_what(alias, ctx.report)
+      if alias is None:
+         raise BadArgument()
+      
+      return alias

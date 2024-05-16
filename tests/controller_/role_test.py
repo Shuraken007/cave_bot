@@ -22,6 +22,7 @@ def role():
       'LastScan': str(uuid.uuid4()),
       'Cell': str(uuid.uuid4()),
       'UserRecord': str(uuid.uuid4()),
+      'UserConfig': str(uuid.uuid4()),
    }
    models = generate_models(table_names)
    db = Db(models, config.db_connection_str, admin_id = config.admin_id)

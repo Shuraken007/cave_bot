@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 
-from ..const import CellType as ct, MAP_SIZE, DEFAULT_MAP_SIZE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
+from ..const import CellType as ct, MAP_SIZE, DEFAULT_MAP_TYPE, cell_max_amount, cell_description, cell_aliases_config, CleanMap
 from ..utils import build_path
 from .color_util import is_text_black
 from .img_storage import ImageStorage
@@ -298,7 +298,7 @@ class RenderImage():
 
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
-            is_known = user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_SIZE)
+            is_known = user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_TYPE)
             cell_type = bot.controller.view.get_cell_type(i+1, j+1)
             img = self.get_img_by_cell(cell_type, is_known, clean)
             color = self.get_color_by_cell(cell_type, bright, is_known, clean)

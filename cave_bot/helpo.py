@@ -96,5 +96,12 @@ help = {
 """,
 'reset_description': """
    if new monday detected - all data get and load to new db
-"""
+""",
+'map_level_descr': """
+   map level values:
+      'easy', 'normal', 'hard', 
+      'e', 'n', 'h', 
+      20, 25, 30, 
+      1, 2, 3   
+""",
 }

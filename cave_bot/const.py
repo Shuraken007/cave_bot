@@ -76,7 +76,6 @@ for k, v in cell_aliases_config.items():
 
 
 MAP_SIZE = [20, 20]
-DEFAULT_MAP_SIZE = 20
 
 class CleanMap(enum.IntEnum):
    no_clean = 0,
@@ -87,7 +86,6 @@ class CleanMap(enum.IntEnum):
    enemy = 2,
    ccc = 3,
    ss_arts = 3,
-
 
 class UserRole(enum.IntEnum):
    banned = 0,
@@ -113,8 +111,27 @@ class UserRole(enum.IntEnum):
          return ct
       return cls(v)
 
+class MapType(enum.IntEnum):
+   unknown = 0,
+   easy = 20,
+   normal = 25,
+   hard = 30,
+
+DEFAULT_MAP_TYPE = MapType.easy
+
+map_type_aliases_config = {
+   MapType.easy: ['easy', 'e', 1, 20],
+   MapType.normal: ['normal', 'n', 2, 25],
+   MapType.hard: ['hard', 'h', 3, 30],
+}
+map_type_aliases = {}
+for k, v in map_type_aliases_config.items():
+   for element in v:
+      map_type_aliases[element] = k
+
 DEFAULT_DB_NAME = 'cave.db'
 MSG_CONSTRAINT = 2000 - len("```ansi\n\n```")
 
-if __name__ == '__main__':
-   CellType.print()
+DEFAULT_USER_CONFIG = {
+   'map_type': MapType.easy,
+}
