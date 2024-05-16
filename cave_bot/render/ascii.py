@@ -70,7 +70,7 @@ class RenderAscii:
          for j in range(0, MAP_SIZE[1]):
             # if j % 5 == 0 and j > 0:
             #    line += " "
-            cell_type = bot.view.get_cell_type(i+1, j+1)
+            cell_type = bot.controller.view.get_cell_type(i+1, j+1)
             if user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_SIZE) is not None:
                cell_type = ct.unknown
 

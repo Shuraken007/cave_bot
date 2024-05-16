@@ -56,3 +56,6 @@ def build_sending_msg_arr_consider_constraint(arr):
          new_arr.append(joined)
 
    return new_arr
+
+def get_mock_class_with_attr(attribute_dict):
+   return type('',(object,),attribute_dict)()

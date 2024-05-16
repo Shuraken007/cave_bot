@@ -1,19 +1,18 @@
 from collections import OrderedDict
 
-from .const import CellType as ct, UserRole as ur, MAP_SIZE, DEFAULT_MAP_SIZE
+from .const import CellType as ct, MAP_SIZE, DEFAULT_MAP_SIZE
 from .reaction import Reactions as r
 from .controller_.role import Role
+from .view import View
 
 class Controller:
-   def __init__(self, db_process, view):
+   def __init__(self, db_process):
       self.db_process = db_process
-      self.view = view
+      self.view = View()
       self.user_roles = {}
       self.init_view()
 
       self.role = Role(db_process)
-
-      pass
 
    def init_view(self):
       for i in range(0, MAP_SIZE[0]):
@@ -21,7 +20,6 @@ class Controller:
             self.update_cell([i+1, j+1])
 
 #    Role Functions
-
    def add_user_role(self, user, user_role, ctx):
       self.role.add(user, user_role, ctx)
 

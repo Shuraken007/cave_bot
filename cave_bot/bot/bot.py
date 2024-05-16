@@ -4,13 +4,12 @@ import discord
 from discord.ext import commands
 import os
 
-from .bot_util import init_ctx, get_mock_class_with_attr, \
+from .bot_util import init_ctx, \
                      strict_channels, strict_users, response_by_report
-from ..utils import get_last_monday, get_week_start_as_str
+from ..utils import get_last_monday, get_week_start_as_str, get_mock_class_with_attr
 from ..model import generate_models, get_table_names
 from ..db_init import Db
 from ..db_process import DbProcess
-from ..view import View
 from ..controller import Controller
 from ..const import UserRole as ur
 from .. import parser
@@ -61,8 +60,7 @@ class MyBot(commands.Bot):
       self.db_process = None
       self.init_db()
 
-      self.view = View()
-      self.controller = Controller(self.db_process, self.view)
+      self.controller = Controller(self.db_process)
       self.logger = Logger('output')
       self.render_ascii = RenderAscii()
       self.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'], self)
@@ -81,7 +79,7 @@ class MyBot(commands.Bot):
       if self.week_postfix != get_week_start_as_str():
          self.db.engine.dispose()
          self.init_db()
-         self.controller = Controller(self.db_process, self.view)
+         self.controller = Controller(self.db_process)
 
          self.render_image.reset_storage()
          ctx.report.set_key('Info')

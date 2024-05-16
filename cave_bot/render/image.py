@@ -85,7 +85,7 @@ class RenderImage():
       self.sizes = self.get_sizes_spec(cell_config)
       self.images = self.get_common_images()
       self.add_cells()
-      bot.view.set_update_tracker('image_map')
+      bot.controller.view.set_update_tracker('image_map')
       self.storage = ImageStorage()
 
    def reset_storage(self):
@@ -299,7 +299,7 @@ class RenderImage():
       for i in range(0, MAP_SIZE[0]):
          for j in range(0, MAP_SIZE[1]):
             is_known = user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_SIZE)
-            cell_type = bot.view.get_cell_type(i+1, j+1)
+            cell_type = bot.controller.view.get_cell_type(i+1, j+1)
             img = self.get_img_by_cell(cell_type, is_known, clean)
             color = self.get_color_by_cell(cell_type, bright, is_known, clean)
             coords = self.get_cell_coords(i, j)
@@ -312,9 +312,9 @@ class RenderImage():
    def render(self, user_id, bright, clean, bot, ctx):
       img, using_save = None, False
       
-      is_view_updated = bot.view.get_update_tracker('image_map')
+      is_view_updated = bot.controller.view.get_update_tracker('image_map')
       if is_view_updated:
-         bot.view.set_update_tracker('image_map')
+         bot.controller.view.set_update_tracker('image_map')
          self.storage.reset()
 
       if not user_id and not is_view_updated:
