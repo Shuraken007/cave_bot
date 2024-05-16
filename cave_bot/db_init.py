@@ -25,7 +25,7 @@ class Db:
       if admin_id is None:
          return
       with self.Session() as s:
-         admin = self.m.Role(id = admin_id, role = ur.super_admin.value)
+         admin = self.m.Role(id = admin_id, role = ur.super_admin)
          s.merge(admin)
          s.commit()
 

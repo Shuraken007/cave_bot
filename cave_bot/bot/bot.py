@@ -127,6 +127,7 @@ class MyBot(commands.Bot):
 
       await self.process_commands(message)
 
+   # spawn_scan must imitate normal run of command "!scan"
    async def spawn_scan(self):
       for channel_id in self.config.scan_allowed_channel_ids:
          channel = self.get_channel(channel_id)
@@ -170,4 +171,16 @@ class MyBot(commands.Bot):
       ctx.report.set_key('Info')
       ctx.report.msg.add(msg)
 
+   async def get_user_name_by_id(self, user_id):
+      user_id = int(user_id)
+      
+      user = self.get_user(user_id)
+      if user is None:
+         try:
+            user = await self.fetch_user(user_id)
+         except:
+            pass
+      if user is None:
+         return f'unknown name ({user_id} id)'
 
+      return user.name

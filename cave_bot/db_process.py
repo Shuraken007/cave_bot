@@ -105,7 +105,7 @@ class DbProcess:
          ).first()
          
          if cell_type is not None:
-            cell_type = CellType(cell_type[0])
+            cell_type = cell_type[0]
          
          return cell_type
 
@@ -120,7 +120,7 @@ class DbProcess:
       with self.db.Session() as s:
          return s.query(self.db.m.UserRecord).filter(
             self.db.m.UserRecord.user_id == user_id,
-            self.db.m.UserRecord.cell_type == cell_type.value,
+            self.db.m.UserRecord.cell_type == cell_type,
             self.db.m.UserRecord.map_size == map_size
          ).order_by(self.db.m.UserRecord.x, self.db.m.UserRecord.y).all()
 

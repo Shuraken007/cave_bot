@@ -1,9 +1,30 @@
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Integer, Column, DateTime, BigInteger
+import sqlalchemy as sa
+from sqlalchemy import Integer, Column, DateTime, BigInteger, TypeDecorator
 
-from .const import CellType
+from .const import CellType, UserRole
 from .utils import get_week_start_as_str
 
+class CellTypeValue(sa.types.TypeDecorator):
+   impl = Integer
+   cache_ok = True
+
+   def process_bind_param(self, cell_type, dialect):
+      return cell_type.value
+
+   def process_result_value(self, value, dialect):
+      return CellType(value)
+   
+class UserRoleValue(sa.types.TypeDecorator):
+   impl = Integer
+   cache_ok = True
+
+   def process_bind_param(self, user_role, dialect):
+      return user_role.value
+
+   def process_result_value(self, value, dialect):
+      return UserRole(value)
+   
 class Models:
    def __init__(self, Cell, UserRecord, LastScan, Role, Base):
       self.Base = Base
@@ -43,7 +64,7 @@ def generate_models(table_names):
       x             = Column(Integer, primary_key = True)
       y             = Column(Integer, primary_key = True)
       map_size           = Column(Integer, default = 20, primary_key = True)
-      cell_type     = Column(Integer)
+      cell_type     = Column(CellTypeValue)
 
    class LastScan(Base):
       __tablename__ = table_names['LastScan']
@@ -53,6 +74,6 @@ def generate_models(table_names):
    class Role(Base): 
       __tablename__ = table_names['Role']
       id       = Column(BigInteger, primary_key = True)
-      role     = Column(Integer)
+      role     = Column(UserRoleValue)
    
    return Models(Cell, UserRecord, LastScan, Role, Base)

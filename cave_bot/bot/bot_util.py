@@ -68,7 +68,7 @@ def strict_channels_f(ctx):
 def strict_users_f(ctx, min_role):
    bot = ctx.bot
    init_ctx(ctx)
-   is_role_ok, err_msg = bot.controller.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
+   is_role_ok, err_msg = bot.controller.role.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
    if not is_role_ok:
       raise commands.CommandError(err_msg)
    return True
