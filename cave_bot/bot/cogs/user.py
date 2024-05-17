@@ -65,29 +65,5 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 			else:
 				self.bot.render_image.render(me, bright, clean, self.bot, ctx)
 
-	@strict_channels()
-	@strict_users(ur.nobody)
-	@commands.group(aliases=['conf', 'co'], brief = "manage your settings")
-	async def config(self, ctx):
-		if ctx.invoked_subcommand is None:
-			self.bot.controller.show_config(ctx)
-
-	@strict_channels()
-	@strict_users(ur.nobody)
-	@config.command(aliases=['r'], brief = "reset config to default")
-	async def reset(self, ctx):
-		self.bot.controller.reset_config(ctx)
-			
-	@strict_channels()
-	@strict_users(ur.nobody)
-	@config.command(aliases=['m'], brief = "select map difficulty")
-	async def map(self, ctx, level: Literal['easy', 'normal', 'hard', 'e', 'n', 'h', 20, 25, 30, 1, 2, 3]  = help['map_level_descr']):
-		map_type = None
-		if map_type := map_type_aliases.get(level):
-			self.bot.controller.set_config('map_type', map_type, ctx)
-		else:
-			ctx.report.err.add(f'something gone wrong, unknown map level "{level}"')
-			
-
 async def setup(bot):
 	await bot.add_cog(UserCog(bot))
