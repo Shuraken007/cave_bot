@@ -552,7 +552,7 @@ def test_delete_user_record_and_update_cell_if_set(db_process):
       assert user_record is None
       assert cell.demon_head == cell_type_was_counter_expected
 
-def test_get_user_map_types_unique_amount_if_set(db_process):
+def test_get_user_map_types_unique_if_set(db_process):
    set_user_id = 239485720
    map_type1 = mt.easy
    map_type2 = mt.normal
@@ -564,6 +564,8 @@ def test_get_user_map_types_unique_amount_if_set(db_process):
       [5, 1, set_user_id, ct.empty, map_type2],
       [1, 1, set_user_id + 10, ct.summon_stone, mt.hard],
    ]
+
+   expected_map_types = [map_type1, map_type2]
 
    with db_process.db.Session() as s:
       for config in user_records_config:
@@ -577,10 +579,16 @@ def test_get_user_map_types_unique_amount_if_set(db_process):
          s.add(user_record)
       s.commit()
 
-   map_types_amount = db_process.get_user_map_types_unique_amount(set_user_id)
-   assert map_types_amount == len([map_type1, map_type2])
+   map_types = db_process.get_user_map_types_unique(set_user_id)
 
-def test_get_user_map_types_unique_amount_if_not_set(db_process):
+   assert len(map_types) == len(expected_map_types)
+
+   counter = 0
+   for map_type in map_types:
+      assert expected_map_types[counter] == map_type
+      counter += 1
+
+def test_get_user_map_types_unique_if_not_set(db_process):
    set_user_id = 239485720
    user_records_config = [
       [1, 1, set_user_id + 10, ct.summon_stone, mt.normal],
@@ -598,8 +606,8 @@ def test_get_user_map_types_unique_amount_if_not_set(db_process):
          s.add(user_record)
       s.commit()   
 
-   map_types_amount = db_process.get_user_map_types_unique_amount(set_user_id)
-   assert map_types_amount == 0
+   map_types = db_process.get_user_map_types_unique(set_user_id)
+   assert map_types is None
 
 
 def test_get_user_config_if_not_set(db_process):
@@ -642,3 +650,18 @@ def test_set_user_config_if_set(db_process):
 
    assert get_user_config.id == user_id
    assert get_user_config.map_type == map_type_new
+
+def test_delete_user_config_if_not_set(db_process):
+   user_id = 4859132
+   db_process.delete_user_config(user_id)
+
+   assert db_process.get_user_config(user_id) is None
+
+def test_delete_user_config_if_set(db_process):
+   user_id = 239485720
+   map_type = mt.hard
+
+   db_process.set_user_config({'id': user_id, 'map_type': map_type})
+   db_process.delete_user_config(user_id)
+
+   assert db_process.get_user_config(user_id) is None

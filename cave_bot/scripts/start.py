@@ -16,7 +16,12 @@ def main():
 
    command_prefix='!'
 
-   initial_extensions = ['cave_bot.bot.cogs.super_admin', 'cave_bot.bot.cogs.admin', 'cave_bot.bot.cogs.user']
+   initial_extensions = [
+      'cave_bot.bot.cogs.super_admin',
+      'cave_bot.bot.cogs.admin',
+      'cave_bot.bot.cogs.user',
+      'cave_bot.bot.cogs.config'
+   ]
    bot = MyBot(
       config = config, 
       initial_extensions = initial_extensions, 

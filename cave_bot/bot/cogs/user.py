@@ -1,7 +1,7 @@
 from discord.ext import commands
 from typing import Literal, Optional
 
-from ...const import UserRole as ur, map_type_aliases, CleanMap
+from ...const import UserRole as ur, CleanMap
 from ...helpo import help
 from ..converter import CoordsConverter, AliasConverter
 from ... import parser

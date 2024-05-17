@@ -176,15 +176,21 @@ class DbProcess:
          self.update_cell(*coords, cell_type, map_type, -1, session=s)
          s.commit()
 
-   def get_user_map_types_unique_amount(self, user_id):
+   def get_user_map_types_unique(self, user_id):
       with self.db.Session() as s:
-         return s.query(
+         result = s.query(
             self.db.m.UserRecord.map_type
          ).filter(
             self.db.m.UserRecord.user_id == user_id, 
          ).group_by(
             self.db.m.UserRecord.map_type
-         ).count()
+         ).all()
+
+         result = [x[0] for x in result]
+         if len(result) == 0:
+            result = None
+         
+         return result
          
    def get_user_config(self, user_id):
       with self.db.Session() as s:
@@ -198,4 +204,13 @@ class DbProcess:
       with self.db.Session() as s:
          user_config = self.db.m.UserConfig(**user_config_dict)
          s.merge(user_config)
+         s.commit()
+
+   def delete_user_config(self, user_id):
+      with self.db.Session() as s:
+         s.query(
+            self.db.m.UserConfig
+         ).filter(
+            self.db.m.UserConfig.id == user_id
+         ).delete()
          s.commit()

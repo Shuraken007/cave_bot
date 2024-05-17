@@ -15,6 +15,10 @@ class Config:
       self.db_process.set_user_config(params)
       report.reaction.add(Reactions.ok)
 
+   def delete(self, user, report):
+      self.db_process.delete_user_config(user.id)
+      report.reaction.add(Reactions.ok)
+
    def show(self, user, report):
       user_config = self.db_process.get_user_config(user.id)
       if user_config is None:

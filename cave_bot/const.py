@@ -33,9 +33,9 @@ cell_description = {
 cell_aliases_config = {
    ct.unknown              : ["u", "unknown"],
    ct.empty                : ["e", "empty"],
-   ct.demon_hands          : ["dh", "demon's hand"],
+   ct.demon_hands          : ["dh", "demon's hand", "demon hands"],
    ct.demon_head           : ["d", "demon"],
-   ct.demon_tail           : ["dt", "demon's tail"],
+   ct.demon_tail           : ["dt", "demon's tail", "demon tail"],
    ct.spider               : ["s", "spider"],
    ct.idle_reward          : ["i", "idle reward", "idle rewards"],
    ct.summon_stone         : ["ss", "summoning stone", "summon stone"],
@@ -73,9 +73,6 @@ cell_aliases = {}
 for k, v in cell_aliases_config.items():
    for alias in v:
       cell_aliases[alias] = k
-
-
-MAP_SIZE = [20, 20]
 
 class CleanMap(enum.IntEnum):
    no_clean = 0,
@@ -117,12 +114,10 @@ class MapType(enum.IntEnum):
    normal = 25,
    hard = 30,
 
-DEFAULT_MAP_TYPE = MapType.easy
-
 map_type_aliases_config = {
-   MapType.easy: ['easy', 'e', 1, 20],
-   MapType.normal: ['normal', 'n', 2, 25],
-   MapType.hard: ['hard', 'h', 3, 30],
+   MapType.easy: ['easy', 'e', '1', '20'],
+   MapType.normal: ['normal', 'n', '2', '25'],
+   MapType.hard: ['hard', 'h', '3', '30'],
 }
 map_type_aliases = {}
 for k, v in map_type_aliases_config.items():

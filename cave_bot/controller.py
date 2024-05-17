@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from .const import CellType as ct, MAP_SIZE, DEFAULT_MAP_TYPE
+from .const import CellType as ct, MapType
 from .reaction import Reactions as r
 from .controller_.role import Role
 from .controller_.config import Config
@@ -9,18 +9,64 @@ from .view import View
 class Controller:
    def __init__(self, db_process):
       self.db_process = db_process
-      self.view = View()
+      self.view = {}
       self.user_roles = {}
-      self.init_view()
 
       self.role = Role(db_process)
       self.config = Config(db_process)
 
-   def init_view(self):
-      for i in range(0, MAP_SIZE[0]):
-         for j in range(0, MAP_SIZE[1]):
-            self.update_cell([i+1, j+1])
+   def get_view(self, map_type):
+      if view:= self.view.get(map_type):
+         return view
+      
+      view = View(map_type)
+      self.init_view(view)
+      self.view[map_type] = view
+      return view
 
+   def init_view(self, view):
+      map_size = view.map_type.value
+      for i in range(0, map_size):
+         for j in range(0, map_size):
+            self.update_cell([i+1, j+1], view)
+
+   def detect_user_map_type(self, user, ctx, with_error = True):
+      user_config = self.db_process.get_user_config(user.id)
+      map_type = MapType.unknown
+      if user_config:
+         map_type = user_config.map_type
+      
+      if map_type != MapType.unknown:
+         return map_type
+      
+      map_types = self.db_process.get_user_map_types_unique(user.id)
+      
+      if map_types is None:
+         msg = ("can't detect user map difficulty, please select"
+                "   !config map easy"
+                "   !co m e"
+                "   "
+                "   !help config map"
+                "   !h co m")
+
+         if with_error:
+            ctx.report.err.add(msg)
+      elif len(map_types) > 1:
+         msg = ("detected more, than one difficulty ({}): {}, "
+                "please select smth one"
+                ""
+                "!config map easy"
+                "!co m e"
+                ""
+                "!help config map"
+                "!h co m").format(len(map_types), [x.name for x in map_types])
+         if with_error:
+            ctx.report.err.add(msg)
+      else:
+         map_type = map_types[0]
+
+      return map_type
+   
 #    Role Functions
    def add_user_role(self, user, user_role, ctx):
       self.role.add(user, user_role, ctx)
@@ -40,33 +86,46 @@ class Controller:
       user = ctx.message.author
       self.config.reset(user, ctx.report)
 
+   def delete_config(self, ctx):
+      user = ctx.message.author
+      self.config.delete(user, ctx.report)
+
    def show_config(self, ctx):
       user = ctx.message.author
       self.config.show(user, ctx.report)
 
 # Cell functions
 
-   def update_cell(self, coords):
-      self.view.set_update_tracker('up')
-      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords, DEFAULT_MAP_TYPE)
-      self.view.update_cell(*coords, new_cell_type_counters)
-      return self.view.get_update_tracker('up')
+   def update_cell(self, coords, view):
+      view.set_update_tracker('up')
+      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords, view.map_type)
+      view.update_cell(*coords, new_cell_type_counters)
+      return view.get_update_tracker('up')
 
-   def get_total_cells(self, cell_type, user_id = None):
+   def get_total_cells(self, cell_type, map_type, user_id = None):
+      view = self.get_view(map_type)
       amount = 0
       if not user_id:
-         amount = self.view.get_cell_type_amount(cell_type)
+         amount = view.get_cell_type_amount(cell_type)
       else:
-         records = self.db_process.get_user_records_by_cell_type(user_id, cell_type, DEFAULT_MAP_TYPE)
+         records = self.db_process.get_user_records_by_cell_type(user_id, cell_type, map_type)
          if records is not None:
             amount = len(records)
       return amount
 
-   def add(self, what, coords, ctx):
+   def add(self, what, coords, ctx, map_type = MapType.unknown):
+      if map_type == MapType.unknown:
+         map_type = self.detect_user_map_type(ctx.message.author, ctx)
+
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(r.fail)
+         return
+
+      view = self.get_view(map_type)
 
       user_id = ctx.message.author.id
       cell_type_new = what
-      cell_type_was = self.db_process.get_user_record(user_id, *coords, DEFAULT_MAP_TYPE)
+      cell_type_was = self.db_process.get_user_record(user_id, *coords, map_type)
 
       if cell_type_was is not None and cell_type_was == cell_type_new:
          ctx.report.reaction.add(r.user_data_equal)
@@ -74,11 +133,11 @@ class Controller:
 
       is_cell_type_changed = False
       if cell_type_was:
-         self.db_process.update_cell(*coords, cell_type_was, DEFAULT_MAP_TYPE, -1)
-         is_cell_type_changed |= self.update_cell(coords)
+         self.db_process.update_cell(*coords, cell_type_was, map_type, -1)
+         is_cell_type_changed |= self.update_cell(coords, view)
 
-      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, DEFAULT_MAP_TYPE)
-      is_cell_type_changed |= self.update_cell(coords)
+      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, map_type)
+      is_cell_type_changed |= self.update_cell(coords, view)
 
       if cell_type_was is None:
          ctx.report.reaction.add(r.user_data_new)
@@ -91,7 +150,7 @@ class Controller:
          else:
             ctx.report.reaction.add(r.cell_update)
       
-      cell = self.view.get_cell(*coords)
+      cell = view.get_cell(*coords)
       cell_type_most = cell.get_most_cell_type()
       if cell_type_most not in [ct.unknown, cell_type_new]:
          cell_type_most_counter = cell.get_cell_type_counter(cell_type_most)
@@ -102,40 +161,54 @@ class Controller:
          ctx.report.reaction.add(r.user_data_wrong)
 
    def delete(self, coords, user, ctx):
+      map_type = self.detect_user_map_type(user, ctx)
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(r.fail)
+         return
+      
+      view = self.get_view(map_type)
+
       author_role = self.role.get(ctx.message.author)
       if user.id != ctx.message.author.id and \
          not self.role.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      cell_type_was = self.db_process.get_user_record(user.id, *coords, DEFAULT_MAP_TYPE)
+      cell_type_was = self.db_process.get_user_record(user.id, *coords, map_type)
 
       if cell_type_was is None:
          ctx.report.reaction.add(r.user_data_equal)
          return
 
-      self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was, DEFAULT_MAP_TYPE)
+      self.db_process.delete_user_record_and_update_cell(user.id, coords, cell_type_was, map_type)
       ctx.report.reaction.add(r.user_data_deleted)
-      is_cell_type_changed = self.update_cell(coords)
+      is_cell_type_changed = self.update_cell(coords, view)
 
       if is_cell_type_changed:
          ctx.report.reaction.add(r.cell_update)
 
    def deleteall(self, user, ctx):
+      map_type = self.detect_user_map_type(user, ctx)
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(r.fail)
+         return
+
+      view = self.get_view(map_type)
+
       author_role = self.role.get(ctx.message.author)
       if user.id != ctx.message.author.id and \
          not self.role.user_have_role_less_than(user, author_role, ctx.report):
          return
 
-      user_records = self.db_process.get_all_user_record(user.id, DEFAULT_MAP_TYPE)
+      user_records = self.db_process.get_all_user_record(user.id, map_type)
 
       for user_record in user_records:
          x             = user_record.x
          y             = user_record.y
          cell_type = user_record.cell_type
 
-         self.db_process.delete_user_record_and_update_cell(user.id, [x, y], cell_type, DEFAULT_MAP_TYPE)
+         self.db_process.delete_user_record_and_update_cell(user.id, [x, y], cell_type, map_type)
          ctx.report.reaction.add(r.user_data_deleted)
-         is_cell_type_changed = self.update_cell([x, y])
+         is_cell_type_changed = self.update_cell([x, y], view)
          if is_cell_type_changed:
             ctx.report.reaction.add(r.cell_update)
 
@@ -144,33 +217,50 @@ class Controller:
       if user.id != ctx.message.author.id and \
          not self.role.user_have_role_less_than(user, author_role, ctx.report):
          return
+      
+      map_types = self.db_process.get_user_map_types_unique(user.id)
+      
+      if not map_types:
+         ctx.report.msg.add('nothing to report')
+         return
+      
+      for map_type in map_types:
 
-      msg_arr = []
-      compact = {}
-
-      user_records = self.db_process.get_all_user_record(user.id, DEFAULT_MAP_TYPE)
-      for user_record in user_records:
-         x             = user_record.x
-         y             = user_record.y
-         cell_type = user_record.cell_type
-
-         coords_as_str = f'{x}-{y}'
-         ct_name = cell_type.name
-         msg_arr.append(f'{coords_as_str} : {ct_name}')
-
-         if not ct_name in compact:
-            compact[ct_name] = []
-         compact[ct_name].append(coords_as_str)
-
-      if is_compact:
          msg_arr = []
-         for key, value in compact.items():
-            val_as_str = ' | '.join(value)
-            msg_arr.append(f'{key} : {val_as_str}')
-      ctx.report.msg.add(msg_arr)
+         compact = {}
+
+         user_records = self.db_process.get_all_user_record(user.id, map_type)
+         for user_record in user_records:
+            x             = user_record.x
+            y             = user_record.y
+            cell_type = user_record.cell_type
+
+            coords_as_str = f'{x}-{y}'
+            ct_name = cell_type.name
+            msg_arr.append(f'{coords_as_str} : {ct_name}')
+
+            if not ct_name in compact:
+               compact[ct_name] = []
+            compact[ct_name].append(coords_as_str)
+
+         if is_compact:
+            msg_arr = []
+            for key, value in compact.items():
+               val_as_str = ' | '.join(value)
+               msg_arr.append(f'{key} : {val_as_str}')
+         
+         msg_arr.insert(0, f'\nMap: {map_type.name}')
+
+         ctx.report.msg.add(msg_arr)
 
    async def report_cell(self, coords, ctx, bot):
-      users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords, DEFAULT_MAP_TYPE)
+      map_type = self.detect_user_map_type(ctx.message.author, ctx)
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(r.fail)
+         return
+
+      view = self.get_view(map_type)
+      users_and_types_by_coords = self.db_process.get_users_and_types_by_coords(*coords, map_type)
       map_ct_to_usernames = OrderedDict()
       for (cell_type, user_id) in users_and_types_by_coords:
          if cell_type not in map_ct_to_usernames:
@@ -178,7 +268,7 @@ class Controller:
          user_name = await bot.get_user_name_by_id(user_id)
          map_ct_to_usernames[cell_type].append(user_name)
 
-      cell = self.view.get_cell(*coords)
+      cell = view.get_cell(*coords)
       msg_arr = []
       for key, value in map_ct_to_usernames.items():
          value.sort()
@@ -189,5 +279,7 @@ class Controller:
 
       if len(msg_arr) == 0:
          msg_arr.append('nobody reported')
-         
+
+      msg_arr.insert(0, f'Map: {map_type}')
+      
       ctx.report.msg.add(msg_arr)

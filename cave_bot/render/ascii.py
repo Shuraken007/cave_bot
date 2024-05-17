@@ -1,5 +1,6 @@
 from . import color_util
-from ..const import MAP_SIZE, DEFAULT_MAP_TYPE, CellType as ct
+from ..const import CellType as ct, MapType
+from ..reaction import Reactions
 
 color_scheme = {
    ct.unknown              : None,
@@ -61,17 +62,24 @@ class RenderAscii:
       return c
 
    def render(self, user_id, bot, ctx):
+      map_type = bot.controller.detect_user_map_type(ctx.message.author, ctx)
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(Reactions.fail)
+         return
+      
+      view = bot.controller.get_view(map_type)
+
       arr = []
       # arr.append(color_util.ansi_message_start())
-      for i in range(0, MAP_SIZE[0]):
+      for i in range(0, map_type.value):
          line = ""
          # if i % 10 == 0 and i > 0:
          #    arr.append("")
-         for j in range(0, MAP_SIZE[1]):
+         for j in range(0, map_type.value):
             # if j % 5 == 0 and j > 0:
             #    line += " "
-            cell_type = bot.controller.view.get_cell_type(i+1, j+1)
-            if user_id and bot.db_process.get_user_record(user_id, i+1, j+1, DEFAULT_MAP_TYPE) is not None:
+            cell_type =view.get_cell_type(i+1, j+1)
+            if user_id and bot.db_process.get_user_record(user_id, i+1, j+1, map_type) is not None:
                cell_type = ct.unknown
 
             c = self.get_char(cell_type, i, j)

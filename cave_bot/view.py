@@ -1,4 +1,4 @@
-from .const import CellType as ct, DEFAULT_MAP_TYPE
+from .const import CellType as ct
 
 class Cell:
    def __init__(self, cell_type_counters = None):
@@ -75,7 +75,7 @@ class View:
             row.append(Cell())
          self.cells.append(row)
 
-   def __init__(self, map_type = DEFAULT_MAP_TYPE):
+   def __init__(self, map_type):
       self.map_type = map_type
       self.cells = []
       self.init_grid()
