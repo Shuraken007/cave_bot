@@ -212,3 +212,41 @@ class DbProcess:
             self.db.m.UserConfig.id == user_id
          ).delete()
          s.commit()
+
+   def get_map_max_amount(self, map_type, cell_name):
+      with self.db.Session() as s:
+         amount = s.query(
+            getattr(self.db.m.MapConfig, cell_name)
+         ).filter(
+            self.db.m.MapConfig.map_type == map_type
+         ).first()
+
+         if amount:
+            return amount[0]
+         return None
+      
+   def get_map_max_amount(self, map_type, cell_name):
+      with self.db.Session() as s:
+         amount = s.query(
+            getattr(self.db.m.MapConfig, cell_name)
+         ).filter(
+            self.db.m.MapConfig.map_type == map_type
+         ).first()
+
+         if amount:
+            return amount[0]
+         return None
+      
+   def set_map_max_amount(self, map_type, cell_name, value):
+      with self.db.Session() as s:
+         map_config = s.query(self.db.m.MapConfig).filter(
+            self.db.m.MapConfig.map_type == map_type,
+         ).first()
+         if map_config is None:
+            map_config = self.db.m.MapConfig(
+               map_type = map_type
+            )
+
+         setattr(map_config, cell_name, value)   
+         s.merge(map_config)
+         s.commit()

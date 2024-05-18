@@ -19,6 +19,7 @@ def db_process():
       'LastScan': str(uuid.uuid4()),
       'Cell': str(uuid.uuid4()),
       'UserRecord': str(uuid.uuid4()),
+      'MapConfig': str(uuid.uuid4()),
       'UserConfig': str(uuid.uuid4()),
    }
    models = generate_models(table_names)
@@ -665,3 +666,38 @@ def test_delete_user_config_if_set(db_process):
    db_process.delete_user_config(user_id)
 
    assert db_process.get_user_config(user_id) is None
+
+def test_get_map_max_amount_if_not_set(db_process):
+   map_type = mt.easy
+   cell_type = ct.idle_reward
+   amount = db_process.get_map_max_amount(map_type, cell_type.name)
+   assert amount is None
+
+def test_get_map_max_amount_if_set(db_process):
+   map_type = mt.easy
+   cell_type = ct.idle_reward
+   value = 130
+
+   db_process.set_map_max_amount(map_type, cell_type.name, value)
+   amount = db_process.get_map_max_amount(map_type, cell_type.name)
+   assert amount == value
+
+def test_set_map_max_amount_if_not_set(db_process):
+   map_type = mt.easy
+   cell_type = ct.idle_reward
+   value = 130
+
+   db_process.set_map_max_amount(map_type, cell_type.name, value)
+   amount = db_process.get_map_max_amount(map_type, cell_type.name)
+   assert amount == value
+
+def test_set_map_max_amount_if_set(db_process):
+   map_type = mt.easy
+   cell_type = ct.idle_reward
+   value = 130
+   delta = 10
+
+   db_process.set_map_max_amount(map_type, cell_type.name, value)
+   db_process.set_map_max_amount(map_type, cell_type.name, value+delta)
+   amount = db_process.get_map_max_amount(map_type, cell_type.name)
+   assert amount == value+delta

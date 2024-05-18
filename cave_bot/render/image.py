@@ -389,16 +389,33 @@ class RenderImage():
 
       return img
 
+   def get_total_max_amount(self, founded, cell_type_or_name, map_type, bot):
+      cell_name = cell_type_or_name
+      if type(cell_type_or_name) == ct:
+         cell_name = cell_type_or_name.name
+
+      total_from_db = bot.controller.db_process.get_map_max_amount(
+         map_type, cell_name)
+      if total_from_db is None or total_from_db < founded:
+         bot.controller.db_process.set_map_max_amount(
+            map_type, cell_name, founded
+         )
+         total_from_db = founded
+
+      return total_from_db
+
+
    def get_description_text(self, cell_type_name, user_id, bot, map_type):
       founded, total, description, name = None, None, None, None
       text = []
       if cell_type_name == 'artifact':
-         total = cell_max_amount.get(cell_type_name)
 
          found_arr = []
          for art in [ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories]:
             found_arr.append(bot.controller.get_total_cells(art, map_type, user_id))
          founded = sum(found_arr)
+         
+         total = self.get_total_max_amount(founded, cell_type_name, map_type, bot)
 
          description = cell_description.get(cell_type_name, "")
          name = cell_type_name
@@ -406,7 +423,7 @@ class RenderImage():
          cell_type = ct[cell_type_name]
          
          founded = bot.controller.get_total_cells(cell_type, map_type, user_id)
-         total = cell_max_amount.get(cell_type, 0)
+         total = self.get_total_max_amount(founded, cell_type_name, map_type, bot)
          description = cell_description.get(cell_type, "")
          name = max(cell_aliases_config[cell_type], key=len)
 
