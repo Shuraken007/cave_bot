@@ -9,7 +9,7 @@ MATCH_MAP = re.compile(r"Cave Difficulty\s*:\s*([\d\w]+)")
 MATCH_REPORT = re.compile(r"(\d+\-\d+)\s*:\s*([\w' ]+)")
 MATCH_COMPACT_REPORT = regex.compile(r"([\w' ]+)\s*:\s*(\d+\-\d+\s*)+")
 
-def validate_coords(coords, report, map_type=MapType.easy):
+def validate_coords(coords, report, map_type=None):
    try:
       extracted_coords = coords.split('-')
 
@@ -22,7 +22,11 @@ def validate_coords(coords, report, map_type=MapType.easy):
       x = int(extracted_coords[0])
       y = int(extracted_coords[1])
 
+      if map_type in [None,  MapType.unknown]:
+         map_type = MapType.hard
+
       map_size = map_type.value
+
       if x < 1 or x > map_size or y < 1 or y > map_size:
          err_msg = f'error: x - {x} or y - {y} failed bounds'
          report.err.add(err_msg)

@@ -607,7 +607,7 @@ def test_get_user_map_types_unique_if_not_set(db_process):
       s.commit()   
 
    map_types = db_process.get_user_map_types_unique(set_user_id)
-   assert map_types is None
+   assert len(map_types) == 0
 
 
 def test_get_user_config_if_not_set(db_process):

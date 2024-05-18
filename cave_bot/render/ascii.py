@@ -88,4 +88,5 @@ class RenderAscii:
          arr.append(line)
       
       # arr.append(color_util.ansi_message_end())
+      ctx.report.msg.add(f'Map: {map_type.name}')
       ctx.report.msg.add(arr)

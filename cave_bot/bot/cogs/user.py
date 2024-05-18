@@ -33,7 +33,6 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 	@commands.command(aliases=['da'], brief = "deletes all your record")
 	async def deleteall(self, ctx):
 		ctx.report.msg.add(f'Removed coords:')
-		self.bot.controller.report(ctx.message.author, 'c', ctx)
 		self.bot.controller.deleteall(ctx.message.author, ctx)
 
 	@strict_channels()

@@ -369,6 +369,7 @@ class RenderImage():
       if not img:
          img = self.generate_map(user_id, bright, clean, bot, view, ctx)
       
+      ctx.report.msg.add(f'Map: {map_type.name}')
       ctx.report.image.add(img)
       
       if not using_save and not user_id:

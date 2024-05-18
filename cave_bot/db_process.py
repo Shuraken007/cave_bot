@@ -187,8 +187,6 @@ class DbProcess:
          ).all()
 
          result = [x[0] for x in result]
-         if len(result) == 0:
-            result = None
          
          return result
          

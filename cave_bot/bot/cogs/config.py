@@ -5,7 +5,7 @@ from ...const import UserRole as ur, map_type_aliases
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
 
-class ConfigCog(commands.Cog, name='Config', description = "Config commands - your settings"):
+class ConfigCog(commands.Cog, name='Settings', description = "Config commands - your settings"):
 
 	def __init__(self, bot):
 		self.bot = bot

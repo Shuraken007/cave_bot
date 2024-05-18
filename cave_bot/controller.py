@@ -41,27 +41,27 @@ class Controller:
       
       map_types = self.db_process.get_user_map_types_unique(user.id)
       
-      if map_types is None:
-         msg = ("can't detect user map difficulty, please select"
-                "   !config map easy"
-                "   !co m e"
-                "   "
-                "   !help config map"
+      if len(map_types) == 0:
+         msg = ("can't detect user map difficulty, please select\n"
+                "   !config map easy\n"
+                "   !co m e\n"
+                "   \n"
+                "   !help config map\n"
                 "   !h co m")
 
          if with_error:
-            ctx.report.err.add(msg)
+            ctx.report.unique.add(msg)
       elif len(map_types) > 1:
-         msg = ("detected more, than one difficulty ({}): {}, "
-                "please select smth one"
-                ""
-                "!config map easy"
-                "!co m e"
-                ""
-                "!help config map"
+         msg = ("detected more, than one difficulty ({}): {}, \n"
+                "please select smth one\n"
+                "\n"
+                "!config map easy\n"
+                "!co m e\n"
+                "\n"
+                "!help config map\n"
                 "!h co m").format(len(map_types), [x.name for x in map_types])
          if with_error:
-            ctx.report.err.add(msg)
+            ctx.report.unique.add(msg)
       else:
          map_type = map_types[0]
 
@@ -120,6 +120,8 @@ class Controller:
       if map_type == MapType.unknown:
          ctx.report.reaction.add(r.fail)
          return
+
+
 
       view = self.get_view(map_type)
 
@@ -201,6 +203,8 @@ class Controller:
 
       user_records = self.db_process.get_all_user_record(user.id, map_type)
 
+      self.report(ctx.message.author, 'c', ctx, map_type)
+
       for user_record in user_records:
          x             = user_record.x
          y             = user_record.y
@@ -212,15 +216,19 @@ class Controller:
          if is_cell_type_changed:
             ctx.report.reaction.add(r.cell_update)
 
-   def report(self, user, is_compact, ctx):
+   def report(self, user, is_compact, ctx, map_type = None):
       author_role = self.role.get(ctx.message.author)
       if user.id != ctx.message.author.id and \
          not self.role.user_have_role_less_than(user, author_role, ctx.report):
          return
       
-      map_types = self.db_process.get_user_map_types_unique(user.id)
+      map_types = []
+      if map_type is not None:
+         map_types = [map_type]
+      else:
+         map_types = self.db_process.get_user_map_types_unique(user.id)
       
-      if not map_types:
+      if len(map_types) == 0:
          ctx.report.msg.add('nothing to report')
          return
       
@@ -254,6 +262,7 @@ class Controller:
          ctx.report.msg.add(msg_arr)
 
    async def report_cell(self, coords, ctx, bot):
+      print(coords)
       map_type = self.detect_user_map_type(ctx.message.author, ctx)
       if map_type == MapType.unknown:
          ctx.report.reaction.add(r.fail)
@@ -280,6 +289,6 @@ class Controller:
       if len(msg_arr) == 0:
          msg_arr.append('nobody reported')
 
-      msg_arr.insert(0, f'Map: {map_type}')
+      msg_arr.insert(0, f'Map: {map_type.name}')
       
       ctx.report.msg.add(msg_arr)

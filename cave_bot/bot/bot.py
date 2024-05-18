@@ -85,16 +85,16 @@ class MyBot(commands.Bot):
          ctx.report.set_key('Info')
          ctx.report.msg.add('Restarted, reseted week!!!')
 
-   # async def on_command_error(self, ctx, error):
-   #    if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
-   #       await preprocess(ctx)
-   #       if len(str(error)) > 0:
-   #          ctx.report.err.add(str(error))
-   #          ctx.report.log.add({'exception': str(error)})
+   async def on_command_error(self, ctx, error):
+      if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
+         await preprocess(ctx)
+         if len(str(error)) > 0:
+            ctx.report.err.add(str(error))
+            ctx.report.log.add({'exception': str(error)})
 
-   #       await postprocess(ctx)
-   #    else:
-   #       await super().on_command_error(ctx, error)  # вызывает изначальное поведение on_error_message
+         await postprocess(ctx)
+      else:
+         await super().on_command_error(ctx, error)  # вызывает изначальное поведение on_error_message
 
    # override for help
    # !h user | !h User
@@ -116,7 +116,7 @@ class MyBot(commands.Bot):
    async def on_message(self, message):
       if message.author == self.user:
          return
-      
+         
       mock_ctx = get_mock_class_with_attr({"channel": message.channel, 'message': message, 'bot': self})
       await preprocess(mock_ctx)
       
@@ -169,6 +169,7 @@ class MyBot(commands.Bot):
       msg = f'scanned {len(messages)} from {after}'
       ctx.report.set_key('Info')
       ctx.report.msg.add(msg)
+      print(msg)
 
    async def get_user_name_by_id(self, user_id):
       user_id = int(user_id)

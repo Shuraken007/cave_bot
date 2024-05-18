@@ -58,7 +58,93 @@ class KeyStorage(BaseStorage):
          return None
 
       return data
+   
+class KeyStorageUnique(BaseStorage):
+   def __init__(self, name):
+      super().__init__()
+      self.data = {}
+      self.name = name
+      self.key = None
 
+   def set_key(self, key):
+      self.key = key
+      if key in self.data:
+         return
+      self.data[key] = OrderedDict()
+
+   def add(self, entity):
+      if self.off:
+         return
+      if self.key is None:
+         raise Exception(f'report key is not set for storage {self.name}')
+      if type(entity) != list:
+         entity = [entity]
+      
+      storage = self.data[self.key]
+      for e in entity:
+         if not e in storage:
+            storage[e] = 0
+         storage[e] += 1
+
+      self.amount += len(entity)
+
+   def get(self, key):
+      if self.off:
+         return None
+
+      if key is None:
+         raise Exception(f'key is not set on getting data for storage {self.name}')
+
+      raw_data = self.data.get(key, None)
+
+      if raw_data is None or len(raw_data.keys()) == 0:
+         return None
+
+      data = []
+      for message, amount in raw_data.items():
+         msg = message
+         if amount > 1:
+            msg += f': ({amount})'
+         data.append(msg)
+
+      return data
+
+class ArrayStorageUnique(BaseStorage):
+   def __init__(self):
+      super().__init__()
+      self.data = {}
+
+   def add(self, entity):
+      if self.off:
+         return
+      
+      if type(entity) != list:
+         entity = [entity]
+
+      storage = self.data
+      for e in entity:
+         if not e in storage:
+            storage[e] = 0
+         storage[e] += 1
+
+      self.amount += len(entity)
+
+   def get(self):
+      if self.off:
+         return None
+
+      if len(self.data.keys()) == 0:
+         return None
+
+      data = []
+      for message, amount in self.data.items():
+         msg = message
+         if amount > 1:
+            msg += f': ({amount})'
+         data.append(msg)
+
+      return data
+   
 class ArrayStorage(BaseStorage):
    def __init__(self):
       super().__init__()
@@ -169,6 +255,9 @@ class Report:
             arr.append('')
          arr.extend(reaction_data)
 
+      if unique:= self.unique.get():
+         arr.extend(unique)
+
       return arr
 
    def get_amount(self):
@@ -196,12 +285,13 @@ class Report:
       self.err = KeyStorage('err')
       self.log = KeyStorage('log')
 
+      self.unique = ArrayStorageUnique()
       self.reaction = CounterStorage()
       self.reaction_msg = ArrayStorage()
 
       self.image = ArrayStorage()
 
-      self.storages = [self.msg, self.err, self.log, self.reaction_msg, self.reaction, self.image]
+      self.storages = [self.msg, self.err, self.log, self.unique, self.reaction_msg, self.reaction, self.image]
 
       self.keys = []
 
