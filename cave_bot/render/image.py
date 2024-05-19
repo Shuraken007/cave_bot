@@ -71,6 +71,7 @@ def add_img(background, foreground, align, shift=None, foregound_on_background=T
    else:
       img = Image.alpha_composite(foreground, background_part)
    background.paste(img, (width, height))
+   img.close()
 
 class ImageCache:
    def __init__(self, map_type, font_descr, font_cell, sizes, images):
@@ -94,6 +95,7 @@ class RenderImage():
 
       self.cache = {}
       self.storage = ImageStorage()
+      self.close_cache = []
 
    def init_cache_by_map_type(self, view):
       map_type = view.map_type
@@ -115,6 +117,12 @@ class RenderImage():
    
    def reset_storage(self):
       self.storage.reset()
+
+   def close_images(self):
+      # print(f'closing {len(self.close_cache)} images')
+      for img in self.close_cache:
+         img.close
+      self.close_cache = []
 
    def get_font_size_descr(self, bg_w, map_type):
       return int(bg_w * (3/200))
@@ -298,7 +306,8 @@ class RenderImage():
       if color:
          img = img.copy()
          self.change_color(img, (0, 0, 0, 0), color)
-
+         self.close_cache.append(img)
+         
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
 
    def add_text_by_cell(self, text, cell_type, coords, back, bright, map_type):
@@ -330,7 +339,6 @@ class RenderImage():
 
       back = cache.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
-
 
       for i in range(0, map_type.value):
          for j in range(0, map_type.value):
@@ -368,14 +376,16 @@ class RenderImage():
 
       if not img:
          img = self.generate_map(user_id, bright, clean, bot, view, ctx)
-      
+
       ctx.report.msg.add(f'Map: {map_type.name}')
-      ctx.report.image.add(img)
+      ctx.report.image.add(img.copy())
       
       if not using_save and not user_id:
          self.storage.add_image([bright, clean, map_type.name], img)
       elif user_id:
-         del img
+         self.close_cache.append(img)
+
+      self.close_images()
 
    def get_description_image(self, cell_type_name, is_bright, images):
       cell_type = None
@@ -383,6 +393,7 @@ class RenderImage():
          img = images[ct.scepter_of_domination]
       elif cell_type_name == 'empty':
          img = images['cell'].copy()
+         self.close_cache.append(img)
          color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean)
          self.change_color(img, (0, 0, 0, 0), color)
       else:

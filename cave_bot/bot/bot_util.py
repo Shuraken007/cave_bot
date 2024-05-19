@@ -48,6 +48,7 @@ async def response_by_report(ctx):
             image.save(image_binary, 'PNG')
             image_binary.seek(0)
             await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+            image.close()
 
    r.dump_to_logger(bot.logger)
    ctx.report = Report()

@@ -63,6 +63,6 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 				self.bot.render_ascii.render(me, self.bot, ctx)
 			else:
 				self.bot.render_image.render(me, bright, clean, self.bot, ctx)
-
+				
 async def setup(bot):
 	await bot.add_cog(UserCog(bot))
