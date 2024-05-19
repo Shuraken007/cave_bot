@@ -585,6 +585,20 @@ files = [
 ]
 
 [[package]]
+name = "objgraph"
+version = "3.6.1"
+description = "Draws Python object reference graphs with graphviz"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "objgraph-3.6.1-py2.py3-none-any.whl", hash = "sha256:21c6bc62df0e7b77cc0a31d96feec04c965f09ec2e3d78b816b516a604f0defd"},
+    {file = "objgraph-3.6.1.tar.gz", hash = "sha256:fe96c74147bbcaae8665b396e5388bdcc3197deebba4e6381f05202ee5b453a7"},
+]
+
+[package.extras]
+ipython = ["graphviz"]
+
+[[package]]
 name = "packaging"
 version = "24.0"
 description = "Core utilities for Python packages"
@@ -1179,4 +1193,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "66305a6a63e318525c5bd8e187a26d98c647e2d0c4bb8206a0788667ee9bc360"
+content-hash = "e273898ec31d82d815865de7612379105dc3b17b07f5580181b86e6bc4785870"

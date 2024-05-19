@@ -374,6 +374,8 @@ class RenderImage():
       
       if not using_save and not user_id:
          self.storage.add_image([bright, clean, map_type.name], img)
+      elif user_id:
+         del img
 
    def get_description_image(self, cell_type_name, is_bright, images):
       cell_type = None

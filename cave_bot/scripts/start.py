@@ -2,6 +2,7 @@ from discord import Intents
 
 from ..bot.bot import MyBot
 from ..config import Config
+from ..utils import start_memory_tracker
 
 def get_intents():
    intents = Intents.default()
@@ -10,6 +11,7 @@ def get_intents():
    return intents
 
 def main():
+   start_memory_tracker()
    config = Config()
 
    intents = get_intents()

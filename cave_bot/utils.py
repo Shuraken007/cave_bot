@@ -2,6 +2,9 @@ from pathlib import Path
 import os
 from datetime import datetime, timezone, timedelta
 from .const import MSG_CONSTRAINT
+import tracemalloc
+import objgraph
+from io import StringIO
 
 def build_path(path_arr, file_name=None, mkdir=False):
    path = os.path.join(os.path.dirname( __file__ ), '..', *path_arr)
@@ -59,3 +62,17 @@ def build_sending_msg_arr_consider_constraint(arr):
 
 def get_mock_class_with_attr(attribute_dict):
    return type('',(object,),attribute_dict)()
+
+def start_memory_tracker():
+   tracemalloc.start() 
+
+def print_memory_tracker(ctx):
+   # snapshot = tracemalloc.take_snapshot() 
+   # top_stats = snapshot.statistics('lineno') 
+   
+   # for stat in top_stats[:10]: 
+   #    ctx.report.msg.add(str(stat))
+
+   mem_info = StringIO()
+   objgraph.show_most_common_types(limit = 10, file=mem_info)
+   ctx.report.msg.add(mem_info.getvalue())

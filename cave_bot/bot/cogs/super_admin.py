@@ -4,6 +4,7 @@ from discord.ext import commands
 from ...const import UserRole as ur
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
+from ...utils import print_memory_tracker
 
 class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin commands - manipulate with other admins data"):
 
@@ -25,6 +26,12 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
         for user in users:
             ctx.report.set_key(f'{user.name}')
             self.bot.controller.delete_user_role(user, ctx)
+
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(aliases=['dm'], brief = "dump memory objects")
+    async def dumpmemory(self, ctx):
+        print_memory_tracker(ctx)
 
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))
