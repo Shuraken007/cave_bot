@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import gc
 
 from ...const import UserRole as ur
 from ...helpo import help
@@ -32,6 +33,13 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
     @commands.command(aliases=['dm'], brief = "dump memory objects")
     async def dumpmemory(self, ctx):
         print_memory_tracker(ctx)
+
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(aliases=['gc'], brief = "attempt to run garbage collector manually")
+    async def gccollect(self, ctx):
+        gc.collect()
+        ctx.report.msg.add('collected')
 
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))
