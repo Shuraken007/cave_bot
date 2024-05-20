@@ -9,6 +9,14 @@ MATCH_MAP = re.compile(r"Cave Difficulty\s*:\s*([\d\w]+)")
 MATCH_REPORT = re.compile(r"(\d+\-\d+)\s*:\s*([\w' ]+)")
 MATCH_COMPACT_REPORT = regex.compile(r"([\w' ]+)\s*:\s*(\d+\-\d+\s*)+")
 
+def convert_coords_due_bug(x, y, size, report):
+   absolute_number = (x-1)  * 20 + y
+   a = int(absolute_number / size) + 1
+   b = absolute_number % size
+
+   report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
+   return a, b
+
 def validate_coords(coords, report, map_type=None):
    try:
       extracted_coords = coords.split('-')
@@ -21,6 +29,9 @@ def validate_coords(coords, report, map_type=None):
 
       x = int(extracted_coords[0])
       y = int(extracted_coords[1])
+
+      if map_type.value > MapType.easy:
+         x, y = convert_coords_due_bug(x, y, map_type.value, report)
 
       if map_type in [None,  MapType.unknown]:
          map_type = MapType.hard
