@@ -262,7 +262,6 @@ class Controller:
          ctx.report.msg.add(msg_arr)
 
    async def report_cell(self, coords, ctx, bot):
-      print(coords)
       map_type = self.detect_user_map_type(ctx.message.author, ctx)
       if map_type == MapType.unknown:
          ctx.report.reaction.add(r.fail)

@@ -17,7 +17,7 @@ def convert_coords_due_bug(x, y, size, report):
    report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
    return a, b
 
-def validate_coords(coords, report, map_type=None, is_new_version = False):
+def validate_coords(coords, report, map_type=None, is_new_version = False, is_bug_converter = False):
    try:
       extracted_coords = coords.split('-')
 
@@ -30,7 +30,7 @@ def validate_coords(coords, report, map_type=None, is_new_version = False):
       x = int(extracted_coords[0])
       y = int(extracted_coords[1])
 
-      if not is_new_version and map_type.value > MapType.easy:
+      if is_bug_converter and not is_new_version and map_type.value > MapType.easy:
          x, y = convert_coords_due_bug(x, y, map_type.value, report)
 
       if map_type in [None,  MapType.unknown]:
@@ -70,7 +70,7 @@ def validate_map_type(map_type_val, ctx):
 
    return map_type, is_new_version
 
-def validate_and_add(what, coords, bot, map_type, ctx, is_new_version):
+def validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter):
    try:
       strict_channels_f(ctx)
       strict_users_f(ctx, ur.nobody)
@@ -79,7 +79,7 @@ def validate_and_add(what, coords, bot, map_type, ctx, is_new_version):
       return
 
    what = validate_what(what, ctx.report)
-   coords = validate_coords(coords, ctx.report, map_type, is_new_version)
+   coords = validate_coords(coords, ctx.report, map_type, is_new_version, is_bug_converter)
 
    if what is None or coords is None:
       return
@@ -91,6 +91,7 @@ def parse_msg(ctx, bot):
 
    map_type = bot.controller.detect_user_map_type(ctx.message.author, ctx, with_error = False)
    is_new_version = False
+   is_bug_converter = False
 
    for e in arr:
       ctx.report.set_key(f'line {i}')
@@ -98,19 +99,19 @@ def parse_msg(ctx, bot):
       if match := MATCH_MAP.match(e):
          map_type_alias = match.group(1)
          map_type, is_new_version = validate_map_type(map_type_alias, ctx)
-
+         is_bug_converter = True
          if not map_type:
             return
          bot.controller.config.set(ctx.message.author, 'map_type', map_type, ctx.report)
       if match := MATCH_REPORT.match(e):
          coords = match.group(1)
          what = match.group(2).strip()
-         validate_and_add(what, coords, bot, map_type, ctx, is_new_version)
+         validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter)
       elif match:= MATCH_COMPACT_REPORT.match(e):
          what = match.group(1).strip()
          coords_arr = match.captures(2)
          for coords in coords_arr:
             coords = coords.strip()
-            validate_and_add(what, coords, bot, map_type, ctx, is_new_version)
+            validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter)
       else:
          ctx.report.log.add({'error': f'not match'})
