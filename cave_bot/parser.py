@@ -17,7 +17,7 @@ def convert_coords_due_bug(x, y, size, report):
    report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
    return a, b
 
-def validate_coords(coords, report, map_type=None):
+def validate_coords(coords, report, map_type=None, is_new_version = False):
    try:
       extracted_coords = coords.split('-')
 
@@ -30,7 +30,7 @@ def validate_coords(coords, report, map_type=None):
       x = int(extracted_coords[0])
       y = int(extracted_coords[1])
 
-      if map_type.value > MapType.easy:
+      if not is_new_version and map_type.value > MapType.easy:
          x, y = convert_coords_due_bug(x, y, map_type.value, report)
 
       if map_type in [None,  MapType.unknown]:
@@ -58,15 +58,19 @@ def validate_what(what, report):
    return ct(cell_aliases[what])
 
 def validate_map_type(map_type_val, ctx):
+   is_new_version = False
    map_type = map_type_aliases.get(map_type_val)
    if map_type is None:
       err_msg = f'unknown map difficulty {map_type_val}'
       ctx.report.err.add(err_msg)
       ctx.report.reaction.add(r.fail)
-      return
-   return map_type
 
-def validate_and_add(what, coords, bot, map_type, ctx):
+   if len(map_type_val) > 1:
+      is_new_version = True
+
+   return map_type, is_new_version
+
+def validate_and_add(what, coords, bot, map_type, ctx, is_new_version):
    try:
       strict_channels_f(ctx)
       strict_users_f(ctx, ur.nobody)
@@ -75,7 +79,7 @@ def validate_and_add(what, coords, bot, map_type, ctx):
       return
 
    what = validate_what(what, ctx.report)
-   coords = validate_coords(coords, ctx.report, map_type)
+   coords = validate_coords(coords, ctx.report, map_type, is_new_version)
 
    if what is None or coords is None:
       return
@@ -86,13 +90,14 @@ def parse_msg(ctx, bot):
    i = 1
 
    map_type = bot.controller.detect_user_map_type(ctx.message.author, ctx, with_error = False)
-   
+   is_new_version = False
+
    for e in arr:
       ctx.report.set_key(f'line {i}')
       i += 1
       if match := MATCH_MAP.match(e):
          map_type_alias = match.group(1)
-         map_type = validate_map_type(map_type_alias, ctx)
+         map_type, is_new_version = validate_map_type(map_type_alias, ctx)
 
          if not map_type:
             return
@@ -100,12 +105,12 @@ def parse_msg(ctx, bot):
       if match := MATCH_REPORT.match(e):
          coords = match.group(1)
          what = match.group(2).strip()
-         validate_and_add(what, coords, bot, map_type, ctx)
+         validate_and_add(what, coords, bot, map_type, ctx, is_new_version)
       elif match:= MATCH_COMPACT_REPORT.match(e):
          what = match.group(1).strip()
          coords_arr = match.captures(2)
          for coords in coords_arr:
             coords = coords.strip()
-            validate_and_add(what, coords, bot, map_type, ctx)
+            validate_and_add(what, coords, bot, map_type, ctx, is_new_version)
       else:
          ctx.report.log.add({'error': f'not match'})
