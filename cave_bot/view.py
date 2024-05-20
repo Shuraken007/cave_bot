@@ -66,7 +66,7 @@ class View:
       self.tracker[key] = 0
 
    def get_update_tracker(self, key):
-      return self.tracker[key]
+      return self.tracker.get(key)
 
    def init_grid(self):
       for i in range(0, self.map_type.value):

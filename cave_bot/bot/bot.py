@@ -83,7 +83,7 @@ class MyBot(commands.Bot):
 
          self.render_image.reset_storage()
          ctx.report.set_key('Info')
-         ctx.report.msg.add('Restarted, reseted week!!!')
+         ctx.report.msg.add('Restarted, reseted week!!!\n')
 
    async def on_command_error(self, ctx, error):
       if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
