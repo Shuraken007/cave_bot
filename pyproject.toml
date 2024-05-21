@@ -5,20 +5,36 @@ description = "discord bot for building map on chat reports"
 authors = ["Shuraken007 <alexander.mad93@gmail.com>"]
 readme = "README.md"
 
+[tool.poetry.group.test]
+optional = true
+[tool.poetry.group.test.dependencies]
+  pytest-xdist = "^3.6.1"
+  pytest = "^8.2.0"
+
+[tool.poetry.group.mysql]
+optional = true
+[tool.poetry.group.mysql.dependencies]
+  pymysql = "^1.1.0"
+
+[tool.poetry.group.psql]
+optional = true
+[tool.poetry.group.psql.dependencies]
+  psycopg2-binary = "^2.9.9"
+
+[tool.poetry.group.debug]
+optional = true
+[tool.poetry.group.debug.dependencies]
+  objgraph = "^3.6.1"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 discord-py = "^2.3.2"
 python-dotenv = "^1.0.1"
 pillow = "^10.3.0"
 sqlalchemy = "^2.0.30"
-pytest = "^8.2.0"
 sqlalchemy-utils = "^0.41.2"
-pytest-xdist = "^3.6.1"
-psycopg2-binary = "^2.9.9"
-pymysql = "^1.1.0"
 regex = "^2024.5.10"
 alembic = "^1.13.1"
-objgraph = "^3.6.1"
 
 [tool.poetry.scripts]
 start = "cave_bot.scripts.start:main"
