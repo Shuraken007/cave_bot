@@ -25,10 +25,10 @@ class Controller:
       return view
 
    def init_view(self, view):
-      map_size = view.map_type.value
-      for i in range(0, map_size):
-         for j in range(0, map_size):
-            self.update_cell([i+1, j+1], view)
+      cells = self.db_process.get_all_cells(view.map_type)
+      for cell in cells:
+         counters = [getattr(cell, x.name) for x in ct]
+         view.update_cell(cell.x, cell.y, counters)
 
    def detect_user_map_type(self, user, ctx, with_error = True):
       user_config = self.db_process.get_user_config(user.id)

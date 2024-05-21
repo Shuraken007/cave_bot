@@ -16,8 +16,8 @@ def convert_coords_due_bug(x, y, size, report):
    if b == 0:
       b = size
       a -= 1
-   # report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
    return a, b
+   # report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
 
 def validate_coords(coords, report, map_type=None, is_new_version = False, is_bug_converter = False):
    try:

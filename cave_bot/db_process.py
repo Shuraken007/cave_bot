@@ -13,6 +13,12 @@ class DbProcess:
          arr.append(getattr(self.db.m.Cell, ct.name))
       return arr
 
+   def get_all_cells(self, map_type):
+      with self.db.Session() as s:
+         return s.query(self.db.m.Cell).filter(
+            self.db.m.Cell.map_type == map_type
+         ).order_by(self.db.m.Cell.x, self.db.m.Cell.y).all()
+
    def get_cell_type_counters(self, x, y, map_type):
       with self.db.Session() as s:
          cell = s.query(*self.cell_query_fields).filter(
