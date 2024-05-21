@@ -99,10 +99,7 @@ def test_get_last_scan_if_not_set(db_process):
 def test_get_last_scan(db_process, local_time, anaware_time):
    # global_time test have not sence, should be set via set_last_scan to have effect
    for time in [local_time, anaware_time]:
-      with db_process.db.Session() as s:
-         last_scan = db_process.db.m.LastScan(id=1, last_scan = time)
-         s.merge(last_scan)
-         s.commit()
+      db_process.set_last_scan(time)
 
       last_scan = db_process.get_last_scan()
       time = time_to_local_timezone(time)
@@ -633,7 +630,7 @@ def test_get_user_config_if_set(db_process):
 def test_set_user_config_if_not_set(db_process):
    user_id = 239485720
    map_type = mt.hard
-   db_process.set_user_config({'id': user_id, 'map_type': map_type})
+   db_process.set_user_config(user_id, {'map_type': map_type})
 
    get_user_config = db_process.get_user_config(user_id)
 
@@ -644,8 +641,8 @@ def test_set_user_config_if_set(db_process):
    user_id = 239485720
    map_type_was = mt.hard
    map_type_new = mt.normal
-   db_process.set_user_config({'id': user_id, 'map_type': map_type_was})
-   db_process.set_user_config({'id': user_id, 'map_type': map_type_new})
+   db_process.set_user_config(user_id, {'map_type': map_type_was})
+   db_process.set_user_config(user_id, {'map_type': map_type_new})
 
    get_user_config = db_process.get_user_config(user_id)
 
@@ -662,7 +659,7 @@ def test_delete_user_config_if_set(db_process):
    user_id = 239485720
    map_type = mt.hard
 
-   db_process.set_user_config({'id': user_id, 'map_type': map_type})
+   db_process.set_user_config(user_id, {'map_type': map_type})
    db_process.delete_user_config(user_id)
 
    assert db_process.get_user_config(user_id) is None

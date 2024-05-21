@@ -6,13 +6,11 @@ class Config:
       self.db_process = db_process
 
    def set(self, user, field, value, report):
-      params = {'id': user.id, field: value}
-      self.db_process.set_user_config(params)
+      self.db_process.set_user_config(user.id, {field: value})
       report.reaction.add(Reactions.ok)
 
    def reset(self, user, report):
-      params = {'id': user.id, **DEFAULT_USER_CONFIG}
-      self.db_process.set_user_config(params)
+      self.db_process.set_user_config(user.id, DEFAULT_USER_CONFIG)
       report.reaction.add(Reactions.ok)
 
    def delete(self, user, report):

@@ -51,6 +51,7 @@ class DbProcess:
 
    def _end_session(self):
       if self.s.new or self.s.dirty or self.s.deleted:
+         print('commit')
          self.s.commit()
       self.s.close()
 
@@ -217,16 +218,27 @@ class DbProcess:
          self.db.m.UserConfig.id == user_id, 
       ).first()
       
-   def set_user_config(self, user_config_dict):
-      user_config = self.db.m.UserConfig(**user_config_dict)
-      self.s.merge(user_config)
+   def set_user_config(self, user_id, user_config_dict):
+      user_config = self.s.query(
+         self.db.m.UserConfig
+      ).filter(
+         self.db.m.UserConfig.id == user_id
+      ).first()
+      if user_config is None:
+         user_config = self.db.m.UserConfig(id = user_id)
+      
+      for field, value in user_config_dict.items():
+         setattr(user_config, field, value)
+
+      self.s.add(user_config)
 
    def delete_user_config(self, user_id):
       config = self.s.query(
          self.db.m.UserConfig
       ).filter(
          self.db.m.UserConfig.id == user_id
-      )
+      ).first()
+
       if config is not None:
          self.s.delete(config)
 
@@ -262,4 +274,4 @@ class DbProcess:
          )
 
       setattr(map_config, cell_name, value)   
-      self.s.merge(map_config)
+      self.s.add(map_config)
