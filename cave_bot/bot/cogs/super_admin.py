@@ -41,5 +41,12 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
         gc.collect()
         ctx.report.msg.add('collected')
 
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(brief = "save from memory db to connected db")
+    async def save(self, ctx):
+        self.bot.db.save_to_load_db()
+        ctx.report.msg.add('saved')
+
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))

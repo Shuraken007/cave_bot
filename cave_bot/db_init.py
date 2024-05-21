@@ -13,13 +13,25 @@ def get_engine(db_connection_str):
 class Db:
    def __init__(self, models, db_connection_str, admin_id=None):
       self.m = models
-      self.engine = get_engine(db_connection_str)
-      
+      self.memory_db = sa.create_engine("sqlite://")
+      self.load_db = get_engine(db_connection_str)
+
+      self.m.Base.metadata.create_all(self.memory_db)
+      self.m.Base.metadata.create_all(self.load_db)
+
+      self.load_from_one_db_to_another(self.load_db, self.memory_db)
+
       self.Session = self.get_session()
+
       self.add_admin(admin_id)
 
+      with self.Session() as s:
+         last_scan_record = s.query(self.m.LastScan).first()
+         print(f'last_scan: {str(last_scan_record and last_scan_record.last_scan)}')
+
+
    def drop_tables(self):
-      self.m.Base.metadata.drop_all(bind = self.engine)
+      self.m.Base.metadata.drop_all(bind = self.load_db)
 
    def add_admin(self, admin_id):
       if admin_id is None:
@@ -31,7 +43,18 @@ class Db:
 
    def get_session(self):
       Session = sa.orm.sessionmaker()
-      Session.configure(bind=self.engine)
-
-      self.m.Base.metadata.create_all(self.engine)
+      Session.configure(bind=self.memory_db)
       return Session
+   
+   def save_to_load_db(self):
+      self.load_from_one_db_to_another(self.memory_db, self.load_db)
+
+   def load_from_one_db_to_another(self, engine_from, engine_to):
+      with engine_from.connect() as db_from:
+         with engine_to.connect() as db_to:
+            for table in self.m.Base.metadata.sorted_tables:
+               db_to.execute(table.delete())
+               db_to.commit()
+               for row in db_from.execute(sa.select(table.c)):
+                  db_to.execute(table.insert().values(row._mapping))
+                  db_to.commit()

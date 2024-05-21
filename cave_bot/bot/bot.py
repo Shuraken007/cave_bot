@@ -1,7 +1,7 @@
 #!python3
 import inspect
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import os
 
 from .bot_util import init_ctx, \
@@ -21,9 +21,11 @@ from ..render.image import RenderImage
 async def preprocess(ctx):
    init_ctx(ctx)
    ctx.bot.reset(ctx)
+   # ctx.bot.db_process.start_session()
 
 async def postprocess(ctx):
    await response_by_report(ctx)
+   # ctx.bot.db_process.end_session()
 
 class MyBot(commands.Bot):
 
@@ -77,7 +79,8 @@ class MyBot(commands.Bot):
 
    def reset(self, ctx):
       if self.week_postfix != get_week_start_as_str():
-         self.db.engine.dispose()
+         self.dump_memory_db_to_connection()
+         self.db.memory_db.dispose()
          self.init_db()
          self.controller = Controller(self.db_process)
 
@@ -113,6 +116,9 @@ class MyBot(commands.Bot):
 
       await self.spawn_scan()
 
+      if not self.dump_memory_db_to_connection.is_running():
+         self.dump_memory_db_to_connection.start()      
+
    async def on_message(self, message):
       if message.author == self.user:
          return
@@ -124,6 +130,11 @@ class MyBot(commands.Bot):
       await postprocess(mock_ctx)
 
       await self.process_commands(message)
+
+      last_msg_datetime = message.created_at
+
+      if last_msg_datetime:
+         self.db_process.set_last_scan(last_msg_datetime)
 
    # spawn_scan must imitate normal run of command "!scan"
    async def spawn_scan(self):
@@ -184,3 +195,8 @@ class MyBot(commands.Bot):
          return f'unknown name ({user_id} id)'
 
       return user.name
+
+   @tasks.loop(minutes=30.0)
+   async def dump_memory_db_to_connection(self):
+      self.db.save_to_load_db()
+      print('dumped')

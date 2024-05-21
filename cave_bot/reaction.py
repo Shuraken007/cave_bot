@@ -18,7 +18,7 @@ emoji = {
    r.fail: "❌",
    r.user_data_equal: "🟰",
    r.user_data_new: "➕",
-   r.user_data_changed: "↔️",
+   r.user_data_changed: "♻️",
    r.user_data_deleted: "➖",
    r.user_data_wrong: "⚠️",
    r.cell_new: "🆕",
@@ -43,7 +43,7 @@ def number_to_digits(number):
 def process_reactions(reactions, report):
    emoji_arr = []
    for reaction, value in reactions.items():
-      if value > 1:
+      if reaction not in [r.ok]:
          add_reaction_to_report(reaction, value, report)
 
       if value > 1 and reaction not in allowed_value:
