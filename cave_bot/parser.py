@@ -15,6 +15,7 @@ def convert_coords_due_bug(x, y, size, report):
    b = absolute_number % size
    if b == 0:
       b = size
+      a -= 1
    # report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
    return a, b
 
