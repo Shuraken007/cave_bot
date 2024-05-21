@@ -51,7 +51,6 @@ class DbProcess:
 
    def _end_session(self):
       if self.s.new or self.s.dirty or self.s.deleted:
-         print('commit')
          self.s.commit()
       self.s.close()
 

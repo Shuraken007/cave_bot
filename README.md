@@ -85,8 +85,10 @@ required:
   https://python-poetry.org/docs/#installing-with-the-official-installer
 
 * create virtual environment - folder where all libs will loaded locally only for this project `poetry env use python3` - where python3 - your current python alias (python 3.10 as example)
-* install all python packages / dependencies
-`poetry install`
+* install all python packages / dependencies  
+`poetry install --with test --with debug --with mysql --with psql`
+  select smth one of `psql` / `mysql`  
+  `test` probably not required on prod
 
 # run project & scripts
 * start bot:  
