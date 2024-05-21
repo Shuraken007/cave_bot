@@ -6,6 +6,10 @@ import tracemalloc
 import objgraph
 from io import StringIO
 
+import cProfile
+import io
+import pstats
+
 def build_path(path_arr, file_name=None, mkdir=False):
    path = os.path.join(os.path.dirname( __file__ ), '..', *path_arr)
    if mkdir:
@@ -76,3 +80,21 @@ def print_memory_tracker(ctx):
    mem_info = StringIO()
    objgraph.show_most_common_types(limit = 10, file=mem_info)
    ctx.report.msg.add(mem_info.getvalue())
+
+def profile_start(ctx):
+   ctx.bot.pr = cProfile.Profile()
+   ctx.bot.pr.enable()
+
+def profile_end(ctx):
+   ctx.bot.pr.disable()
+
+   s = io.StringIO()
+   ps = pstats.Stats(ctx.bot.pr, stream=s).sort_stats("cumulative")
+   ps.print_stats(20)
+   msg = s.getvalue()
+   msg_arr = msg.split("\n")
+   # uncomment this to see who's calling what
+   # ps.print_callers()
+   ctx.report.msg.add('Profile start <--------------------------')
+   ctx.report.msg.add(msg_arr)
+   ctx.report.msg.add('Profile end <--------------------------')

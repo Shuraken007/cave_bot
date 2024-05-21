@@ -6,7 +6,8 @@ import os
 
 from .bot_util import init_ctx, \
                      strict_channels, strict_users, response_by_report
-from ..utils import get_last_monday, get_week_start_as_str, get_mock_class_with_attr
+from ..utils import get_last_monday, get_week_start_as_str, get_mock_class_with_attr, \
+                     profile_start, profile_end
 from ..model import generate_models, get_table_names
 from ..db_init import Db
 from ..db_process import DbProcess
@@ -21,9 +22,14 @@ from ..render.image import RenderImage
 async def preprocess(ctx):
    init_ctx(ctx)
    ctx.bot.reset(ctx)
+   if ctx.bot.is_profile:
+      profile_start(ctx)
    # ctx.bot.db_process.start_session()
 
 async def postprocess(ctx):
+   if ctx.bot.is_profile and ctx.bot.pr:
+      profile_end(ctx)
+
    await response_by_report(ctx)
    # ctx.bot.db_process.end_session()
 
@@ -68,6 +74,9 @@ class MyBot(commands.Bot):
       self.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'], self)
 
       self.initial_extensions = initial_extensions
+
+      self.is_profile = False
+      self.pr = None
 
       # this part typically solved with decorators like `@bot.event`
       # but it required MyBot instance, which is bad design

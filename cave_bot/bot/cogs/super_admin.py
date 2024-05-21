@@ -48,5 +48,25 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
         self.bot.db.save_to_load_db()
         ctx.report.msg.add('saved')
 
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(aliases=['pro'], brief = "profile peformance")
+    async def profile(self, ctx):
+        if self.bot.is_profile == True:
+            ctx.report.msg.add('profiling off')
+            self.bot.is_profile = False
+            self.bot.pr = None
+        else:
+            ctx.report.msg.add('profiling on')
+            self.bot.is_profile = True
+    
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(brief = "test db, better with select")
+    async def test(self, ctx):
+        with self.bot.db.LoadSession() as s:
+            last_scan_record = s.query(self.bot.db.m.LastScan).first()
+            ctx.report.msg.add(last_scan_record and str(last_scan_record.last_scan))
+
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))

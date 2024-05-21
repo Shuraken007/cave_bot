@@ -21,7 +21,8 @@ class Db:
 
       self.load_from_one_db_to_another(self.load_db, self.memory_db)
 
-      self.Session = self.get_session()
+      self.Session = self.get_session(self.memory_db)
+      self.LoadSession = self.get_session(self.load_db)
 
       self.add_admin(admin_id)
 
@@ -41,9 +42,9 @@ class Db:
          s.merge(admin)
          s.commit()
 
-   def get_session(self):
+   def get_session(self, engine):
       Session = sa.orm.sessionmaker()
-      Session.configure(bind=self.memory_db)
+      Session.configure(bind=engine)
       return Session
    
    def save_to_load_db(self):
