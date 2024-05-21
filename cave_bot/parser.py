@@ -13,8 +13,9 @@ def convert_coords_due_bug(x, y, size, report):
    absolute_number = (x-1)  * 20 + y
    a = int(absolute_number / size) + 1
    b = absolute_number % size
-
-   report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
+   if b == 0:
+      b = size
+   # report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
    return a, b
 
 def validate_coords(coords, report, map_type=None, is_new_version = False, is_bug_converter = False):

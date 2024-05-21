@@ -119,7 +119,7 @@ class RenderImage():
       self.storage.reset()
 
    def close_images(self):
-      # print(f'closing {len(self.close_cache)} images')
+      # print(f'closing {len(self.close_cache)} images   ')
       for img in self.close_cache:
          img.close
       self.close_cache = []
