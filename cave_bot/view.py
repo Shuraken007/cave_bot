@@ -58,6 +58,15 @@ class View:
 
       return counter
 
+   def get_explored_cells(self):
+      counter = 0
+      for i in range(0, self.map_type.value):
+         for j in range(0, self.map_type.value):
+            if self.get_cell_type(i, j) != ct.unknown:
+               counter += 1
+               
+      return counter
+
    def update_tracker(self):
       for k in self.tracker.keys():
          self.tracker[k] += 1

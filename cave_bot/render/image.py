@@ -5,6 +5,7 @@ from ..const import CellType as ct, \
    MapType
 from ..utils import build_path
 from .color_util import is_text_black
+from .gradient_color import get_gradient_color
 from .img_storage import ImageStorage
 from ..reaction import Reactions
 
@@ -71,6 +72,23 @@ def add_img(background, foreground, align, shift=None, foregound_on_background=T
    else:
       img = Image.alpha_composite(foreground, background_part)
    background.paste(img, (width, height))
+
+def draw_bar(draw, x, y, width, height, progress, fill_color, background_color):
+   # Draw the background
+   draw.rectangle((x+(height/2), y, x+width+(height/2), y+height), fill=background_color, width=10)
+   draw.ellipse((x+width, y, x+height+width, y+height), fill=background_color)
+   draw.ellipse((x, y, x+height, y+height), fill=background_color)
+   
+   if progress == 0:
+      return
+   
+   width = int(width*progress)
+
+   # Draw the part of the progress bar that is actually filled
+   draw.rectangle((x+(height/2), y, x+width+(height/2), y+height), fill=fill_color, width=10)
+   draw.ellipse((x+width, y, x+height+width, y+height), fill=fill_color)
+   draw.ellipse((x, y, x+height, y+height), fill=fill_color)
+
 
 class ImageCache:
    def __init__(self, map_type, font_descr, font_cell, sizes, images):
@@ -471,15 +489,41 @@ class RenderImage():
       self.add_description_text(description_text, coords, back, is_bright, cache)
       return cache.sizes['cell_width']
 
+   def add_bar(self, y, back, bot, is_bright, map_type):
+      view = bot.controller.get_view(map_type)
+
+      total_cells = map_type.value ** 2
+      explored_cells = view.get_explored_cells() 
+      progress = explored_cells / total_cells
+      total_width = int(self.bg_w * 0.8)
+      height = int(self.bg_w * 0.02)
+
+      x = int((self.bg_w - total_width) / 2)
+
+      fill_color = get_gradient_color(progress, total_width)
+      transperancy = 80
+      if is_bright:
+         transperancy = 125
+      fill_color.append(transperancy)
+      background_color = self.get_color_by_name('grey', is_bright)
+      draw = ImageDraw.Draw(back)
+      draw_bar(draw, x, y, total_width, height, progress, tuple(fill_color), tuple(background_color))
+      return height
+   
    def add_descriptions(self, back, user_id, bot, is_bright, map_type):
       cache = self.cache[map_type]
 
       base_coords = self.get_cell_coords(map_type.value, 1, cache.sizes)
       shift = cache.sizes['cell_width']
       base_coords[1] += shift
+      
+      bar_shift = self.add_bar(base_coords[1], back, bot, is_bright, map_type)
+
+      base_coords[1] += bar_shift
+      base_coords[1] += shift
 
       coords = base_coords.copy()
-      
+
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
          shift_y = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type)
          coords[1] += shift_y * 1.1
