@@ -240,7 +240,9 @@ class RenderImage():
       if align is not None:
          if align == 'CENTER' and width is not None:
             coords[0] += int((width - w) / 2)
-         if align == 'CENTER' and height is not None:
+         elif align == 'TOPRIGHT':
+            coords[0] -= w
+         if height is not None:
             coords[1] += int((height) / 2) - h
             pass
 
@@ -453,7 +455,9 @@ class RenderImage():
          msg2 += f'  [{description}]'      
       text.append({'text': msg2.lower()})
 
-      return text
+      description_text_spec = {'founded': founded, 'total': total}
+
+      return text, description_text_spec
 
    def add_description_text(self, description_text, coords, back, is_bright, cache):
       icon_width = cache.sizes['cell_width']
@@ -484,18 +488,53 @@ class RenderImage():
       cache = self.cache[map_type]
 
       img = self.get_description_image(cell_type_name, is_bright, cache.images)
-      description_text = self.get_description_text(cell_type_name, user_id, bot, map_type)
+      description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
       self.add_description_text(description_text, coords, back, is_bright, cache)
-      return cache.sizes['cell_width']
+      return cache.sizes['cell_width'], description_text_spec
 
-   def add_bar(self, y, back, bot, is_bright, map_type):
+   def add_bar_description(self, explored_cells, total_cells, progress, x, center_y, total_width, height, back, is_bright, map_type):
+      cache = self.cache[map_type]
+
+      coords = [x + total_width + height * 1.5, center_y - height / 2]
+      pos_spec = { 
+         'coords': coords, 
+         'height': height
+      }
+      text_spec = { 
+         'text': f'[{explored_cells}/{total_cells}]',
+         'color': self.get_text_color(back, coords, color_name=None, is_bright=is_bright),
+         'font': cache.font_descr,
+      }
+
+      self.add_text(back, text_spec, pos_spec)
+
+      coords = [x - height / 2, center_y - height / 2]
+      pos_spec = {
+         'coords': coords, 
+         'align': "TOPRIGHT",
+         'height': height
+      }
+      text_spec = { 
+         'text': f'[ {int(progress * 100)}% ]',
+         'color': self.get_text_color(back, coords, color_name=None, is_bright=is_bright),
+         'font': cache.font_descr,
+      }
+
+      self.add_text(back, text_spec, pos_spec)      
+
+   def add_bar(self, center_y, back, bot, is_bright, map_type, user_id, boon_total, boon_found):
       view = bot.controller.get_view(map_type)
 
-      total_cells = map_type.value ** 2
-      explored_cells = view.get_explored_cells() 
+      total_cells, explored_cells = 0, 0
+      if user_id:
+         total_cells, explored_cells = boon_total, boon_found
+      else:
+         total_cells = map_type.value ** 2
+         explored_cells = view.get_explored_cells() 
+         
       progress = explored_cells / total_cells
-      total_width = int(self.bg_w * 0.8)
+      total_width = int(self.bg_w * 0.7)
       height = int(self.bg_w * 0.02)
 
       x = int((self.bg_w - total_width) / 2)
@@ -507,9 +546,9 @@ class RenderImage():
       fill_color.append(transperancy)
       background_color = self.get_color_by_name('grey', is_bright)
       draw = ImageDraw.Draw(back)
-      draw_bar(draw, x, y, total_width, height, progress, tuple(fill_color), tuple(background_color))
-      return height
-   
+      draw_bar(draw, x, center_y - height / 2, total_width, height, progress, tuple(fill_color), tuple(background_color))
+      self.add_bar_description(explored_cells, total_cells, progress, x, center_y, total_width, height, back, is_bright, map_type)
+
    def add_descriptions(self, back, user_id, bot, is_bright, map_type):
       cache = self.cache[map_type]
 
@@ -517,20 +556,22 @@ class RenderImage():
       shift = cache.sizes['cell_width']
       base_coords[1] += shift
       
-      bar_shift = self.add_bar(base_coords[1], back, bot, is_bright, map_type)
-
-      base_coords[1] += bar_shift
-      base_coords[1] += shift
-
       coords = base_coords.copy()
 
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
-         shift_y = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type)
+         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type)
          coords[1] += shift_y * 1.1
 
       coords = base_coords.copy()
       coords[0] += int(self.bg_w / 2)
 
+      boon_total, boon_found = 0, 0
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
-         shift_y = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type)
+         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type)
          coords[1] += shift_y * 1.1
+         if cell_type_name != ct.empty.name:
+            boon_total += description_text_spec['total']
+            boon_found += description_text_spec['founded']
+
+      bar_y = max(back.height * 0.95, (back.height + coords[1])/2)
+      self.add_bar(bar_y, back, bot, is_bright, map_type, user_id, boon_total, boon_found)
