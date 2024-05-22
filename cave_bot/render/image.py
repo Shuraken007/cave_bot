@@ -569,7 +569,7 @@ class RenderImage():
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
          shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type)
          coords[1] += shift_y * 1.1
-         if cell_type_name != ct.empty.name:
+         if cell_type_name not in [ct.empty.name, ct.idle_reward.name]:
             boon_total += description_text_spec['total']
             boon_found += description_text_spec['founded']
 
