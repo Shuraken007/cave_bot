@@ -174,13 +174,24 @@ class RenderImage():
 
       return images
 
-   def change_color(self, img, which, on_what):
+   def change_color(self, img, which, on_what, img_name, images):
+      img_cache_key = "{}{}{}".format(str(which), str(on_what), img_name)
+      is_img_cached = img_cache_key in images
+
+      if is_img_cached:
+         return images[img_cache_key]
+      
+      img = img.copy()
+
       pixdata = img.load()
       for y in range(img.size[1]):
          for x in range(img.size[0]):
                if pixdata[x, y] == (*which,):
                   pixdata[x, y] = (*on_what,)
 
+      images[img_cache_key] = img
+      return img
+   
    def resize(self, img, recommended_w2h, recommended_height, recommended_width=None, save_ratio=True):
       recommended_w2h = recommended_w2h or (img.width / img.height)
       recommended_width = int(
@@ -301,23 +312,22 @@ class RenderImage():
 
    def get_img_by_cell(self, cell_type, is_known, clean, images):
       if is_known:
-         return images['blank']
+         return images['blank'], 'blank'
       
       if cell_type in [ct.unknown, ct.empty]:
-         return images['blank']
+         return images['blank'], 'blank'
       
       if self.is_cleaned(clean, cell_type):
-         return images['blank']
+         return images['blank'], 'blank'
      
-      return images.get(cell_type)
+      return images.get(cell_type), cell_type.name
 
-   def add_img_by_cell(self, coords, img, color, back):
+   def add_img_by_cell(self, coords, img, color, back, img_name, images):
       if not img:
          return
       if color:
-         img = img.copy()
-         self.change_color(img, (0, 0, 0, 0), color)
-         
+         img = self.change_color(img, (0, 0, 0, 0), color, img_name, images)
+
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
 
    def add_text_by_cell(self, text, cell_type, coords, back, bright, map_type):
@@ -343,6 +353,14 @@ class RenderImage():
 
       self.add_text(back, text_spec, pos_spec)
 
+   def order_user_records(self, user_records):
+      hash = {}
+      for r in user_records:
+         key = f'{r.x}-{r.y}'
+         hash[key] = True
+
+      return hash
+
    def generate_map(self, user_id, bright, clean, bot, view, ctx):
       map_type = view.map_type
       cache = self.cache[map_type]
@@ -350,14 +368,19 @@ class RenderImage():
       back = cache.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
 
+      user_records = {}
+      if user_id:
+         user_records = bot.db_process.get_user_record_by_map(map_type)
+         user_records = self.order_user_records(user_records)
+
       for i in range(0, map_type.value):
          for j in range(0, map_type.value):
-            is_known = user_id and bot.db_process.get_user_record(user_id, i+1, j+1, map_type)
+            is_known = user_id and f'{i+1}-{j+1}' in user_records
             cell_type = view.get_cell_type(i+1, j+1)
-            img = self.get_img_by_cell(cell_type, is_known, clean, cache.images)
+            img, img_name = self.get_img_by_cell(cell_type, is_known, clean, cache.images)
             color = self.get_color_by_cell(cell_type, bright, is_known, clean)
             coords = self.get_cell_coords(i, j, cache.sizes)
-            self.add_img_by_cell(coords, img, color, back)
+            self.add_img_by_cell(coords, img, color, back, img_name, cache.images)
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright, map_type)
 
       self.add_descriptions(back, user_id, bot, bright, map_type)
@@ -394,13 +417,12 @@ class RenderImage():
          self.storage.add_image([bright, clean, map_type.name], img)
 
    def get_description_image(self, cell_type_name, is_bright, images):
-      cell_type = None
+      img = None
       if cell_type_name == 'artifact':
          img = images[ct.scepter_of_domination]
       elif cell_type_name == 'empty':
-         img = images['cell'].copy()
          color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean)
-         self.change_color(img, (0, 0, 0, 0), color)
+         img = self.change_color(images['cell'], (0, 0, 0, 0), color, 'cell', images)
       else:
          cell_type = ct[cell_type_name]
          img = images.get(cell_type)
@@ -421,7 +443,6 @@ class RenderImage():
          total_from_db = founded
 
       return total_from_db
-
 
    def get_description_text(self, cell_type_name, user_id, bot, map_type):
       founded, total, description, name = None, None, None, None
