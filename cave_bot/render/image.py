@@ -370,7 +370,7 @@ class RenderImage():
 
       user_records = {}
       if user_id:
-         user_records = bot.db_process.get_user_record_by_map(map_type)
+         user_records = bot.db_process.get_all_user_record(user_id, map_type)
          user_records = self.order_user_records(user_records)
 
       for i in range(0, map_type.value):
