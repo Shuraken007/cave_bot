@@ -104,4 +104,5 @@ help = {
       20, 25, 30, 
       1, 2, 3   
 """),
+'lead_limit': commands.parameter(description="limit output to first N scores"),
 }

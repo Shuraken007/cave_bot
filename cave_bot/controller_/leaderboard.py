@@ -47,7 +47,14 @@ class Leaderboard:
 
       return score_by_user_id
 
-   async def scores_to_table(self, score_by_user_id, ctx):
+   def process_user_name(self, user_name, processing_user_id, owner_user_id):
+      arr = user_name.split(' ')
+      name = arr[0]
+      if processing_user_id == owner_user_id:
+         name = "\033[0;31;40m" + name + "\033[0m"
+      return name
+
+   async def scores_to_table(self, score_by_user_id, ctx, user):
       col_names = ['user', 'score']
       for x in ct:
          if self.is_artifact(x) or x == ct.unknown:
@@ -60,6 +67,7 @@ class Leaderboard:
 
       for user_id, score_config in score_by_user_id.items():
          user_name = await ctx.bot.get_user_name_by_id(user_id)
+         user_name = self.process_user_name(user_name, user_id, user.id)
          score = score_config['score']
          row = [user_name, score]
          for x in ct:
@@ -73,7 +81,7 @@ class Leaderboard:
 
       return tabl
          
-   async def show(self, user, view, map_type, ctx):
+   async def show(self, user, view, map_type, ctx, limit):
       user_records = self.db_process.get_user_record_by_map(map_type)
       winners = {}
       for user_record in user_records:
@@ -82,8 +90,13 @@ class Leaderboard:
          self.add_potential_winner(winners, user_record)
       
       score_by_user_id = self.process_winners(winners, map_type)
-      tabl = await self.scores_to_table(score_by_user_id, ctx)
+      
+      max_len = len(score_by_user_id.keys())
+      if limit is None:
+         limit = max_len
+      limit = min(limit, max_len)
 
-      msg = tabl.get_string(sortby="score", reversesort=True)
+      tabl = await self.scores_to_table(score_by_user_id, ctx, user)
+      msg = tabl.get_string(sortby="score", reversesort=True, end = limit)
       msg_arr = msg.split('\n')
       ctx.report.msg.add(msg_arr)

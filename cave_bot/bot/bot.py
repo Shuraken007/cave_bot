@@ -204,7 +204,12 @@ class MyBot(commands.Bot):
             pass
       if user is None:
          return f'unknown name ({user_id} id)'
-      return user.global_name
+      name = user.global_name
+      if name is None:
+         name = user.name
+      if name is None:
+         name = str(user_id)
+      return name
 
    @tasks.loop(minutes=30.0)
    async def dump_memory_db_to_connection(self):

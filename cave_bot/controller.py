@@ -97,7 +97,7 @@ class Controller:
       self.config.show(user, ctx.report)
 
 #  Leaderboard functions
-   async def show_leaderboard(self, ctx):
+   async def show_leaderboard(self, ctx, limit):
       user = ctx.message.author
       map_type = self.detect_user_map_type(user, ctx)
       if map_type == MapType.unknown:
@@ -106,7 +106,7 @@ class Controller:
 
       view = self.get_view(map_type)
 
-      await self.leaderboard.show(user, view, map_type, ctx)
+      await self.leaderboard.show(user, view, map_type, ctx, limit)
 
 # Cell functions
 

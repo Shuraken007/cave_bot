@@ -67,8 +67,8 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@commands.command(aliases=['l', 'lead'], brief = "show player scores, depending on opening cells")
-	async def leaderboard(self, ctx):
-		await self.bot.controller.show_leaderboard(ctx)
+	async def leaderboard(self, ctx, limit: Optional[int] = help['lead_limit']):
+		await self.bot.controller.show_leaderboard(ctx, limit)
 
 async def setup(bot):
 	await bot.add_cog(UserCog(bot))
