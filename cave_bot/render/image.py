@@ -1,8 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 
 from ..const import CellType as ct, \
-   cell_max_amount, cell_description, cell_aliases_config, CleanMap, \
-   MapType
+   cell_description, cell_aliases_config, CleanMap,  MapType
 from ..utils import build_path
 from .color_util import is_text_black
 from .gradient_color import get_gradient_color
@@ -532,8 +531,11 @@ class RenderImage():
       else:
          total_cells = map_type.value ** 2
          explored_cells = view.get_explored_cells() 
+      
+      progress = 0
+      if total_cells > 0:
+         progress = explored_cells / total_cells
          
-      progress = explored_cells / total_cells
       total_width = int(self.bg_w * 0.7)
       height = int(self.bg_w * 0.02)
 

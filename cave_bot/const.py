@@ -51,28 +51,16 @@ cell_aliases_config = {
 for k,v in cell_aliases_config.items():
    v.append(k.name)
 
-cell_max_amount = {
-   ct.demon_head : 2,
-   ct.demon_tail : 20,
-   ct.demon_hands : 20,
-   ct.spider : 20,
-   'artifact' : 5,
-   ct.summon_stone : 10,
-   ct.empty : 124,
-}
-
-all_items_total = 0
-for _, v in cell_max_amount.items():
-   all_items_total += v
-
-cell_max_amount[ct.idle_reward] = 400 - all_items_total
-
 # build reverted cell_aliases: "u" : ct.unknown
 
 cell_aliases = {}
 for k, v in cell_aliases_config.items():
    for alias in v:
       cell_aliases[alias] = k
+
+map_cell_name_to_shortest_alias = {}
+for k, v in cell_aliases_config.items():
+   map_cell_name_to_shortest_alias[k.name] = min(v, key=len)
 
 class CleanMap(enum.IntEnum):
    no_clean = 0,

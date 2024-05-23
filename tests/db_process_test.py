@@ -7,7 +7,7 @@ from cave_bot.const import CellType as ct, UserRole as ur, MapType as mt
 from cave_bot.model import generate_models
 from cave_bot.db_process import DbProcess
 from cave_bot.db_init import Db
-from cave_bot.utils import time_to_local_timezone
+from cave_bot.utils import time_to_global_timezone
 from cave_bot.config import Config
 
 @pytest.fixture()
@@ -102,7 +102,7 @@ def test_get_last_scan(db_process, local_time, anaware_time):
       db_process.set_last_scan(time)
 
       last_scan = db_process.get_last_scan()
-      time = time_to_local_timezone(time)
+      time = time_to_global_timezone(time)
       # print(last_scan)
       # print(time)
       assert last_scan == time
@@ -116,8 +116,8 @@ def test_set_last_scan(db_process, local_time, global_time, anaware_time):
          last_scan = last_scan_record.last_scan
 
          # sqlite return anaware, while postgres - aware
-         last_scan = time_to_local_timezone(last_scan)         
-         time = time_to_local_timezone(time)
+         last_scan = time_to_global_timezone(last_scan)         
+         time = time_to_global_timezone(time)
          # print(last_scan)
          # print(time)
          assert last_scan == time

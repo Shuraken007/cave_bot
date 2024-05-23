@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 import sqlalchemy as sa
 from sqlalchemy import Integer, Column, DateTime, BigInteger, TypeDecorator
+from datetime import datetime, timezone
 
 from .const import CellType as ct, UserRole, MapType
 from .utils import get_week_start_as_str
@@ -80,6 +81,7 @@ def generate_models(table_names):
       y             = Column(Integer, primary_key = True)
       map_type      = Column(MapTypeValue, default = MapType.unknown, primary_key = True)
       cell_type     = Column(CellTypeValue)
+      time          = Column(DateTime(timezone=True))
 
    class LastScan(Base):
       __tablename__ = table_names['LastScan']

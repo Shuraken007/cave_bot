@@ -4,6 +4,7 @@ from .const import CellType as ct, MapType
 from .reaction import Reactions as r
 from .controller_.role import Role
 from .controller_.config import Config
+from .controller_.leaderboard import Leaderboard
 from .view import View
 
 class Controller:
@@ -14,6 +15,7 @@ class Controller:
 
       self.role = Role(db_process)
       self.config = Config(db_process)
+      self.leaderboard = Leaderboard(db_process)
 
    def get_view(self, map_type):
       if view:= self.view.get(map_type):
@@ -94,6 +96,18 @@ class Controller:
       user = ctx.message.author
       self.config.show(user, ctx.report)
 
+#  Leaderboard functions
+   async def show_leaderboard(self, ctx):
+      user = ctx.message.author
+      map_type = self.detect_user_map_type(user, ctx)
+      if map_type == MapType.unknown:
+         ctx.report.reaction.add(r.fail)
+         return
+
+      view = self.get_view(map_type)
+
+      await self.leaderboard.show(user, view, map_type, ctx)
+
 # Cell functions
 
    def update_cell(self, coords, view):
@@ -138,7 +152,7 @@ class Controller:
          self.db_process.update_cell(*coords, cell_type_was, map_type, -1)
          is_cell_type_changed |= self.update_cell(coords, view)
 
-      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, map_type)
+      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, map_type, ctx.message.created_at)
       is_cell_type_changed |= self.update_cell(coords, view)
 
       if cell_type_was is None:

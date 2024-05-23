@@ -68,5 +68,29 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
             last_scan_record = s.query(self.bot.db.m.LastScan).first()
             ctx.report.msg.add(last_scan_record and str(last_scan_record.last_scan))
 
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(aliases = ['rwd'], brief = "reset week db")
+    async def reset_week_db(self, ctx):
+        allowed_partial_table_names_to_reset = ['last_scan', 'cell_', 'user_record_']
+        db = self.bot.db
+        with db.memory_db.connect() as mdb:
+            for table in db.m.Base.metadata.sorted_tables:
+                is_reset = False
+                for part in allowed_partial_table_names_to_reset:
+                    if part in table.name:
+                        is_reset = True
+                        break
+                if not is_reset:
+                    continue
+                ctx.report.msg.add(f'drop -> {table.name}')
+                mdb.execute(table.delete())
+
+            mdb.commit()
+
+        self.bot.reset_view()
+        await self.bot.spawn_scan()
+
+
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))

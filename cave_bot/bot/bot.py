@@ -86,14 +86,16 @@ class MyBot(commands.Bot):
       self._after_invoke = postprocess
       self.add_not_registered_self_commands()
 
+   def reset_view(self):
+      self.controller = Controller(self.db_process)
+      self.render_image.reset_storage()
+
    def reset(self, ctx):
       if self.week_postfix != get_week_start_as_str():
          self.dump_memory_db_to_connection()
          self.db.memory_db.dispose()
          self.init_db()
-         self.controller = Controller(self.db_process)
-
-         self.render_image.reset_storage()
+         self.reset_view()
          ctx.report.set_key('Info')
          ctx.report.msg.add('Restarted, reseted week!!!\n')
 
@@ -202,8 +204,7 @@ class MyBot(commands.Bot):
             pass
       if user is None:
          return f'unknown name ({user_id} id)'
-
-      return user.name
+      return user.global_name
 
    @tasks.loop(minutes=30.0)
    async def dump_memory_db_to_connection(self):

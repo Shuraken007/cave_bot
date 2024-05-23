@@ -42,6 +42,11 @@ def time_to_local_timezone(dt):
    dt = dt.replace(tzinfo=local_timezone)
    return dt
 
+def time_to_global_timezone(dt):
+   global_timezone = timezone.utc
+   dt = dt.replace(tzinfo=global_timezone)
+   return dt
+
 def build_sending_msg_arr_consider_constraint(arr):
    new_arr = []
    start_idx, end_idx = 0, 0

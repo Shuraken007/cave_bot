@@ -1,5 +1,5 @@
 from .const import CellType
-from .utils import time_to_local_timezone
+from .utils import time_to_global_timezone
 
 def decorator(f):
    def session_wrap(self, *args, **kwargs):
@@ -95,20 +95,19 @@ class DbProcess:
 
    def get_last_scan(self):
       last_scan_record = self.s.query(self.db.m.LastScan).first()
-
       if last_scan_record is not None:
          last_scan = last_scan_record.last_scan
 
          # sqlite database don't works with utc correctly, while postgress works
          # depends on engine dialect+driver
-         last_scan = time_to_local_timezone(last_scan)
+         last_scan = time_to_global_timezone(last_scan)
          return last_scan
       return None
 
    def set_last_scan(self, last_scan):
       # sqlite database don't works with utc correctly, while postgress works
       # depends on engine dialect+driver
-      last_scan = time_to_local_timezone(last_scan)
+      last_scan = time_to_global_timezone(last_scan)
 
       record = self.db.m.LastScan(id = 1, last_scan = last_scan)
       self.s.merge(record)
@@ -158,6 +157,11 @@ class DbProcess:
          self.db.m.UserRecord.user_id == user_id,
          self.db.m.UserRecord.map_type == map_type,
       ).order_by(self.db.m.UserRecord.x, self.db.m.UserRecord.y).all()
+   
+   def get_user_record_by_map(self, map_type):
+      return self.s.query(self.db.m.UserRecord).filter(
+         self.db.m.UserRecord.map_type == map_type,
+      ).all()
 
    def get_user_records_by_cell_type(self, user_id, cell_type, map_type):
       return self.s.query(self.db.m.UserRecord).filter(
@@ -173,10 +177,24 @@ class DbProcess:
          self.db.m.UserRecord.map_type == map_type,
       ).order_by(self.db.m.UserRecord.cell_type).all()
 
-   def update_user_record(self, user_id, x, y, cell_type, map_type):
-      user_record = self.db.m.UserRecord(
-         user_id = user_id, x = x, y = y, cell_type = cell_type, map_type = map_type)
-      self.s.merge(user_record)
+   def update_user_record(self, user_id, x, y, cell_type, map_type, time):
+      user_record = self.s.query(self.db.m.UserRecord).filter(
+         self.db.m.UserRecord.user_id == user_id, 
+         self.db.m.UserRecord.x == x, 
+         self.db.m.UserRecord.y == y,
+         self.db.m.UserRecord.map_type == map_type
+      ).first()
+      # don't update field time
+      if user_record and user_record.cell_type == cell_type:
+         return
+      if user_record is None:      
+         user_record = self.db.m.UserRecord(
+            user_id = user_id, x = x, y = y, map_type = map_type)
+         
+      user_record.time = time
+      user_record.cell_type = cell_type
+
+      self.s.add(user_record)
 
    def delete_user_record(self, user_id, x, y, map_type):
       user_record = self.s.query(self.db.m.UserRecord).filter(
@@ -189,8 +207,8 @@ class DbProcess:
       if user_record is not None:
          self.s.delete(user_record)
 
-   def update_user_record_and_cell(self, user_id, coords, cell_type, map_type):
-      self.update_user_record(user_id, *coords, cell_type, map_type)
+   def update_user_record_and_cell(self, user_id, coords, cell_type, map_type, time):
+      self.update_user_record(user_id, *coords, cell_type, map_type, time)
       self.update_cell(*coords, cell_type, map_type, +1)
 
    def delete_user_record_and_update_cell(self, user_id, coords, cell_type, map_type):
@@ -240,17 +258,6 @@ class DbProcess:
 
       if config is not None:
          self.s.delete(config)
-
-   def get_map_max_amount(self, map_type, cell_name):
-      amount = self.s.query(
-         getattr(self.db.m.MapConfig, cell_name)
-      ).filter(
-         self.db.m.MapConfig.map_type == map_type
-      ).first()
-
-      if amount:
-         return amount[0]
-      return None
       
    def get_map_max_amount(self, map_type, cell_name):
       amount = self.s.query(
@@ -262,6 +269,13 @@ class DbProcess:
       if amount:
          return amount[0]
       return None
+   
+   def get_map_config(self, map_type):
+      return self.s.query(
+         self.db.m.MapConfig
+      ).filter(
+         self.db.m.MapConfig.map_type == map_type
+      ).first()
       
    def set_map_max_amount(self, map_type, cell_name, value):
       map_config = self.s.query(self.db.m.MapConfig).filter(

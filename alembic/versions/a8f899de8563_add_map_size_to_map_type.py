@@ -11,6 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 import cave_bot
 from cave_bot.const import MapType
+
 # revision identifiers, used by Alembic.
 revision: str = 'a8f899de8563'
 down_revision: Union[str, None] = 'fde7a62d363e'

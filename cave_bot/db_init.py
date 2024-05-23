@@ -55,7 +55,6 @@ class Db:
          with engine_to.connect() as db_to:
             for table in self.m.Base.metadata.sorted_tables:
                db_to.execute(table.delete())
-               db_to.commit()
                for row in db_from.execute(sa.select(table.c)):
                   db_to.execute(table.insert().values(row._mapping))
-                  db_to.commit()
+            db_to.commit()
