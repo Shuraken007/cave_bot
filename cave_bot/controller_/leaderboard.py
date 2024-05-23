@@ -21,9 +21,8 @@ class Leaderboard:
          return True
       return False
 
-   def process_winners(self, winners, map_type):
+   def process_winners(self, winners, map_type, map_config):
       score_by_user_id = {}
-      map_config = self.db_process.get_map_config(map_type)
       for r in winners.values():
          is_art = self.is_artifact(r.cell_type)
          cell_type_name = r.cell_type.name
@@ -54,16 +53,26 @@ class Leaderboard:
          name = "\033[0;31;40m" + name + "\033[0m"
       return name
 
-   async def scores_to_table(self, score_by_user_id, ctx, user):
+   async def scores_to_table(self, score_by_user_id, ctx, user, map_type, map_config):
       col_names = ['user', 'score']
+      score_values = ['REWARD', 99999]
       for x in ct:
          if self.is_artifact(x) or x == ct.unknown:
             continue
          col_name = map_cell_name_to_shortest_alias[x.name]
          col_names.append(col_name)
+         total_cells = getattr(map_config, x.name, 1)
+         score = int( map_type.value ** 2 / total_cells)
+
+         score_values.append(score)
+
       col_names.append('art')
+      total_cells_artifact = getattr(map_config, 'artifact', 1)
+      score_artifact = int( map_type.value ** 2 / total_cells_artifact)
+      score_values.append(score_artifact)
       
       tabl = prettytable.PrettyTable(col_names)
+      tabl.add_row(score_values)
 
       for user_id, score_config in score_by_user_id.items():
          user_name = await ctx.bot.get_user_name_by_id(user_id)
@@ -89,14 +98,18 @@ class Leaderboard:
             continue
          self.add_potential_winner(winners, user_record)
       
-      score_by_user_id = self.process_winners(winners, map_type)
+      map_config = self.db_process.get_map_config(map_type)
+      
+      score_by_user_id = self.process_winners(winners, map_type, map_config)
       
       max_len = len(score_by_user_id.keys())
       if limit is None:
          limit = max_len
       limit = min(limit, max_len)
 
-      tabl = await self.scores_to_table(score_by_user_id, ctx, user)
+      limit += 1 # reward row
+
+      tabl = await self.scores_to_table(score_by_user_id, ctx, user, map_type, map_config)
       msg = tabl.get_string(sortby="score", reversesort=True, end = limit)
       msg_arr = msg.split('\n')
       ctx.report.msg.add(msg_arr)
