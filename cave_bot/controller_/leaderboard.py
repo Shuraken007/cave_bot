@@ -50,7 +50,7 @@ class Leaderboard:
    async def scores_to_table(self, score_by_user_id, ctx):
       col_names = ['user', 'score']
       for x in ct:
-         if self.is_artifact(x) or x == ct.empty:
+         if self.is_artifact(x) or x == ct.unknown:
             continue
          col_name = map_cell_name_to_shortest_alias[x.name]
          col_names.append(col_name)
@@ -63,7 +63,7 @@ class Leaderboard:
          score = score_config['score']
          row = [user_name, score]
          for x in ct:
-            if self.is_artifact(x) or x == ct.empty:
+            if self.is_artifact(x) or x == ct.unknown:
                continue
             val = score_config.get(x.name, 0)
             row.append(val)         
