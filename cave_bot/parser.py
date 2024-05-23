@@ -32,11 +32,11 @@ def validate_coords(coords, report, map_type=None, is_new_version = False, is_bu
       x = int(extracted_coords[0])
       y = int(extracted_coords[1])
 
-      if is_bug_converter and not is_new_version and map_type.value > MapType.easy:
+      if is_bug_converter and not is_new_version and map_type.value > MapType.normal:
          x, y = convert_coords_due_bug(x, y, map_type.value, report)
 
       if map_type in [None,  MapType.unknown]:
-         map_type = MapType.hard
+         map_type = MapType.nightmare
 
       map_size = map_type.value
 

@@ -98,14 +98,14 @@ class UserRole(enum.IntEnum):
 
 class MapType(enum.IntEnum):
    unknown = 0,
-   easy = 20,
-   normal = 25,
-   hard = 30,
+   normal = 20,
+   hard = 25,
+   nightmare = 30,
 
 map_type_aliases_config = {
-   MapType.easy: ['easy', 'e', '1', '20'],
-   MapType.normal: ['normal', 'n', '2', '25'],
-   MapType.hard: ['hard', 'h', '3', '30'],
+   MapType.normal: ['Normal', 'n', '1', '20', 'easy'],
+   MapType.hard: ['Hard', 'h', '2', '25', 'normal'],
+   MapType.nightmare: ['Nightmare', 'nm', '3', '30', 'hard'],
 }
 map_type_aliases = {}
 for k, v in map_type_aliases_config.items():
@@ -116,5 +116,5 @@ DEFAULT_DB_NAME = 'cave.db'
 MSG_CONSTRAINT = 2000 - len("```ansi\n\n```")
 
 DEFAULT_USER_CONFIG = {
-   'map_type': MapType.easy,
+   'map_type': MapType.normal,
 }

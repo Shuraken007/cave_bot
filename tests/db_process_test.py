@@ -30,7 +30,7 @@ def db_process():
    db.drop_tables()
 
 def test_get_cell_type_counters(db_process):
-   x, y, map_type, idle_reward_counter, demon_head_counter = 3, 4, mt.easy, 5, 2
+   x, y, map_type, idle_reward_counter, demon_head_counter = 3, 4, mt.normal, 5, 2
    with db_process.db.Session() as s:
       cell = db_process.db.m.Cell(x = x, y = y, map_type = map_type, idle_reward = idle_reward_counter, demon_head = demon_head_counter)
       s.add(cell)
@@ -46,7 +46,7 @@ def test_get_cell_type_counters(db_process):
 
 @pytest.mark.parametrize("delta", [+1, -1])
 def test_update_cell_if_not_set(db_process, delta):
-   x, y, map_type = 3, 4, mt.easy
+   x, y, map_type = 3, 4, mt.normal
 
    db_process.update_cell(x, y, ct.demon_head, map_type, delta)
 
@@ -60,7 +60,7 @@ def test_update_cell_if_not_set(db_process, delta):
 
 @pytest.mark.parametrize("delta", [+1, -1])
 def test_update_cell_if_set(db_process, delta):
-   x, y, map_type, counter = 3, 4, mt.easy, 5
+   x, y, map_type, counter = 3, 4, mt.normal, 5
    with db_process.db.Session() as s:
       cell = db_process.db.m.Cell(x = x, y = y, demon_head = counter, map_type = map_type)
       s.add(cell)
@@ -206,14 +206,14 @@ def test_get_user_roles_if_set(db_process):
       assert user_role.role == user_roles_config[id]
 
 def test_get_user_record_if_not_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.easy
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.normal
 
    cell_type = db_process.get_user_record(user_id, x, y, map_type)
 
    assert cell_type is None
 
 def test_get_user_record_if_set(db_process):
-   x, y, user_id, expected_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.easy
+   x, y, user_id, expected_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.normal
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y, 
@@ -229,20 +229,20 @@ def test_get_user_record_if_set(db_process):
    
 
 def test_get_all_user_record_if_not_set(db_process):
-   user_id, map_type =2879234928, mt.easy
+   user_id, map_type =2879234928, mt.normal
    user_records = db_process.get_all_user_record(user_id, map_type)
 
    assert len(user_records) == 0
 
 def test_get_all_user_record_if_set(db_process):
    set_user_id = 239485720
-   map_type = mt.easy
+   map_type = mt.normal
    user_records_config = [
       [3, 4, set_user_id, ct.demon_head, map_type],
       [3, 2, set_user_id, ct.demon_tail, map_type],
       [2, 2, set_user_id, ct.idle_reward, map_type],
       [1, 2, set_user_id, ct.empty, map_type],
-      [1, 1, set_user_id + 10, ct.summon_stone, mt.normal],
+      [1, 1, set_user_id + 10, ct.summon_stone, mt.hard],
    ]
    expected_user_records_config = [
       [1, 2, set_user_id, ct.empty, map_type],
@@ -278,13 +278,13 @@ def test_get_all_user_record_if_set(db_process):
       counter += 1
 
 def test_get_user_records_by_cell_type_if_not_set(db_process):
-   user_id, cell_type, map_type = 2879234928, ct.demon_head, mt.easy
+   user_id, cell_type, map_type = 2879234928, ct.demon_head, mt.normal
    user_records = db_process.get_user_records_by_cell_type(user_id, cell_type, map_type)
 
    assert len(user_records) == 0
 
 def test_get_user_records_by_cell_type_if_set(db_process):
-   request_user_id, request_cell_type, map_type = 239485720, ct.summon_stone, mt.easy
+   request_user_id, request_cell_type, map_type = 239485720, ct.summon_stone, mt.normal
    user_records_config = [
       [3, 4, request_user_id, ct.demon_head, map_type],
       [3, 2, request_user_id, request_cell_type, map_type],
@@ -325,13 +325,13 @@ def test_get_user_records_by_cell_type_if_set(db_process):
       counter += 1
 
 def test_get_users_and_types_by_coords_if_not_set(db_process):
-   x, y, map_type = 2, 3, mt.easy
+   x, y, map_type = 2, 3, mt.normal
    user_records = db_process.get_users_and_types_by_coords(x, y, map_type)
    assert len(user_records) == 0
 
 def test_get_users_and_types_by_coords_if_set(db_process):
    user1, user2, user3 = 3495873489, 817238172, 83745834
-   x, y, map_type = 4, 5, mt.easy
+   x, y, map_type = 4, 5, mt.normal
    user_records_config = [
       [x, y, user1, ct.demon_head, map_type],
       [x, y, user2, ct.empty, map_type],
@@ -369,7 +369,7 @@ def test_get_users_and_types_by_coords_if_set(db_process):
       counter += 1
 
 def test_update_user_record_if_not_set(db_process):
-   x, y, user_id, expected_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.easy
+   x, y, user_id, expected_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.normal
    db_process.update_user_record(user_id, x, y, expected_cell_type, map_type)
 
    with db_process.db.Session() as s:
@@ -381,7 +381,7 @@ def test_update_user_record_if_not_set(db_process):
       assert user_record.cell_type == expected_cell_type
 
 def test_update_user_record_if_set(db_process):
-   x, y, user_id, set_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.normal
+   x, y, user_id, set_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.hard
    expected_cell_type = ct.empty
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
@@ -404,7 +404,7 @@ def test_update_user_record_if_set(db_process):
       assert user_record.cell_type == expected_cell_type
 
 def test_delete_user_record_if_not_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.easy
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.normal
    db_process.delete_user_record(user_id, x, y, map_type)
 
    with db_process.db.Session() as s:
@@ -416,7 +416,7 @@ def test_delete_user_record_if_not_set(db_process):
       assert user_record is None
 
 def test_delete_user_record_if_set(db_process):
-   x, y, user_id, set_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.easy
+   x, y, user_id, set_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.normal
    with db_process.db.Session() as s:
       user_record = db_process.db.m.UserRecord(
          x = x, y = y, 
@@ -437,7 +437,7 @@ def test_delete_user_record_if_set(db_process):
       assert user_record is None
 
 def test_update_user_record_and_cell_if_not_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.hard
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.nightmare
    user_cell_type_now = ct.empty
    cell_type_now_counter_expected = 1
 
@@ -459,7 +459,7 @@ def test_update_user_record_and_cell_if_not_set(db_process):
       assert cell.map_type == map_type
 
 def test_update_user_record_and_cell_if_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.normal
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.hard
    user_cell_type_was = ct.demon_head
    user_cell_type_now = ct.empty
    cell_type_was_counter = 3
@@ -493,7 +493,7 @@ def test_update_user_record_and_cell_if_set(db_process):
       assert cell.empty == cell_type_now_counter_expected
 
 def test_delete_user_record_and_update_cell_if_not_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.hard
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.nightmare
 
    db_process.delete_user_record_and_update_cell(user_id, [x, y], ct.empty, map_type)
 
@@ -516,7 +516,7 @@ def test_delete_user_record_and_update_cell_if_not_set(db_process):
       assert cell.map_type == map_type
 
 def test_delete_user_record_and_update_cell_if_set(db_process):
-   x, y, user_id, map_type = 3, 4, 2879234928, mt.normal
+   x, y, user_id, map_type = 3, 4, 2879234928, mt.hard
    user_cell_type_was = ct.demon_head
    cell_type_was_counter = 3
    cell_type_was_counter_expected = 2
@@ -552,15 +552,15 @@ def test_delete_user_record_and_update_cell_if_set(db_process):
 
 def test_get_user_map_types_unique_if_set(db_process):
    set_user_id = 239485720
-   map_type1 = mt.easy
-   map_type2 = mt.normal
+   map_type1 = mt.normal
+   map_type2 = mt.hard
    user_records_config = [
       [3, 4, set_user_id, ct.demon_head, map_type1],
       [3, 2, set_user_id, ct.demon_tail, map_type1],
       [2, 2, set_user_id, ct.idle_reward, map_type2],
       [1, 2, set_user_id, ct.empty, map_type2],
       [5, 1, set_user_id, ct.empty, map_type2],
-      [1, 1, set_user_id + 10, ct.summon_stone, mt.hard],
+      [1, 1, set_user_id + 10, ct.summon_stone, mt.nightmare],
    ]
 
    expected_map_types = [map_type1, map_type2]
@@ -589,7 +589,7 @@ def test_get_user_map_types_unique_if_set(db_process):
 def test_get_user_map_types_unique_if_not_set(db_process):
    set_user_id = 239485720
    user_records_config = [
-      [1, 1, set_user_id + 10, ct.summon_stone, mt.normal],
+      [1, 1, set_user_id + 10, ct.summon_stone, mt.hard],
    ]
 
    with db_process.db.Session() as s:
@@ -615,7 +615,7 @@ def test_get_user_config_if_not_set(db_process):
 
 def test_get_user_config_if_set(db_process):
    user_id = 239485720
-   map_type = mt.hard
+   map_type = mt.nightmare
 
    with db_process.db.Session() as s:
       obj = db_process.db.m.UserConfig(id = user_id, map_type = map_type)
@@ -629,7 +629,7 @@ def test_get_user_config_if_set(db_process):
 
 def test_set_user_config_if_not_set(db_process):
    user_id = 239485720
-   map_type = mt.hard
+   map_type = mt.nightmare
    db_process.set_user_config(user_id, {'map_type': map_type})
 
    get_user_config = db_process.get_user_config(user_id)
@@ -639,8 +639,8 @@ def test_set_user_config_if_not_set(db_process):
 
 def test_set_user_config_if_set(db_process):
    user_id = 239485720
-   map_type_was = mt.hard
-   map_type_new = mt.normal
+   map_type_was = mt.nightmare
+   map_type_new = mt.hard
    db_process.set_user_config(user_id, {'map_type': map_type_was})
    db_process.set_user_config(user_id, {'map_type': map_type_new})
 
@@ -657,7 +657,7 @@ def test_delete_user_config_if_not_set(db_process):
 
 def test_delete_user_config_if_set(db_process):
    user_id = 239485720
-   map_type = mt.hard
+   map_type = mt.nightmare
 
    db_process.set_user_config(user_id, {'map_type': map_type})
    db_process.delete_user_config(user_id)
@@ -665,13 +665,13 @@ def test_delete_user_config_if_set(db_process):
    assert db_process.get_user_config(user_id) is None
 
 def test_get_map_max_amount_if_not_set(db_process):
-   map_type = mt.easy
+   map_type = mt.normal
    cell_type = ct.idle_reward
    amount = db_process.get_map_max_amount(map_type, cell_type.name)
    assert amount is None
 
 def test_get_map_max_amount_if_set(db_process):
-   map_type = mt.easy
+   map_type = mt.normal
    cell_type = ct.idle_reward
    value = 130
 
@@ -680,7 +680,7 @@ def test_get_map_max_amount_if_set(db_process):
    assert amount == value
 
 def test_set_map_max_amount_if_not_set(db_process):
-   map_type = mt.easy
+   map_type = mt.normal
    cell_type = ct.idle_reward
    value = 130
 
@@ -689,7 +689,7 @@ def test_set_map_max_amount_if_not_set(db_process):
    assert amount == value
 
 def test_set_map_max_amount_if_set(db_process):
-   map_type = mt.easy
+   map_type = mt.normal
    cell_type = ct.idle_reward
    value = 130
    delta = 10

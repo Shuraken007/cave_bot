@@ -1,7 +1,7 @@
 from discord.ext import commands
 from typing import Literal
 
-from ...const import UserRole as ur, map_type_aliases
+from ...const import UserRole as ur, map_type_aliases, map_type_aliases_config, MapType
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
 
@@ -22,11 +22,11 @@ class ConfigCog(commands.Cog, name='Settings', description = "Config commands - 
 	@config.command(aliases=['r'], brief = "reset config to default")
 	async def reset(self, ctx):
 		self.bot.controller.reset_config(ctx)
-			
+
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@config.command(aliases=['m'], brief = "select map difficulty")
-	async def map(self, ctx, level: Literal['easy', 'normal', 'hard', 'e', 'n', 'h', '20', '25', '30', '1', '2', '3']  = help['map_level_descr']):
+	async def map(self, ctx, level: Literal['Normal', 'n', '1', '20', 'easy', 'Hard', 'h', '2', '25', 'normal', 'Nightmare', 'nm', '3', '30', 'hard']  = help['map_level_descr']):
 		map_type = None
 		if map_type := map_type_aliases.get(level):
 			self.bot.controller.set_config('map_type', map_type, ctx)

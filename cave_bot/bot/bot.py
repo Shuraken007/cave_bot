@@ -147,7 +147,7 @@ class MyBot(commands.Bot):
       if last_msg_datetime:
          self.db_process.set_last_scan(last_msg_datetime)
 
-   # spawn_scan must imitate normal run of command "!scan"
+   # spawn_scan must imitate hard run of command "!scan"
    async def spawn_scan(self):
       for channel_id in self.config.scan_allowed_channel_ids:
          channel = self.get_channel(channel_id)

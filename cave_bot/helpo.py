@@ -1,12 +1,22 @@
 from discord.ext import commands
 
-from .const import cell_aliases_config
+from .const import cell_aliases_config, map_type_aliases_config, MapType
 
 what_str = ['']
 for k, v in cell_aliases_config.items():
    what = f'\t\t{k.name}: ' + ', '.join(v)
    what_str.append(what)
 what_descr = commands.parameter(description="\n".join(what_str))
+
+map_level_values = ['']
+for map_type in MapType:
+   if map_type == MapType.unknown:
+      continue
+   key = map_type.name
+   aliases = map_type_aliases_config[map_type]
+   msg = f'\t\t{key}: {aliases}'
+   map_level_values.append(msg)
+map_level_values = '\n'.join(map_level_values)
 
 help = {
    
@@ -62,7 +72,7 @@ help = {
    !aa @FirstUser @SecondUser
 """,
 'banadd_description': """
-   dreams of any admin - ban hammer, hit them hard
+   dreams of any admin - ban hammer, hit them nightmare
 
    !banadd @SillyDebater
    !ba @SillyDebater @SmartAss5
@@ -97,12 +107,6 @@ help = {
 'reset_description': """
    if new monday detected - all data get and load to new db
 """,
-'map_level_descr': commands.parameter(description="""
-   map level values:
-      'easy', 'normal', 'hard', 
-      'e', 'n', 'h', 
-      20, 25, 30, 
-      1, 2, 3   
-"""),
+'map_level_descr': commands.parameter(description=map_level_values),
 'lead_limit': commands.parameter(description="limit output to first N scores"),
 }

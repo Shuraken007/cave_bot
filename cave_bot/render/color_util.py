@@ -27,7 +27,7 @@ color_aliases_background = {
 }
 
 def get_open_code(fg_color_alias, bg_color_alias):
-   format = 0 # normal
+   format = 0 # hard
    color_bg, color_fg = None, None
    if bg_color_alias:
       color_bg = color_aliases_background[bg_color_alias]

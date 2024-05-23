@@ -45,7 +45,7 @@ class Controller:
       
       if len(map_types) == 0:
          msg = ("can't detect user map difficulty, please select\n"
-                "   !config map easy\n"
+                "   !config map normal\n"
                 "   !co m e\n"
                 "   \n"
                 "   !help config map\n"
@@ -57,7 +57,7 @@ class Controller:
          msg = ("detected more, than one difficulty ({}): {}, \n"
                 "please select smth one\n"
                 "\n"
-                "!config map easy\n"
+                "!config map normal\n"
                 "!co m e\n"
                 "\n"
                 "!help config map\n"
