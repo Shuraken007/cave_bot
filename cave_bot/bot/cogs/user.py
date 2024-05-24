@@ -16,9 +16,7 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 	@strict_users(ur.nobody)
 	@commands.command(aliases=['a'], brief = "add item by coords", description = help['add_description'])
 	async def add(self, ctx, what: AliasConverter = help['what_descr'], coords: commands.Greedy[CoordsConverter] = help['coord_descr']):
-		for coord in coords:
-			ctx.report.set_key(f'{coord}')
-			self.bot.controller.add(what, coord, ctx)
+		self.bot.controller.add(what, coords, ctx)
 
 	@strict_channels()
 	@strict_users(ur.nobody)

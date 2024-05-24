@@ -3,6 +3,7 @@ import inspect
 import discord
 from discord.ext import commands, tasks
 import os
+import traceback
 
 from .bot_util import init_ctx, \
                      strict_channels, strict_users, response_by_report
@@ -103,6 +104,9 @@ class MyBot(commands.Bot):
       if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
          await preprocess(ctx)
          if len(str(error)) > 0:
+            trace = traceback.TracebackException.from_exception(error)
+            trace_str = ''.join(trace.format())
+            ctx.report.err.add(trace_str)
             ctx.report.err.add(str(error))
             ctx.report.log.add({'exception': str(error)})
 
