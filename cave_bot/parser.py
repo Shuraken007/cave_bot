@@ -19,36 +19,39 @@ def convert_coords_due_bug(x, y, size, report):
    return a, b
    # report.msg.add(f'[{x}-{y}] -> [{a}-{b}]')
 
-def validate_coords(coords, report, map_type=None, is_new_version = False, is_bug_converter = False):
-   try:
-      extracted_coords = coords.split('-')
+def validate_coords(coords_arr, report, map_type=None, is_new_version = False, is_bug_converter = False):
+   validated_coords_arr = []
+   for coords in coords_arr:
+      try:
+         extracted_coords = coords.split('-')
 
-      if len(extracted_coords) != 2:
-         err_msg = f'error: only {len(extracted_coords)} coords {extracted_coords}'
-         report.err.add(err_msg)
-         report.reaction.add(r.fail)
-         return
+         if len(extracted_coords) != 2:
+            err_msg = f'error: only {len(extracted_coords)} coords {extracted_coords}'
+            report.err.add(err_msg)
+            report.reaction.add(r.fail)
+            return
 
-      x = int(extracted_coords[0])
-      y = int(extracted_coords[1])
+         x = int(extracted_coords[0])
+         y = int(extracted_coords[1])
 
-      if is_bug_converter and not is_new_version and map_type.value > MapType.normal:
-         x, y = convert_coords_due_bug(x, y, map_type.value, report)
+         if is_bug_converter and not is_new_version and map_type.value > MapType.normal:
+            x, y = convert_coords_due_bug(x, y, map_type.value, report)
 
-      if map_type in [None,  MapType.unknown]:
-         map_type = MapType.nightmare
+         if map_type in [None,  MapType.unknown]:
+            map_type = MapType.nightmare
 
-      map_size = map_type.value
+         map_size = map_type.value
 
-      if x < 1 or x > map_size or y < 1 or y > map_size:
-         err_msg = f'error: x - {x} or y - {y} failed bounds'
-         report.err.add(err_msg)
-         report.reaction.add(r.fail)
-         return
-   
-      return [x, y]
-   except Exception as e:
-      report.log.add({'exception': str(e)})
+         if x < 1 or x > map_size or y < 1 or y > map_size:
+            err_msg = f'error: x - {x} or y - {y} failed bounds'
+            report.err.add(err_msg)
+            report.reaction.add(r.fail)
+            continue
+      
+         validated_coords_arr.append([x, y])
+      except Exception as e:
+         report.log.add({'exception': str(e)})
+   return validated_coords_arr
 
 def validate_what(what, report):
    what = what.lower()
@@ -72,7 +75,7 @@ def validate_map_type(map_type_val, ctx):
 
    return map_type, is_new_version
 
-def validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter):
+def validate_and_add(what, coords_arr, bot, map_type, ctx, is_new_version, is_bug_converter):
    try:
       strict_channels_f(ctx)
       strict_users_f(ctx, ur.nobody)
@@ -81,11 +84,11 @@ def validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_co
       return
 
    what = validate_what(what, ctx.report)
-   coords = validate_coords(coords, ctx.report, map_type, is_new_version, is_bug_converter)
+   coords_arr = validate_coords(coords_arr, ctx.report, map_type, is_new_version, is_bug_converter)
 
-   if what is None or coords is None:
+   if what is None or coords_arr is None or len(coords_arr) == 0:
       return
-   bot.controller.add(what, coords, ctx, map_type)
+   bot.controller.add(what, coords_arr, ctx, map_type)
 
 def parse_msg(ctx, bot):   
    arr = ctx.message.content.split("\n")
@@ -106,14 +109,13 @@ def parse_msg(ctx, bot):
             return
          bot.controller.config.set(ctx.message.author, 'map_type', map_type, ctx.report)
       if match := MATCH_REPORT.match(e):
-         coords = match.group(1)
+         coords = match.group(1).strip()
          what = match.group(2).strip()
-         validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter)
+         validate_and_add(what, [coords], bot, map_type, ctx, is_new_version, is_bug_converter)
       elif match:= MATCH_COMPACT_REPORT.match(e):
          what = match.group(1).strip()
          coords_arr = match.captures(2)
-         for coords in coords_arr:
-            coords = coords.strip()
-            validate_and_add(what, coords, bot, map_type, ctx, is_new_version, is_bug_converter)
+         coords_arr = [x.strip() for x in coords_arr]
+         validate_and_add(what, coords_arr, bot, map_type, ctx, is_new_version, is_bug_converter)
       else:
          ctx.report.log.add({'error': f'not match'})

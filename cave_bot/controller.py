@@ -110,10 +110,12 @@ class Controller:
 
 # Cell functions
 
-   def update_cell(self, coords, view):
+   def update_cell(self, coords, view, cell_counters = None):
       view.set_update_tracker('up')
-      new_cell_type_counters = self.db_process.get_cell_type_counters(*coords, view.map_type)
-      view.update_cell(*coords, new_cell_type_counters)
+      if cell_counters is None:
+         cell_counters = self.db_process.get_cell_type_counters(*coords, view.map_type)
+      
+      view.update_cell(*coords, cell_counters)
       return view.get_update_tracker('up')
 
    def get_total_cells(self, cell_type, map_type, user_id = None):
@@ -127,7 +129,15 @@ class Controller:
             amount = len(records)
       return amount
 
-   def add(self, what, coords, ctx, map_type = MapType.unknown):
+   def order_user_records(self, user_records):
+      hash = {}
+      for r in user_records:
+         key = f'{r.x}-{r.y}'
+         hash[key] = r
+
+      return hash
+
+   def add(self, what, coords_arr, ctx, map_type = MapType.unknown):
       if map_type == MapType.unknown:
          map_type = self.detect_user_map_type(ctx.message.author, ctx)
 
@@ -135,46 +145,52 @@ class Controller:
          ctx.report.reaction.add(r.fail)
          return
 
-
-
       view = self.get_view(map_type)
-
       user_id = ctx.message.author.id
+
+      user_records = self.db_process.get_all_user_record(user_id, map_type)
+      user_records = self.order_user_records(user_records)
+
       cell_type_new = what
-      cell_type_was = self.db_process.get_user_record(user_id, *coords, map_type)
+      for coords in coords_arr:
+         user_record = user_records.get(f'{coords[0]}-{coords[1]}')
 
-      if cell_type_was is not None and cell_type_was == cell_type_new:
-         ctx.report.reaction.add(r.user_data_equal)
-         return
+         cell_type_was = None
+         if user_record is not None:
+            cell_type_was = user_record.cell_type
+         
+         if cell_type_was is not None and cell_type_was == cell_type_new:
+            ctx.report.reaction.add(r.user_data_equal)
+            return
 
-      is_cell_type_changed = False
-      if cell_type_was:
-         self.db_process.update_cell(*coords, cell_type_was, map_type, -1)
-         is_cell_type_changed |= self.update_cell(coords, view)
+         is_cell_type_changed = False
+         if cell_type_was:
+            cell_counters = self.db_process.update_cell(*coords, cell_type_was, map_type, -1)
+            is_cell_type_changed |= self.update_cell(coords, view, cell_counters)
 
-      self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, map_type, ctx.message.created_at)
-      is_cell_type_changed |= self.update_cell(coords, view)
+         cell_counters = self.db_process.update_user_record_and_cell(user_id, coords, cell_type_new, map_type, ctx.message.created_at)
+         is_cell_type_changed |= self.update_cell(coords, view, cell_counters)
 
-      if cell_type_was is None:
-         ctx.report.reaction.add(r.user_data_new)
-      else:
-         ctx.report.reaction.add(r.user_data_changed)
-
-      if is_cell_type_changed:
          if cell_type_was is None:
-            ctx.report.reaction.add(r.cell_new)
+            ctx.report.reaction.add(r.user_data_new)
          else:
-            ctx.report.reaction.add(r.cell_update)
-      
-      cell = view.get_cell(*coords)
-      cell_type_most = cell.get_most_cell_type()
-      if cell_type_most not in [ct.unknown, cell_type_new]:
-         cell_type_most_counter = cell.get_cell_type_counter(cell_type_most)
-         cell_type_new_counter = cell.get_cell_type_counter(cell_type_new)
-         msg = 'adding wrong item: coords: {}, popular item: {} added {} times, you add item: {} added {} times'
-         error = msg.format(coords, cell_type_most.name, cell_type_most_counter, cell_type_new.name, cell_type_new_counter - 1)
-         ctx.report.err.add(error)
-         ctx.report.reaction.add(r.user_data_wrong)
+            ctx.report.reaction.add(r.user_data_changed)
+
+         if is_cell_type_changed:
+            if cell_type_was is None:
+               ctx.report.reaction.add(r.cell_new)
+            else:
+               ctx.report.reaction.add(r.cell_update)
+         
+         cell = view.get_cell(*coords)
+         cell_type_most = cell.get_most_cell_type()
+         if cell_type_most not in [ct.unknown, cell_type_new]:
+            cell_type_most_counter = cell.get_cell_type_counter(cell_type_most)
+            cell_type_new_counter = cell.get_cell_type_counter(cell_type_new)
+            msg = 'adding wrong item: coords: {}, popular item: {} added {} times, you add item: {} added {} times'
+            error = msg.format(coords, cell_type_most.name, cell_type_most_counter, cell_type_new.name, cell_type_new_counter - 1)
+            ctx.report.err.add(error)
+            ctx.report.reaction.add(r.user_data_wrong)
 
    def delete(self, coords, user, ctx):
       map_type = self.detect_user_map_type(user, ctx)

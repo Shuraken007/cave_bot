@@ -6,7 +6,7 @@ from .bot_util import init_ctx
 class CoordsConverter(Converter):
    async def convert(self, ctx, coords: str):
       init_ctx(ctx)
-      coords = validate_coords(coords, ctx.report)
+      [coords] = validate_coords([coords], ctx.report)
       if coords is None:
          raise BadArgument('failed coords')
       

@@ -67,14 +67,23 @@ class DbProcess:
          self.db.m.Cell.map_type == map_type
       ).order_by(self.db.m.Cell.x, self.db.m.Cell.y).all()
 
+   def build_counters_by_cell(self, cell):
+      counters = []
+      for cell_type in CellType:
+         val = getattr(cell, cell_type.name)
+         if val is None:
+            val = 0
+         counters.append(val)
+      return counters
+   
    def get_cell_type_counters(self, x, y, map_type):
-      cell = self.s.query(*self.cell_query_fields).filter(
+      cell = self.s.query(self.db.m.Cell).filter(
          self.db.m.Cell.x   == x,
          self.db.m.Cell.y   == y,
          self.db.m.Cell.map_type == map_type
       ).first()
       if cell is not None:
-         return cell
+         return self.build_counters_by_cell(cell)
 
    def update_cell(self, x, y, cell_type, map_type, delta):
       cell = self.s.query(self.db.m.Cell).filter(
@@ -92,6 +101,7 @@ class DbProcess:
          setattr(cell, cell_type.name, val)
 
       self.s.add(cell)
+      return self.build_counters_by_cell(cell)
 
    def get_last_scan(self):
       last_scan_record = self.s.query(self.db.m.LastScan).first()
@@ -209,7 +219,7 @@ class DbProcess:
 
    def update_user_record_and_cell(self, user_id, coords, cell_type, map_type, time):
       self.update_user_record(user_id, *coords, cell_type, map_type, time)
-      self.update_cell(*coords, cell_type, map_type, +1)
+      return self.update_cell(*coords, cell_type, map_type, +1)
 
    def delete_user_record_and_update_cell(self, user_id, coords, cell_type, map_type):
       self.delete_user_record(user_id, *coords, map_type)
