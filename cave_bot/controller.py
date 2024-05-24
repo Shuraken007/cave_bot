@@ -161,7 +161,7 @@ class Controller:
          
          if cell_type_was is not None and cell_type_was == cell_type_new:
             ctx.report.reaction.add(r.user_data_equal)
-            return
+            continue
 
          is_cell_type_changed = False
          if cell_type_was:
