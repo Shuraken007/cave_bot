@@ -45,8 +45,9 @@ class Controller:
       
       if len(map_types) == 0:
          msg = ("can't detect user map difficulty, please select\n"
-                "   !config map normal\n"
-                "   !co m e\n"
+                "   !config map nightmare\n"
+                "   !co m nm\n"
+                "   normal - n, hard - h, nightmare - nm"
                 "   \n"
                 "   !help config map\n"
                 "   !h co m")
@@ -57,10 +58,11 @@ class Controller:
          msg = ("detected more, than one difficulty ({}): {}, \n"
                 "please select smth one\n"
                 "\n"
-                "!config map normal\n"
-                "!co m e\n"
-                "\n"
-                "!help config map\n"
+                "   !config map nightmare\n"
+                "   !co m nm\n"
+                "   normal - n, hard - h, nightmare - nm"
+                "   \n"
+                "   !help config map\n"
                 "!h co m").format(len(map_types), [x.name for x in map_types])
          if with_error:
             ctx.report.unique.add(msg)

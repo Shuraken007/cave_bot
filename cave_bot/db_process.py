@@ -31,13 +31,14 @@ def for_all_methods(decorator, include_with_partial, exclude):
       return cls
    return decorate
 
-@for_all_methods(decorator, ['cell', 'last_scan', 'user', 'map'], ['get_array_of_cell_orm_cell_type_fields'])
+@for_all_methods(decorator, ['cell', 'last_scan', 'user', 'map'], ['get_array_of_cell_orm_cell_type_fields', 'build_counters_by_cell'])
 class DbProcess:
    def __init__(self, db):
       self.db = db
       self.cell_query_fields = self.get_array_of_cell_orm_cell_type_fields()
 
       self.is_session_invoked_outer = False
+      self._is_opened = False
       self.s = None
 
    def get_array_of_cell_orm_cell_type_fields(self):
@@ -47,9 +48,16 @@ class DbProcess:
       return arr
 
    def _start_session(self):
+      if self._is_opened:
+         return
+      
+      self._is_opened = True
       self.s = self.db.Session()
 
    def _end_session(self):
+      if not self._is_opened:
+         return
+      self._is_opened = False
       if self.s.new or self.s.dirty or self.s.deleted:
          self.s.commit()
       self.s.close()

@@ -42,7 +42,7 @@ def test_get_cell_type_counters(db_process):
    expected_counters[ct.idle_reward.value] = idle_reward_counter
    expected_counters[ct.demon_head.value] = demon_head_counter
 
-   assert counters == tuple(expected_counters)
+   assert counters == expected_counters
 
 @pytest.mark.parametrize("delta", [+1, -1])
 def test_update_cell_if_not_set(db_process, delta):
@@ -370,7 +370,7 @@ def test_get_users_and_types_by_coords_if_set(db_process):
 
 def test_update_user_record_if_not_set(db_process):
    x, y, user_id, expected_cell_type, map_type = 3, 4, 2879234928, ct.demon_head, mt.normal
-   db_process.update_user_record(user_id, x, y, expected_cell_type, map_type)
+   db_process.update_user_record(user_id, x, y, expected_cell_type, map_type, datetime.now())
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
@@ -393,7 +393,7 @@ def test_update_user_record_if_set(db_process):
       s.add(user_record)
       s.commit()
 
-   db_process.update_user_record(user_id, x, y, expected_cell_type, map_type)
+   db_process.update_user_record(user_id, x, y, expected_cell_type, map_type, datetime.now())
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
@@ -441,7 +441,7 @@ def test_update_user_record_and_cell_if_not_set(db_process):
    user_cell_type_now = ct.empty
    cell_type_now_counter_expected = 1
 
-   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_type)
+   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_type, datetime.now())
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
@@ -478,7 +478,7 @@ def test_update_user_record_and_cell_if_set(db_process):
       s.add(user_record)
       s.commit()
 
-   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_type)
+   db_process.update_user_record_and_cell(user_id, [x, y], user_cell_type_now, map_type, datetime.now())
 
    with db_process.db.Session() as s:
       user_record = s.query(db_process.db.m.UserRecord).filter(
