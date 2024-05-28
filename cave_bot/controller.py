@@ -45,9 +45,9 @@ class Controller:
       
       if len(map_types) == 0:
          msg = ("can't detect user map difficulty, please select\n"
-                "   !config map nightmare\n"
                 "   !co m nm\n"
-                "   normal - n, hard - h, nightmare - nm"
+                "   !config map Nightmare\n"
+                "   Normal - n, Hard - h, Nightmare - nm"
                 "   \n"
                 "   !help config map\n"
                 "   !h co m")
@@ -58,9 +58,9 @@ class Controller:
          msg = ("detected more, than one difficulty ({}): {}, \n"
                 "please select smth one\n"
                 "\n"
-                "   !config map nightmare\n"
                 "   !co m nm\n"
-                "   normal - n, hard - h, nightmare - nm"
+                "   !config map Nightmare\n"
+                "   Normal - n, Hard - h, Nightmare - nm"
                 "   \n"
                 "   !help config map\n"
                 "!h co m").format(len(map_types), [x.name for x in map_types])
@@ -86,6 +86,10 @@ class Controller:
       user = ctx.message.author
       self.config.set(user, field, value, ctx.report)
 
+   def set_config_color(self, what, color, ctx):
+      user = ctx.message.author
+      self.config.set_color(user, what, color, ctx.report)
+
    def reset_config(self, ctx):
       user = ctx.message.author
       self.config.reset(user, ctx.report)
@@ -97,6 +101,10 @@ class Controller:
    def show_config(self, ctx):
       user = ctx.message.author
       self.config.show(user, ctx.report)
+
+   def copy_config(self, user, ctx):
+      to = ctx.message.author
+      self.config.copy(user, to, ctx.report)
 
 #  Leaderboard functions
    async def show_leaderboard(self, ctx, limit):

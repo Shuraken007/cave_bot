@@ -1,4 +1,4 @@
-from .const import CellType
+from .const import CellType, DEFAULT_USER_CONFIG
 from .utils import time_to_global_timezone
 
 def decorator(f):
@@ -260,7 +260,7 @@ class DbProcess:
          self.db.m.UserConfig.id == user_id
       ).first()
       if user_config is None:
-         user_config = self.db.m.UserConfig(id = user_id)
+         user_config = self.db.m.UserConfig(id = user_id, **DEFAULT_USER_CONFIG)
       
       for field, value in user_config_dict.items():
          setattr(user_config, field, value)

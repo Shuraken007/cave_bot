@@ -1,45 +1,13 @@
 from PIL import Image, ImageDraw, ImageFont
 
 from ..const import CellType as ct, \
-   cell_description, cell_aliases_config, CleanMap,  MapType
+   cell_description, cell_aliases_config, CleanMap,  MapType, \
+   color_scheme, map_colour_alias_to_rgb, DEFAULT_USER_CONFIG
 from ..utils import build_path
 from .color_util import is_text_black
 from .gradient_color import get_gradient_color
 from .img_storage import ImageStorage
 from ..reaction import Reactions
-
-color_scheme = {
-   ct.unknown              : None,
-   ct.empty                : 'brightblue',
-   ct.demon_hands          : 'red',
-   ct.demon_head           : 'red',
-   ct.demon_tail           : 'red',
-   ct.spider               : 'red',
-   ct.idle_reward          : 'blue',
-   ct.summon_stone         : 'epic',
-   ct.amulet_of_fear       : 'orange',
-   ct.demon_skull          : 'orange',
-   ct.golden_compass       : 'orange',
-   ct.lucky_bones          : 'orange',
-   ct.scepter_of_domination: 'orange',
-   ct.spiral_of_time       : 'orange',
-   ct.token_of_memories    : 'orange',
-}
-
-map_colour_alias_to_rgb = {
-   "white": [255, 255, 255, 125],
-   "black": [0, 0, 0, 125],
-   "red": [255, 0, 0, 50],
-   "green": [83, 255, 77, 50],
-   "brightblue": [95, 135, 255, 50],
-   "orange": [255, 153, 51, 255],
-   "epic": [153, 51, 255, 255],
-   "yellow": [255, 255, 0, 50],
-   "blue": [133, 179, 255, 50],
-   "white": [255, 255, 255, 125],
-   "grey": [140, 140, 140, 125],
-   "light_yellow": [255, 255, 153, 125],
-}
 
 def add_img(background, foreground, align, shift=None, foregound_on_background=True):
    width, height = None, None
@@ -268,11 +236,16 @@ class RenderImage():
          color[-1] = 170
       return color
 
+   def color_from_config(self, color):
+      color[-1] = int(color[-1] / 100 * 255)
+      return color
+   
    def get_color_by_name(self, color_name, is_bright):
       color = map_colour_alias_to_rgb[color_name].copy()
-      if is_bright and color[-1] < 125:
-         color[-1] = 125
-      return color
+      if is_bright and color[-1] < 50:
+         color[-1] = 50
+      color[-1] = int(color[-1] / 100 * 255)
+      return self.color_from_config(color)
 
    def is_cleaned(self, clean, cell_type):
       if clean >= clean.idle and cell_type in [ct.empty, ct.idle_reward]:
@@ -291,10 +264,11 @@ class RenderImage():
          return True
       return False
 
-   def get_color_by_cell(self, cell_type, is_bright, is_known, clean):
-      color_name = None
+   def get_color_by_cell(self, cell_type, is_bright, is_known, clean, user_config):
+      color_name, color = None, None
+
       if is_known:
-         color_name = 'green'
+         color = user_config.me_color
       elif self.is_cleaned(clean, cell_type):
          if self.is_hide_on_clean(cell_type):
             color_name = None
@@ -302,15 +276,28 @@ class RenderImage():
             color_name = 'yellow'
       elif clean >= clean.enemy and cell_type == ct.unknown:
          color_name = 'blue'
-      else:
-         color_name = color_scheme.get(cell_type)
+      elif cell_type == ct.unknown:
+         color = user_config.unknown_color
+      elif cell_type == ct.empty:
+         color = user_config.empty_color
+      elif cell_type == ct.idle_reward:
+         color = user_config.idle_reward_color
+      elif cell_type == ct.summon_stone:
+         color = user_config.summon_stone_color
+      elif cell_type in [ct.spider, ct.demon_hands, ct.demon_head, ct.demon_tail]:
+         color = user_config.enemy_color
+      elif cell_type in [ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories]:
+         color = user_config.artifact_color
+
+      if color:
+         return self.color_from_config(color.copy())
 
       if not color_name:
          return None
 
       return self.get_color_by_name(color_name, is_bright)
 
-   def get_img_by_cell(self, cell_type, is_known, clean, images):
+   def get_img_by_cell(self, cell_type, is_known, clean, images, user_config):
       if is_known:
          return images['blank'], 'blank'
       
@@ -319,7 +306,21 @@ class RenderImage():
       
       if self.is_cleaned(clean, cell_type):
          return images['blank'], 'blank'
-     
+      
+      if cell_type == ct.idle_reward and not user_config.idle_reward_icon:
+         return images['blank'], 'blank'
+      
+      if cell_type == ct.summon_stone and not user_config.summon_stone_icon:
+         return images['blank'], 'blank'
+      
+      if cell_type in [ct.spider, ct.demon_hands, ct.demon_head, ct.demon_tail] \
+            and not user_config.enemy_icon:
+         return images['blank'], 'blank'
+
+      if cell_type in [ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories] \
+            and not user_config.artifact_icon:
+         return images['blank'], 'blank'
+
       return images.get(cell_type), cell_type.name
 
    def add_img_by_cell(self, coords, img, color, back, img_name, images):
@@ -361,7 +362,7 @@ class RenderImage():
 
       return hash
 
-   def generate_map(self, user_id, bright, clean, bot, view, ctx):
+   def generate_map(self, user_id, bright, clean, bot, view, user_config, ctx):
       map_type = view.map_type
       cache = self.cache[map_type]
 
@@ -377,14 +378,23 @@ class RenderImage():
          for j in range(0, map_type.value):
             is_known = user_id and f'{i+1}-{j+1}' in user_records
             cell_type = view.get_cell_type(i+1, j+1)
-            img, img_name = self.get_img_by_cell(cell_type, is_known, clean, cache.images)
-            color = self.get_color_by_cell(cell_type, bright, is_known, clean)
+            img, img_name = self.get_img_by_cell(cell_type, is_known, clean, cache.images, user_config)
+            color = self.get_color_by_cell(cell_type, bright, is_known, clean, user_config)
             coords = self.get_cell_coords(i, j, cache.sizes)
             self.add_img_by_cell(coords, img, color, back, img_name, cache.images)
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright, map_type)
 
-      self.add_descriptions(back, user_id, bot, bright, map_type)
+      self.add_descriptions(back, user_id, bot, bright, map_type, user_config)
       return back
+
+   def is_user_config_default(self, user_config):
+      for k, v in DEFAULT_USER_CONFIG.items():
+         if k == 'map_type':
+            continue
+         config_v = getattr(user_config, k)
+         if v != config_v:
+            return False
+      return True
 
    def render(self, user_id, bright, clean, bot, ctx):
       map_type = bot.controller.detect_user_map_type(ctx.message.author, ctx)
@@ -402,26 +412,29 @@ class RenderImage():
          view.set_update_tracker('image_map')
          self.storage.reset()
 
-      if not user_id and not is_view_updated:
+      user_config = bot.db_process.get_user_config(ctx.message.author.id)
+      is_config_default =  self.is_user_config_default(user_config)
+
+      if not user_id and not is_view_updated and is_config_default:
          img = self.storage.get_image([bright, clean, map_type.name])
          if img:
             using_save = True
 
       if not img:
-         img = self.generate_map(user_id, bright, clean, bot, view, ctx)
+         img = self.generate_map(user_id, bright, clean, bot, view, user_config, ctx)
 
       ctx.report.msg.add(f'Map: {map_type.name}')
       ctx.report.image.add(img)
       
-      if not using_save and not user_id:
+      if not using_save and not user_id and is_config_default:
          self.storage.add_image([bright, clean, map_type.name], img)
 
-   def get_description_image(self, cell_type_name, is_bright, images):
+   def get_description_image(self, cell_type_name, is_bright, images, user_config):
       img = None
       if cell_type_name == 'artifact':
          img = images[ct.scepter_of_domination]
       elif cell_type_name == 'empty':
-         color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean)
+         color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean, user_config)
          img = self.change_color(images['cell'], (0, 0, 0, 0), color, 'cell', images)
       else:
          cell_type = ct[cell_type_name]
@@ -504,10 +517,10 @@ class RenderImage():
          w, _ = self.add_text(back, text_spec, pos_spec)
          coords[0] += w*1.1
 
-   def add_description(self, cell_type_name, coords, back, user_id, bot, is_bright, map_type):
+   def add_description(self, cell_type_name, coords, back, user_id, bot, is_bright, map_type, user_config):
       cache = self.cache[map_type]
 
-      img = self.get_description_image(cell_type_name, is_bright, cache.images)
+      img = self.get_description_image(cell_type_name, is_bright, cache.images, user_config)
       description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
       self.add_description_text(description_text, coords, back, is_bright, cache)
@@ -572,7 +585,7 @@ class RenderImage():
       draw_bar(draw, x, center_y - height / 2, total_width, height, progress, tuple(fill_color), tuple(background_color))
       self.add_bar_description(explored_cells, total_cells, progress, x, center_y, total_width, height, back, is_bright, map_type)
 
-   def add_descriptions(self, back, user_id, bot, is_bright, map_type):
+   def add_descriptions(self, back, user_id, bot, is_bright, map_type, user_config):
       cache = self.cache[map_type]
 
       base_coords = self.get_cell_coords(map_type.value, 1, cache.sizes)
@@ -582,7 +595,7 @@ class RenderImage():
       coords = base_coords.copy()
 
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
-         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type)
+         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type, user_config)
          coords[1] += shift_y * 1.1
 
       coords = base_coords.copy()
@@ -590,7 +603,7 @@ class RenderImage():
 
       boon_total, boon_found = 0, 0
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
-         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type)
+         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type, user_config)
          coords[1] += shift_y * 1.1
          if cell_type_name not in [ct.empty.name, ct.idle_reward.name]:
             boon_total += description_text_spec['total']

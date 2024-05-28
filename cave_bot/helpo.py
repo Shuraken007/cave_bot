@@ -1,12 +1,24 @@
 from discord.ext import commands
 
-from .const import cell_aliases_config, map_type_aliases_config, MapType
+from .const import cell_aliases_config, color_config_cell_aliases_config, icon_config_cell_aliases_config, map_type_aliases_config, MapType
 
 what_str = ['']
 for k, v in cell_aliases_config.items():
    what = f'\t\t{k.name}: ' + ', '.join(v)
    what_str.append(what)
 what_descr = commands.parameter(description="\n".join(what_str))
+
+color_config_what_str = ['']
+for k, v in color_config_cell_aliases_config.items():
+   what = f'\t\t{k}: ' + ', '.join(v)
+   color_config_what_str.append(what)
+color_config_what_descr = commands.parameter(description="\n".join(color_config_what_str))
+
+icon_config_what_str = ['']
+for k, v in icon_config_cell_aliases_config.items():
+   what = f'\t\t{k}: ' + ', '.join(v)
+   icon_config_what_str.append(what)
+icon_config_what_descr = commands.parameter(description="\n".join(icon_config_what_str))
 
 map_level_values = ['']
 for map_type in MapType:
@@ -46,6 +58,8 @@ help = {
    !dau @user1 @user2
 """,
 'what_descr': what_descr,
+'color_config_what_descr': color_config_what_descr,
+'icon_config_what_descr': icon_config_what_descr,
 'coord_descr': commands.parameter(description="x-y: 1-2 11-9"),
 'me_descr': commands.parameter(description="don't render what you reported, it's easier to find rest items"),
 'clean_descr': commands.parameter( description=
@@ -109,4 +123,34 @@ help = {
 """,
 'map_level_descr': commands.parameter(description=map_level_values),
 'lead_limit': commands.parameter(description="limit output to first N scores"),
+'color_descr': """
+set color for map cells
+
+!config color summon_stone 153 51 255 100
+!config color ss 153 51 255 100
+where [153, 51, 255, 100] = [red, green, blue, alpha]
+
+alpha is optional, by default = 100
+!config color ss 153 51 255
+
+!config color ss 50
+change only alpha to 50%
+""",
+'icon_descr': """
+turn on / off icons
+
+!config icon idle_reward on
+!config icon idle_reward off
+
+!co i i on
+!co i en y
+!co i ss n
+""",
+'r': commands.parameter(description="red component in [0, 255]"),
+'g': commands.parameter(description="green component in [0, 255]"),
+'b': commands.parameter(description="blue component in [0, 255]"),
+'alpha': commands.parameter(description="transparency - value [0, 100], 0 - not visible, 100 - absolute visible"),
+'yes_no': commands.parameter(description="""
+\t\tpossible values: [y, n, yes, no, on, off, 1, 0, enable, disable, true, false, t ,f]
+"""),
 }

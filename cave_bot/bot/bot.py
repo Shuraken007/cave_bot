@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 import os
 import traceback
 
-from .bot_util import init_ctx, \
+from .bot_util import init_ctx, MyCommandError, \
                      strict_channels, strict_users, response_by_report
 from ..utils import get_last_monday, get_week_start_as_str, get_mock_class_with_attr, \
                      profile_start, profile_end
@@ -101,13 +101,13 @@ class MyBot(commands.Bot):
          ctx.report.msg.add('Restarted, reseted week!!!\n')
 
    async def on_command_error(self, ctx, error):
-      if isinstance(error, (commands.CommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
+      if isinstance(error, (MyCommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
          await preprocess(ctx)
          if len(str(error)) > 0:
             # trace = traceback.TracebackException.from_exception(error)
             # trace_str = ''.join(trace.format())
             # ctx.report.err.add(trace_str)
-            # ctx.report.err.add(str(error))
+            ctx.report.err.add(str(error))
             ctx.report.log.add({'exception': str(error)})
 
          await postprocess(ctx)

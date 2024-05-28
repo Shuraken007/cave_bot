@@ -1,9 +1,11 @@
+import discord
 from discord.ext import commands
-from typing import Literal
+from typing import Literal, Optional
 
 from ...const import UserRole as ur, map_type_aliases, map_type_aliases_config, MapType
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
+from ..converter import ColorConverter, ColorConfigAliasConverter, IconConfigAliasConverter
 
 class ConfigCog(commands.Cog, name='Settings', description = "Config commands - your settings"):
 
@@ -38,6 +40,31 @@ class ConfigCog(commands.Cog, name='Settings', description = "Config commands - 
 	@config.command(aliases=['d'], brief = "delete config from database")
 	async def delete(self, ctx):
 		self.bot.controller.delete_config(ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@config.command(aliases=['c'], brief = "change color", description = help['color_descr'])
+	async def color(self, ctx, what: ColorConfigAliasConverter = help['color_config_what_descr'], r: Optional[int] = help['r'], g: Optional[int] = help['g'], b: Optional[int] = help['b'], alpha: Optional[int] = help['alpha']):
+		arr = []
+		for x in [r, g, b, alpha]:
+			if x is None:
+				continue
+			arr.append(x)
+		color = ColorConverter().convert(ctx, arr)
+		self.bot.controller.set_config_color(what, color, ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@config.command(aliases=['i'], brief = "icon show or not", description = help['icon_descr'])
+	async def icon(self, ctx, what: IconConfigAliasConverter = help['icon_config_what_descr'], yes_no: bool = help['yes_no']):
+		key = f'{what}_icon'
+		self.bot.controller.set_config(key, yes_no, ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@config.command(brief = "copy config from another user")
+	async def copy(self, ctx, user: discord.User):
+		self.bot.controller.copy_config(user, ctx)
 
 async def setup(bot):
 	await bot.add_cog(ConfigCog(bot))

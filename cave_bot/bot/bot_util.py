@@ -7,6 +7,9 @@ from ..report import Report
 from ..reaction import process_reactions
 from ..utils import build_sending_msg_arr_consider_constraint
 
+class MyCommandError(commands.CommandError):
+   pass
+
 def init_ctx(ctx):
    if hasattr(ctx, 'report'):
       return
@@ -60,7 +63,7 @@ def strict_channels_f(ctx):
          ctx.channel.id in bot.config.allowed_channel_ids
       ):
       channel_name = getattr(ctx.channel, 'name', type(ctx.channel).__name__)
-      raise commands.CommandError(f"Channel {channel_name} not allowed!")
+      raise MyCommandError(f"Channel {channel_name} not allowed!")
    return True
 
 def strict_users_f(ctx, min_role):
@@ -68,7 +71,7 @@ def strict_users_f(ctx, min_role):
    init_ctx(ctx)
    is_role_ok, err_msg = bot.controller.role.user_have_role_greater_or_equal(ctx.message.author, min_role, ctx.report)
    if not is_role_ok:
-      raise commands.CommandError(err_msg)
+      raise MyCommandError(err_msg)
    return True
 
 def strict_channels():

@@ -1,4 +1,5 @@
 import enum
+import sqlalchemy as sa
 
 class CellType(enum.IntEnum):
    unknown               = 0,
@@ -49,7 +50,8 @@ cell_aliases_config = {
 }
 
 for k,v in cell_aliases_config.items():
-   v.append(k.name)
+   if k.name not in v:
+      v.append(k.name)
 
 # build reverted cell_aliases: "u" : ct.unknown
 
@@ -115,6 +117,110 @@ for k, v in map_type_aliases_config.items():
 DEFAULT_DB_NAME = 'cave.db'
 MSG_CONSTRAINT = 2000 - len("```ansi\n\n```")
 
+color_scheme = {
+   ct.unknown              : None,
+   ct.empty                : 'brightblue',
+   ct.demon_hands          : 'red',
+   ct.demon_head           : 'red',
+   ct.demon_tail           : 'red',
+   ct.spider               : 'red',
+   ct.idle_reward          : 'blue',
+   ct.summon_stone         : 'epic',
+   ct.amulet_of_fear       : 'orange',
+   ct.demon_skull          : 'orange',
+   ct.golden_compass       : 'orange',
+   ct.lucky_bones          : 'orange',
+   ct.scepter_of_domination: 'orange',
+   ct.spiral_of_time       : 'orange',
+   ct.token_of_memories    : 'orange',
+}
+
+map_colour_alias_to_rgb = {
+   "empty": [0, 0, 0, 0],
+   "white": [255, 255, 255, 50],
+   "black": [0, 0, 0, 50],
+   "red": [255, 0, 0, 20],
+   "green": [83, 255, 77, 20],
+   "brightblue": [95, 135, 255, 20],
+   "orange": [255, 153, 51, 100],
+   "epic": [153, 51, 255, 100],
+   "yellow": [255, 255, 0, 20],
+   "blue": [133, 179, 255, 20],
+   "white": [255, 255, 255, 50],
+   "grey": [140, 140, 140, 50],
+   "light_yellow": [255, 255, 153, 50],
+}
+c = map_colour_alias_to_rgb
+
 DEFAULT_USER_CONFIG = {
    'map_type': MapType.normal,
+
+   'idle_reward_icon': True,
+   'summon_stone_icon': True,
+   'enemy_icon': True,
+   'artifact_icon': True,
+
+   'unknown_color': c['empty'],
+   'empty_color': c['brightblue'],
+   'idle_reward_color': c['blue'],
+   'summon_stone_color': c['epic'],
+   'me_color'   : c['green'],
+   'enemy_color': c['red'],
+   'artifact_color'   : c['orange'],
 }
+
+def color_to_str(color):
+   res = ','.join([str(x) for x in color])
+   return res
+
+SERVER_DEFAULT_USER_CONFIG = {
+   'map_type': "20",
+
+   'idle_reward_icon': sa.sql.expression.true(),
+   'summon_stone_icon': sa.sql.expression.true(),
+   'enemy_icon': sa.sql.expression.true(),
+   'artifact_icon': sa.sql.expression.true(),
+
+   'unknown_color': color_to_str(c['empty']),
+   'empty_color': color_to_str(c['brightblue']),
+   'idle_reward_color': color_to_str(c['blue']),
+   'summon_stone_color': color_to_str(c['epic']),
+   'me_color'   : color_to_str(c['green']),
+   'enemy_color': color_to_str(c['red']),
+   'artifact_color'   : color_to_str(c['orange']),
+}
+
+color_config_cell_aliases_config = {
+   'unknown'     : ["u", "unknown"],
+   'empty'       : ["e", "empty"],
+   'idle_reward' : ["i", "idle reward", "idle rewards"],
+   'summon_stone': ["ss", "summoning stone", "summon stone"],
+   'enemy'       : ["en", "enemy"],
+   'artifact'    : ["a", "art"],
+   'me'          : ["m"]
+}
+
+for k,v in color_config_cell_aliases_config.items():
+   if k not in v:
+      v.append(k)
+
+color_config_cell_aliases = {}
+for k, v in color_config_cell_aliases_config.items():
+   for alias in v:
+      color_config_cell_aliases[alias] = k
+
+icon_config_cell_aliases_config = {
+   'idle_reward' : ["i", "idle reward", "idle rewards"],
+   'summon_stone': ["ss", "summoning stone", "summon stone"],
+   'enemy'       : ["en", "enemy"],
+   'artifact'    : ["a", "art"],
+}
+
+for k,v in icon_config_cell_aliases_config.items():
+   if k not in v:
+      v.append(k)
+
+icon_config_cell_aliases = {}
+for k, v in icon_config_cell_aliases_config.items():
+   for alias in v:
+      icon_config_cell_aliases[alias] = k

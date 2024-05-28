@@ -9,8 +9,22 @@ class Config:
       self.db_process.set_user_config(user.id, {field: value})
       report.reaction.add(Reactions.ok)
 
+   def set_color(self, user, what, color, report):
+      config_key = f'{what}_color'
+      if len(color) == 1:
+         user_config = self.db_process.get_user_config(user.id)
+         color_was = getattr(user_config, config_key)
+         color_was[3] = color[0]
+         color = color_was
+
+      self.set(user, config_key, color, report)
+      report.reaction.add(Reactions.ok)
+
    def reset(self, user, report):
-      self.db_process.set_user_config(user.id, DEFAULT_USER_CONFIG)
+      user_config = self.db_process.get_user_config(user.id)
+      default_config = {**DEFAULT_USER_CONFIG}
+      default_config['map_type'] = user_config.map_type
+      self.db_process.set_user_config(user.id, default_config)
       report.reaction.add(Reactions.ok)
 
    def delete(self, user, report):
@@ -23,4 +37,23 @@ class Config:
          report.msg.add(f'no config settings')
          return
 
-      report.msg.add(f'map: {user_config.map_type.name}')
+      for key in DEFAULT_USER_CONFIG.keys():
+         value = getattr(user_config, key)
+         report.msg.add(f'{key}: {value}')
+
+   def copy(self, copy_from, copy_to, report):
+      user_config = self.db_process.get_user_config(copy_from.id)
+      if user_config is None:
+         report.msg.add(f'user to copy from have not config')
+         report.reaction.add(Reactions.fail)
+         return
+
+      new_config = {}
+      for key in DEFAULT_USER_CONFIG.keys():
+         if key == 'map_type':
+            continue
+         value = getattr(user_config, key)
+         new_config[key] = value
+
+      self.db_process.set_user_config(copy_to.id, new_config)
+      report.reaction.add(Reactions.ok)
