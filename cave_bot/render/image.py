@@ -368,6 +368,11 @@ class RenderImage():
 
       back = cache.images["background"].copy()
       back.draw = ImageDraw.Draw(back)
+      
+      back_color = tuple(self.color_from_config(user_config.background_color.copy()))
+      fake_back = Image.new('RGBA', (back.width, back.height), color=back_color)
+      add_img(back, fake_back, "TOPLEFT", [0, 0], foregound_on_background=True)
+      
 
       user_records = {}
       if user_id:

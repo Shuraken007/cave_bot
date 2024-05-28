@@ -5,7 +5,7 @@ from typing import Literal, Optional
 from ...const import UserRole as ur, map_type_aliases, map_type_aliases_config, MapType
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
-from ..converter import ColorConverter, ColorConfigAliasConverter, IconConfigAliasConverter
+from ..converter import ColorConverter, ColorConfigAliasConverter, IconConfigAliasConverter, HexColorConverter
 
 class ConfigCog(commands.Cog, name='Settings', description = "Config commands - your settings"):
 
@@ -44,13 +44,13 @@ class ConfigCog(commands.Cog, name='Settings', description = "Config commands - 
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@config.command(aliases=['c'], brief = "change color", description = help['color_descr'])
-	async def color(self, ctx, what: ColorConfigAliasConverter = help['color_config_what_descr'], r: Optional[int] = help['r'], g: Optional[int] = help['g'], b: Optional[int] = help['b'], alpha: Optional[int] = help['alpha']):
+	async def color(self, ctx, what: ColorConfigAliasConverter = help['color_config_what_descr'], r: Optional[int] = help['r'], g: Optional[int] = help['g'], b: Optional[int] = help['b'], hex: Optional[HexColorConverter] = help['hex'], alpha: Optional[int] = help['alpha']):
 		arr = []
 		for x in [r, g, b, alpha]:
 			if x is None:
 				continue
 			arr.append(x)
-		color = ColorConverter().convert(ctx, arr)
+		color = ColorConverter().convert(ctx, arr, hex)
 		self.bot.controller.set_config_color(what, color, ctx)
 
 	@strict_channels()

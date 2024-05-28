@@ -56,7 +56,7 @@ def process_reactions(reactions, report):
 
 def add_reaction_to_report(reaction, value, report):
    msg = '{} ({}) - {}' \
-      .format(emoji[reaction], value, reaction.name)
+      .format(str(emoji[reaction]), value, reaction.name)
    report.reaction_msg.add(msg)
 
 def build_emoji_arr(reaction, value):
@@ -64,4 +64,4 @@ def build_emoji_arr(reaction, value):
    if value > 1:
       reactions += number_to_digits(value) 
    
-   return [emoji[x] for x in reactions]
+   return [str(emoji[x]) for x in reactions]

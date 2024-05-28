@@ -11,11 +11,15 @@ class Config:
 
    def set_color(self, user, what, color, report):
       config_key = f'{what}_color'
-      if len(color) == 1:
+      if len(color) in [1, 3]:
          user_config = self.db_process.get_user_config(user.id)
          color_was = getattr(user_config, config_key)
-         color_was[3] = color[0]
-         color = color_was
+         if len(color) == 1:
+            color_was[3] = color[0]
+            color = color_was
+         elif len(color) == 3:
+            alpha_was = color_was[3]
+            color.append(alpha_was)
 
       self.set(user, config_key, color, report)
       report.reaction.add(Reactions.ok)

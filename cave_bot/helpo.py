@@ -130,11 +130,20 @@ set color for map cells
 !config color ss 153 51 255 100
 where [153, 51, 255, 100] = [red, green, blue, alpha]
 
-alpha is optional, by default = 100
+alpha is optional, get from config by default
 !config color ss 153 51 255
 
 !config color ss 50
 change only alpha to 50%
+
+also hexademical colors supported
+!co c art #268BD2 60
+!co c art 268bd2 60
+!co c art 268bd2
+
+where [268BD2, 60] = [hex_color, alpha]
+alpha also is optional
+
 """,
 'icon_descr': """
 turn on / off icons
@@ -150,6 +159,11 @@ turn on / off icons
 'g': commands.parameter(description="green component in [0, 255]"),
 'b': commands.parameter(description="blue component in [0, 255]"),
 'alpha': commands.parameter(description="transparency - value [0, 100], 0 - not visible, 100 - absolute visible"),
+'hex': commands.parameter(description="""
+example: "#FFFF00" - yellow
+read as r: 'FF' + g: 'FF' + b: 'FF'                          
+FF = 255 at hexadecimal format                 
+"""),
 'yes_no': commands.parameter(description="""
 \t\tpossible values: [y, n, yes, no, on, off, 1, 0, enable, disable, true, false, t ,f]
 """),

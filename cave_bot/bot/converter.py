@@ -4,6 +4,7 @@ from ..parser import validate_coords, validate_what
 from .bot_util import init_ctx
 from ..const import color_config_cell_aliases, icon_config_cell_aliases
 from ..reaction import Reactions
+from PIL import ImageColor
 
 class CoordsConverter(Converter):
    async def convert(self, ctx, coords: str):
@@ -77,39 +78,67 @@ class ColorConverter(Converter):
          return
       return alpha
 
-   def validate_color_rgba(self, color_arr, report):
-      if len(color_arr) not in [1, 3, 4]:
-         report.err.add(INVALID_COLOR_ERR_BOUND.format(len(color_arr)))
-         return
-
-      # only transparency
+   def validate_color_rgba(self, color_arr, rgb_from_hex, report):
+      # search alpha
       alpha = None
       if len(color_arr) in [1, 4]:
          alpha = color_arr.pop()
-      elif len(color_arr) == 3:
-         alpha = 100
-      alpha = self.validate_alpha(alpha, report)
-      if alpha is None:
-         return
-      
-      color_arr.append(alpha)
-      if len(color_arr) == 1:
-         return color_arr
-      
+         alpha = self.validate_alpha(alpha, report)
+         if alpha is None:
+            return None, None
+
+      if rgb_from_hex is not None and len(color_arr) > 1:
+         report.err.add('error: both - rgb and hex colors were given')
+         return None, None
+      elif rgb_from_hex:
+         return rgb_from_hex, alpha
+      elif len(color_arr) == 0:
+         return None, alpha
+
+      if len(color_arr) != 3:
+         report.err.add(INVALID_COLOR_ERR_BOUND.format(len(color_arr)))
+         return None, None
+
       for c in range(3):
          if color_arr[c] < 0 or color_arr[c] > 255:
             report.err.add(INVALID_COLOR_COMPONENT_ERR_BOUND.format(color_arr[c]))
-            return
-         
-      return color_arr
+            return None, None
 
-   def convert(self, ctx, color_arr):
+      return color_arr, alpha
+
+   def convert(self, ctx, color_arr, rgb_from_hex):
       
       init_ctx(ctx)
-      if len(color_arr) == 0:
+      if len(color_arr) == 0 and rgb_from_hex is None:
          return
-      color = self.validate_color_rgba(color_arr, ctx.report)
-      if color is None:
+      color_rgb, alpha = self.validate_color_rgba(color_arr, rgb_from_hex, ctx.report)
+      if color_rgb is None and alpha is None:
          raise BadArgument()
       
+      color = []
+      if color_rgb is not None:
+         color.extend(color_rgb)
+      if alpha is not None:
+         color.append(alpha)
+
       return color
+   
+class HexColorConverter(Converter):
+   def validate_hex(self, hex, report):
+      if not hex.startswith("#"):
+         hex = "#" + hex
+      rgb = None
+      try:
+         rgb = list(ImageColor.getcolor(hex, "RGB"))
+      except Exception as e:
+         report.err.add(str(e))
+         return
+      return rgb
+
+   async def convert(self, ctx, hex: str):
+      init_ctx(ctx)
+      rgb = self.validate_hex(hex, ctx.report)
+      if rgb is None:
+         raise BadArgument()
+      
+      return rgb

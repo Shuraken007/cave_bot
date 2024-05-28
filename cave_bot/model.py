@@ -107,9 +107,10 @@ def generate_models(table_names):
 
    # class UserConfig
    user_config_spec = {
-      '__tablename__': table_names['UserConfig'],
-      'id'           : Column(BigInteger, primary_key = True),
-      'map_type'     : Column(MapTypeValue, default = MapType.unknown, primary_key = True)
+      '__tablename__'   : table_names['UserConfig'],
+      'id'              : Column(BigInteger, primary_key = True),
+      'map_type'        : Column(MapTypeValue, default = MapType.unknown, primary_key = True),
+      'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
    }
    for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
                      ct.idle_reward, ct.empty, ct.unknown]:

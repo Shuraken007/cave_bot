@@ -167,6 +167,8 @@ DEFAULT_USER_CONFIG = {
    'me_color'   : c['green'],
    'enemy_color': c['red'],
    'artifact_color'   : c['orange'],
+   
+   'background_color'   : c['empty'],
 }
 
 def color_to_str(color):
@@ -188,6 +190,8 @@ SERVER_DEFAULT_USER_CONFIG = {
    'me_color'   : color_to_str(c['green']),
    'enemy_color': color_to_str(c['red']),
    'artifact_color'   : color_to_str(c['orange']),
+
+   'background_color'   : color_to_str(c['empty']),
 }
 
 color_config_cell_aliases_config = {
@@ -197,7 +201,8 @@ color_config_cell_aliases_config = {
    'summon_stone': ["ss", "summoning stone", "summon stone"],
    'enemy'       : ["en", "enemy"],
    'artifact'    : ["a", "art"],
-   'me'          : ["m"]
+   'me'          : ["m"],
+   'background'  : ["bg", "back"]
 }
 
 for k,v in color_config_cell_aliases_config.items():
