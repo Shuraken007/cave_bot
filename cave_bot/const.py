@@ -149,7 +149,7 @@ map_colour_alias_to_rgb = {
    "white": [255, 255, 255, 50],
    "grey": [140, 140, 140, 50],
    "light_yellow": [255, 255, 153, 50],
-   "white_blue": [245, 245, 255, 100],
+   "white_blue": [185, 240, 255, 100],
    "black_blue": [0, 0, 10, 100],
 }
 c = map_colour_alias_to_rgb

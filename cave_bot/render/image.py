@@ -369,7 +369,7 @@ class RenderImage():
    def generate_back(self, cache, user_config):
       back_color = tuple(self.color_from_config(user_config.background_color.copy()))
       back_border_color = tuple(self.color_from_config(user_config.background_border_color.copy()))
-      back_cache_key = "{}{}".format("background", str(back_color))
+      back_cache_key = "{}{}{}".format("background", str(back_color), str(back_border_color))
       if back_cache_key in cache.images:
          back = cache.images[back_cache_key].copy()
          return cache.images[back_cache_key].copy()
