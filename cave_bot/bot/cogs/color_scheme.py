@@ -34,7 +34,7 @@ class ColorSchemeCog(commands.Cog, name='ColorScheme', description = "Config com
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@scheme.command(aliases=['se'], brief = "search color_schemes and load what you like", description = help['scheme_search'])
-	async def search_scheme(self, ctx, user: Optional[discord.User], name: Optional[str]):
+	async def search(self, ctx, user: Optional[discord.User], name: Optional[str]):
 		await self.bot.controller.search_scheme(user, name, ctx)
 
 	@strict_channels()

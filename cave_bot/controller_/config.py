@@ -8,6 +8,7 @@ class Config:
    def set(self, user, field, value, report):
       self.db_process.set_user_config(user.id, {field: value})
       report.reaction.add(Reactions.ok)
+      self.db_process.db.save_table(self.db_process.db.m.UserConfig)
 
    def set_color(self, user, what, color, report):
       config_key = f'{what}_color'
@@ -23,6 +24,7 @@ class Config:
 
       self.set(user, config_key, color, report)
       report.reaction.add(Reactions.ok)
+      self.db_process.db.save_table(self.db_process.db.m.UserConfig)
 
    def reset(self, user, report):
       user_config = self.db_process.get_user_config(user.id)
@@ -30,6 +32,7 @@ class Config:
       default_config['map_type'] = user_config.map_type
       self.db_process.set_user_config(user.id, default_config)
       report.reaction.add(Reactions.ok)
+      self.db_process.db.save_table(self.db_process.db.m.UserConfig)
 
    def delete(self, user, report):
       self.db_process.delete_user_config(user.id)
@@ -61,3 +64,4 @@ class Config:
 
       self.db_process.set_user_config(copy_to.id, new_config)
       report.reaction.add(Reactions.ok)
+      self.db_process.db.save_table(self.db_process.db.m.UserConfig)

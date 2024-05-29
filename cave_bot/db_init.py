@@ -68,6 +68,15 @@ class Db:
    def save_to_load_db(self):
       self.load_from_one_db_to_another(self.memory_db, self.load_db)
 
+   def save_table(self, class_model):
+      with self.memory_db.connect() as db_from:
+         with self.load_db.connect() as db_to:
+            table = class_model.__table__
+            db_to.execute(table.delete())
+            for row in db_from.execute(sa.select(table.c)):
+               db_to.execute(table.insert().values(row._mapping))
+            db_to.commit()
+
    def load_from_one_db_to_another(self, engine_from, engine_to):
       with engine_from.connect() as db_from:
          with engine_to.connect() as db_to:
