@@ -1,7 +1,7 @@
 from discord.ext import commands
 from typing import Literal, Optional
 
-from ...const import UserRole as ur, CleanMap
+from ...const import UserRole as ur
 from ...helpo import help
 from ..converter import CoordsConverter, AliasConverter
 from ... import parser
@@ -50,17 +50,14 @@ class UserCog(commands.Cog, name='User', description = "User commands - manipula
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@commands.command(aliases=['m'], brief = "render map as image or text", description = help['map_description'])
-	async def map(self, ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii'], bright: Optional[Literal['b', 'bright']] = help['bright_descr'], clean: Optional[Literal['c', 'clean', 'cc', 'ccc']] = help['clean_descr']):
-		if clean is None:
-			clean = 'no_clean'
-		clean = CleanMap[clean]
+	async def map(self, ctx, me: Optional[Literal['me']] = help['me_descr'], ascii: Optional[Literal['ascii']] = help['ascii']):
 		if me:
 			me = ctx.message.author.id
 		async with ctx.typing():
 			if ascii:
 				self.bot.render_ascii.render(me, self.bot, ctx)
 			else:
-				self.bot.render_image.render(me, bright, clean, self.bot, ctx)
+				self.bot.render_image.render(me, self.bot, ctx)
 
 	@strict_channels()
 	@strict_users(ur.nobody)

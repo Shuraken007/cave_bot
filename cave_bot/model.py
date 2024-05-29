@@ -114,6 +114,15 @@ def generate_models(table_names):
       'map_type'        : Column(MapTypeValue, default = MapType.unknown, primary_key = True),
       'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
       'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
+      'text_light_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_light_color']),
+      'text_dark_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_dark_color']),
+      'text_dark_light_threshold': Column(Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
+      'text_all_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_all_collected_color']),
+      'text_part_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_part_collected_color']),
+      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
+      'cell_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_color']),
+      'cell_background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_border_color']),
+      'cell_icon' :  Column(Boolean, default=True),
    }
    for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
                      ct.idle_reward, ct.empty, ct.unknown]:
@@ -135,8 +144,18 @@ def generate_models(table_names):
       '__tablename__'   : table_names['ColorScheme'],
       'user_id'         : Column(BigInteger, primary_key = True),
       'name'            : Column(String(255), primary_key = True),
+      'text_light_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_light_color']),
+      'text_dark_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_dark_color']),
+      'text_dark_light_threshold': Column(Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
+      'text_all_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_all_collected_color']),
+      'text_part_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_part_collected_color']),
+      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
+      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
       'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
       'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
+      'cell_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_color']),
+      'cell_background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_border_color']),
+      'cell_icon' :  Column(Boolean, default=True),
    }
    for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
                      ct.idle_reward, ct.empty, ct.unknown]:

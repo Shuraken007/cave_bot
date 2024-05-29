@@ -5,7 +5,7 @@ from typing import Literal, Optional
 from ...const import UserRole as ur, map_type_aliases
 from ...helpo import help
 from ..bot_util import strict_channels, strict_users
-from ..converter import ColorConverter, ColorConfigAliasConverter, IconConfigAliasConverter
+from ..converter import ColorConverter, ColorConfigAliasConverter, IconConfigAliasConverter, ThresholdConverter
 
 class ConfigCog(commands.Cog, name='Settings', description = "Config commands - your settings"):
 
@@ -59,6 +59,12 @@ class ConfigCog(commands.Cog, name='Settings', description = "Config commands - 
 	async def icon(self, ctx, what: IconConfigAliasConverter = help['icon_config_what_descr'], yes_no: bool = help['yes_no']):
 		key = f'{what}_icon'
 		self.bot.controller.set_config(key, yes_no, ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@config.command(aliases=['tt', 'tth', 'thresh', 'threshold'], brief = "setting - when show light text, when dark", description = help['text_threshold_descr'])
+	async def text_threshold(self, ctx, threshold: ThresholdConverter):
+		self.bot.controller.set_config('text_dark_light_threshold', threshold, ctx)
 
 	@strict_channels()
 	@strict_users(ur.nobody)

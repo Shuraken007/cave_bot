@@ -62,9 +62,6 @@ help = {
 'icon_config_what_descr': icon_config_what_descr,
 'coord_descr': commands.parameter(description="x-y: 1-2 11-9"),
 'me_descr': commands.parameter(description="don't render what you reported, it's easier to find rest items"),
-'clean_descr': commands.parameter( description=
-   """c:hide idle+empty, cc:and enemies, ccc:also summon stones and arts, useful=yellow"""),
-'bright_descr': commands.parameter(description="make all colors bright, turn of transparency"),
 'ascii': commands.parameter(description="use text map instead of image"),
 'compact_descr': commands.parameter(description="make report Compact"),
 'map_description': """
@@ -72,8 +69,6 @@ help = {
    !map me
    !map ascii
    !map me ascii
-   !map bright | !map b
-   !map me bright | !map me b
 """,
 'addadmin_description': """
    add user with admin role - more commands available
@@ -145,6 +140,26 @@ where [268BD2, 60] = [hex_color, alpha]
 alpha also is optional
 
 """,
+'text_threshold_descr': """
+number in [0, 255]
+
+helps to decide - when use dark text, when light
+
+How it works:
+   there are lot of colors on map, not possible to have one text color
+   so there are 2 text colors:
+   light text for dark parts of map
+   dark text for light parts of map
+   before text printed on map, it check brightness - is it dark or not
+   formula: 30% of red + 60% of green + 10% of blue - gives us brightness [0, 255]
+   more precisly: r*0.299 + g*0.587 + b*0.114
+
+Example:
+   let's have threshold = 60
+   we want to put pixel on place with color: [100, 40, 100]
+   100*0.299 + 40*0.587 + 100*0.114 = 64.78 = 65
+   65 > 60, so we think that this place is too bright, select dark text
+""",
 'icon_descr': """
 turn on / off icons
 
@@ -160,9 +175,9 @@ turn on / off icons
 'b': commands.parameter(description="blue component in [0, 255]"),
 'alpha': commands.parameter(description="transparency - value [0, 100], 0 - not visible, 100 - absolute visible"),
 'hex': commands.parameter(description="""
-example: "#FFFF00" - yellow
-read as r: 'FF' + g: 'FF' + b: 'FF'                          
-FF = 255 at hexadecimal format                 
+      example: "#FFFF00" - yellow
+      read as r: 'FF' + g: 'FF' + b: 'FF'                          
+      FF = 255 at hexadecimal format                 
 """),
 'yes_no': commands.parameter(description="""
 \t\tpossible values: [y, n, yes, no, on, off, 1, 0, enable, disable, true, false, t ,f]

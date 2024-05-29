@@ -1,7 +1,7 @@
 from PIL import Image, ImageOps, ImageDraw, ImageFont
 
 from ..const import CellType as ct, \
-   cell_description, cell_aliases_config, CleanMap,  MapType, \
+   cell_description, cell_aliases_config,  MapType, \
    color_scheme, map_colour_alias_to_rgb, DEFAULT_USER_CONFIG
 from ..utils import build_path
 from .color_util import is_text_black
@@ -92,7 +92,6 @@ class RenderImage():
 
       sizes = self.get_sizes_spec(self.cell_config, map_type)
       images = self.get_common_images(sizes['cell_width'])
-      self.add_cells(images, map_type, sizes)
       view.set_update_tracker('image_map')
 
       self.cache[map_type] = ImageCache(map_type, font_descr, font_cell, sizes, images)
@@ -141,8 +140,12 @@ class RenderImage():
       images['blank'] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
       _, _, _, alpha = images['background'].split()
       images['background_alpha'] = alpha
-      images['background'] = images['background'].convert('L')
+      images['background_grayscale'] = images['background'].convert('L')
       images['fake_back'] = Image.new('RGBA', (images['background'].width, images['background'].height))
+
+      _, _, _, alpha = images['cell'].split()
+      images['cell_alpha'] = alpha
+      images['cell_grayscale'] = images['cell'].convert('L')
 
       return images
 
@@ -202,12 +205,19 @@ class RenderImage():
       y = border_shift + (cell_width + cell_shift) * j
       return [y, x]
 
-   def add_cells(self, images, map_type, sizes):
-      back = images['fake_back']
+   def add_cells(self, back, images, map_type, sizes, user_config):
+      if not user_config.cell_icon:
+         return
+      cell_img = self.generate_from_grayscale(
+         images["cell_grayscale"],         
+         images["cell_alpha"],         
+         self.color_from_config(user_config.cell_background_color), 
+         self.color_from_config(user_config.cell_background_border_color),
+      )
       for i in range(0, map_type.value):
          for j in range(0, map_type.value):
             coords = self.get_cell_coords(i, j, sizes)
-            add_img(back, images['cell'], "TOPLEFT", coords, foregound_on_background=True)
+            add_img(back, cell_img, "TOPLEFT", coords, foregound_on_background=True)
 
    def add_text(self, img, text_spec, pos_spec):
       coords = pos_spec['coords']
@@ -228,58 +238,30 @@ class RenderImage():
             coords[1] += int((height) / 2) - h
             pass
 
-      img.draw.text(coords, text, font=font, fill=tuple(color))
+      img.draw.text(coords, text, font=font, fill=color)
       return (w, h)
 
-   def get_text_color(self, img, coords, color_name=None, is_bright=False):
+   def get_text_color(self, img, coords, user_config):
       pixel_color = img.getpixel(tuple(coords))
-      if color_name is None:
-         color_name = is_text_black(pixel_color) and 'black' or 'grey'
-      color = map_colour_alias_to_rgb[color_name].copy()
-      if is_bright:
-         color[-1] = 170
-      return color
 
-   def color_from_config(self, color):
-      color[-1] = int(color[-1] / 100 * 255)
-      return color
-   
-   def get_color_by_name(self, color_name, is_bright):
-      color = map_colour_alias_to_rgb[color_name].copy()
-      if is_bright and color[-1] < 50:
-         color[-1] = 50
-      color[-1] = int(color[-1] / 100 * 255)
+      color = None
+      if is_text_black(pixel_color, user_config.text_dark_light_threshold):
+         color = user_config.text_dark_color
+      else:
+         color = user_config.text_light_color
+
       return self.color_from_config(color)
-
-   def is_cleaned(self, clean, cell_type):
-      if clean >= clean.idle and cell_type in [ct.empty, ct.idle_reward]:
-         return True
-      
-      if clean >= clean.enemy and cell_type in [ct.demon_hands ,ct.demon_head ,ct.demon_tail ,ct.spider]: 
-         return True
-
-      if clean >= clean.ss_arts and cell_type in [ct.summon_stone, ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories]: 
-         return True
-      
-      return False
    
-   def is_hide_on_clean(self, cell_type):
-      if cell_type in [ct.empty, ct.demon_hands ,ct.demon_head ,ct.demon_tail ,ct.spider]:
-         return True
-      return False
+   def color_from_config(self, color):
+      color = color.copy()
+      color[-1] = int(color[-1] / 100 * 255)
+      return tuple(color)
 
-   def get_color_by_cell(self, cell_type, is_bright, is_known, clean, user_config):
-      color_name, color = None, None
+   def get_color_by_cell(self, cell_type, is_known, user_config):
+      color = None
 
       if is_known:
          color = user_config.me_color
-      elif self.is_cleaned(clean, cell_type):
-         if self.is_hide_on_clean(cell_type):
-            color_name = None
-         else:
-            color_name = 'yellow'
-      elif clean >= clean.enemy and cell_type == ct.unknown:
-         color_name = 'blue'
       elif cell_type == ct.unknown:
          color = user_config.unknown_color
       elif cell_type == ct.empty:
@@ -294,23 +276,17 @@ class RenderImage():
          color = user_config.artifact_color
 
       if color:
-         return self.color_from_config(color.copy())
+         return self.color_from_config(color)
+      
+      return None
 
-      if not color_name:
-         return None
-
-      return self.get_color_by_name(color_name, is_bright)
-
-   def get_img_by_cell(self, cell_type, is_known, clean, images, user_config):
+   def get_img_by_cell(self, cell_type, is_known, images, user_config):
       if is_known:
          return images['blank'], 'blank'
       
       if cell_type in [ct.unknown, ct.empty]:
          return images['blank'], 'blank'
-      
-      if self.is_cleaned(clean, cell_type):
-         return images['blank'], 'blank'
-      
+            
       if cell_type == ct.idle_reward and not user_config.idle_reward_icon:
          return images['blank'], 'blank'
       
@@ -335,7 +311,7 @@ class RenderImage():
 
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
 
-   def add_text_by_cell(self, text, cell_type, coords, back, bright, map_type):
+   def add_text_by_cell(self, text, cell_type, coords, back, map_type, user_config):
       if cell_type not in [ct.unknown, ct.empty]:
          return
       
@@ -349,7 +325,7 @@ class RenderImage():
       }
       shift = cache.sizes['cell_width'] / 2
       pixel_coords = [coords[0] + shift, coords[1] + shift]
-      color = self.get_text_color(back, pixel_coords, color_name = None, is_bright=bright)
+      color = self.get_text_color(back, pixel_coords, user_config)
       text_spec = { 
          'text': text,
          'color': color,
@@ -366,27 +342,21 @@ class RenderImage():
 
       return hash
 
-   def generate_back(self, cache, user_config):
-      back_color = tuple(self.color_from_config(user_config.background_color.copy()))
-      back_border_color = tuple(self.color_from_config(user_config.background_border_color.copy()))
-      back_cache_key = "{}{}{}".format("background", str(back_color), str(back_border_color))
-      if back_cache_key in cache.images:
-         back = cache.images[back_cache_key].copy()
-         return cache.images[back_cache_key].copy()
-      
-      gray_back = cache.images["background"]
+   def generate_from_grayscale(self, grayscale_img, alpha_channel, bg_color, border_color):
+      img = ImageOps.colorize(grayscale_img, black = bg_color, white = border_color)
+      img.putalpha(alpha_channel)
+      return img
 
-      back = ImageOps.colorize(gray_back, black = back_color, white = back_border_color)
-      back.putalpha(cache.images["background_alpha"])
-      cache.images[back_cache_key] = back.copy()
-
-      return back
-
-   def generate_map(self, user_id, bright, clean, bot, view, user_config, ctx):
+   def generate_map(self, user_id, bot, view, user_config, ctx):
       map_type = view.map_type
       cache = self.cache[map_type]
 
-      back = self.generate_back(cache, user_config)
+      back = self.generate_from_grayscale(
+         cache.images["background_grayscale"],         
+         cache.images["background_alpha"],         
+         self.color_from_config(user_config.background_color), 
+         self.color_from_config(user_config.background_border_color),
+      )
       back.draw = ImageDraw.Draw(back)
 
       user_records = {}
@@ -398,15 +368,16 @@ class RenderImage():
          for j in range(0, map_type.value):
             is_known = user_id and f'{i+1}-{j+1}' in user_records
             cell_type = view.get_cell_type(i+1, j+1)
-            img, img_name = self.get_img_by_cell(cell_type, is_known, clean, cache.images, user_config)
-            color = self.get_color_by_cell(cell_type, bright, is_known, clean, user_config)
+            img, img_name = self.get_img_by_cell(cell_type, is_known, cache.images, user_config)
+            color = self.get_color_by_cell(cell_type, is_known, user_config)
             coords = self.get_cell_coords(i, j, cache.sizes)
             self.add_img_by_cell(coords, img, color, back, img_name, cache.images)
-            self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright, map_type)
+            self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, map_type, user_config)
 
-      add_img(back, cache.images['fake_back'], "TOPLEFT", [0, 0], foregound_on_background=True)
+      self.add_cells(back, cache.images, map_type, cache.sizes, user_config)
+      # add_img(back, cache.images['fake_back'], "TOPLEFT", [0, 0], foregound_on_background=True)
 
-      self.add_descriptions(back, user_id, bot, bright, map_type, user_config)
+      self.add_descriptions(back, user_id, bot, map_type, user_config)
       return back
 
    def is_user_config_default(self, user_config):
@@ -418,7 +389,7 @@ class RenderImage():
             return False
       return True
 
-   def render(self, user_id, bright, clean, bot, ctx):
+   def render(self, user_id, bot, ctx):
       map_type = bot.controller.detect_user_map_type(ctx.message.author, ctx)
       if map_type == MapType.unknown:
          ctx.report.reaction.add(Reactions.fail)
@@ -438,25 +409,25 @@ class RenderImage():
       is_config_default =  self.is_user_config_default(user_config)
 
       if not user_id and not is_view_updated and is_config_default:
-         img = self.storage.get_image([bright, clean, map_type.name])
+         img = self.storage.get_image([map_type.name])
          if img:
             using_save = True
 
       if not img:
-         img = self.generate_map(user_id, bright, clean, bot, view, user_config, ctx)
+         img = self.generate_map(user_id, bot, view, user_config, ctx)
 
       ctx.report.msg.add(f'Map: {map_type.name}')
       ctx.report.image.add(img)
       
       if not using_save and not user_id and is_config_default:
-         self.storage.add_image([bright, clean, map_type.name], img)
+         self.storage.add_image([map_type.name], img)
 
-   def get_description_image(self, cell_type_name, is_bright, images, user_config):
+   def get_description_image(self, cell_type_name, images, user_config):
       img = None
       if cell_type_name == 'artifact':
          img = images[ct.scepter_of_domination]
       elif cell_type_name == 'empty':
-         color = self.get_color_by_cell(ct.empty, is_bright, False, CleanMap.no_clean, user_config)
+         color = self.get_color_by_cell(ct.empty, False, user_config)
          img = self.change_color(images['cell'], (0, 0, 0, 0), color, 'cell', images)
       else:
          cell_type = ct[cell_type_name]
@@ -479,7 +450,7 @@ class RenderImage():
 
       return total_from_db
 
-   def get_description_text(self, cell_type_name, user_id, bot, map_type):
+   def get_description_text(self, cell_type_name, user_id, bot, map_type, user_config):
       founded, total, description, name = None, None, None, None
       text = []
       if cell_type_name == 'artifact':
@@ -502,7 +473,8 @@ class RenderImage():
          name = max(cell_aliases_config[cell_type], key=len)
 
       msg1 = f'{founded}/{total}'
-      msg1_color =  'green' if founded >= total else 'red'
+      color =  user_config.text_all_collected_color if founded >= total else user_config.text_part_collected_color
+      msg1_color = self.color_from_config(color)
       text.append({'text': msg1.lower(), 'color': msg1_color})
 
       msg2 = f'  {name}'
@@ -514,16 +486,17 @@ class RenderImage():
 
       return text, description_text_spec
 
-   def add_description_text(self, description_text, coords, back, is_bright, cache):
+   def add_description_text(self, description_text, coords, back, cache, user_config):
       icon_width = cache.sizes['cell_width']
       shift = icon_width * 1.2
       coords[0] += shift
 
       for text_config in description_text:
          text = text_config['text']
-         color_name = text_config.get('color', None)
+         color = text_config.get('color', None)
 
-         color = self.get_text_color(back, coords, color_name, is_bright=is_bright)
+         if not color:
+            color = self.get_text_color(back, coords, user_config)
 
          pos_spec = { 
             'coords': coords.copy(), 
@@ -539,16 +512,16 @@ class RenderImage():
          w, _ = self.add_text(back, text_spec, pos_spec)
          coords[0] += w*1.1
 
-   def add_description(self, cell_type_name, coords, back, user_id, bot, is_bright, map_type, user_config):
+   def add_description(self, cell_type_name, coords, back, user_id, bot, map_type, user_config):
       cache = self.cache[map_type]
 
-      img = self.get_description_image(cell_type_name, is_bright, cache.images, user_config)
-      description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type)
+      img = self.get_description_image(cell_type_name, cache.images, user_config)
+      description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type, user_config)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
-      self.add_description_text(description_text, coords, back, is_bright, cache)
+      self.add_description_text(description_text, coords, back, cache, user_config)
       return cache.sizes['cell_width'], description_text_spec
 
-   def add_bar_description(self, explored_cells, total_cells, progress, x, center_y, total_width, height, back, is_bright, map_type):
+   def add_bar_description(self, explored_cells, total_cells, progress, x, center_y, total_width, height, back, map_type, user_config):
       cache = self.cache[map_type]
 
       coords = [x + total_width + height * 1.5, center_y - height / 2]
@@ -558,7 +531,7 @@ class RenderImage():
       }
       text_spec = { 
          'text': f'[{explored_cells}/{total_cells}]',
-         'color': self.get_text_color(back, coords, color_name=None, is_bright=is_bright),
+         'color': self.get_text_color(back, coords, user_config),
          'font': cache.font_descr,
       }
 
@@ -572,13 +545,13 @@ class RenderImage():
       }
       text_spec = { 
          'text': f'[ {int(progress * 100)}% ]',
-         'color': self.get_text_color(back, coords, color_name=None, is_bright=is_bright),
+         'color': self.get_text_color(back, coords, user_config),
          'font': cache.font_descr,
       }
 
       self.add_text(back, text_spec, pos_spec)      
 
-   def add_bar(self, center_y, back, bot, is_bright, map_type, user_id, boon_total, boon_found):
+   def add_bar(self, center_y, back, bot, map_type, user_id, boon_total, boon_found, user_config):
       view = bot.controller.get_view(map_type)
 
       total_cells, explored_cells = 0, 0
@@ -598,16 +571,16 @@ class RenderImage():
       x = int((self.bg_w - total_width) / 2)
 
       fill_color = get_gradient_color(progress, total_width)
-      transperancy = 80
-      if is_bright:
-         transperancy = 125
+      transperancy = user_config.progress_bar_background_color[-1]
       fill_color.append(transperancy)
-      background_color = self.get_color_by_name('grey', is_bright)
-      draw = ImageDraw.Draw(back)
-      draw_bar(draw, x, center_y - height / 2, total_width, height, progress, tuple(fill_color), tuple(background_color))
-      self.add_bar_description(explored_cells, total_cells, progress, x, center_y, total_width, height, back, is_bright, map_type)
+      fill_color = self.color_from_config(fill_color)
 
-   def add_descriptions(self, back, user_id, bot, is_bright, map_type, user_config):
+      background_color = self.color_from_config(user_config.progress_bar_background_color)
+      draw = ImageDraw.Draw(back)
+      draw_bar(draw, x, center_y - height / 2, total_width, height, progress, fill_color, background_color)
+      self.add_bar_description(explored_cells, total_cells, progress, x, center_y, total_width, height, back, map_type, user_config)
+
+   def add_descriptions(self, back, user_id, bot, map_type, user_config):
       cache = self.cache[map_type]
 
       base_coords = self.get_cell_coords(map_type.value, 1, cache.sizes)
@@ -617,7 +590,7 @@ class RenderImage():
       coords = base_coords.copy()
 
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
-         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, is_bright, map_type, user_config)
+         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, map_type, user_config)
          coords[1] += shift_y * 1.1
 
       coords = base_coords.copy()
@@ -625,11 +598,11 @@ class RenderImage():
 
       boon_total, boon_found = 0, 0
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
-         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, is_bright, map_type, user_config)
+         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, map_type, user_config)
          coords[1] += shift_y * 1.1
          if cell_type_name not in [ct.empty.name, ct.idle_reward.name]:
             boon_total += description_text_spec['total']
             boon_found += description_text_spec['founded']
 
       bar_y = max(back.height * 0.95, (back.height + coords[1])/2)
-      self.add_bar(bar_y, back, bot, is_bright, map_type, user_id, boon_total, boon_found)
+      self.add_bar(bar_y, back, bot, map_type, user_id, boon_total, boon_found, user_config)

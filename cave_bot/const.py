@@ -64,16 +64,6 @@ map_cell_name_to_shortest_alias = {}
 for k, v in cell_aliases_config.items():
    map_cell_name_to_shortest_alias[k.name] = min(v, key=len)
 
-class CleanMap(enum.IntEnum):
-   no_clean = 0,
-   c = 1,
-   clean = 1,
-   idle = 1,
-   cc = 2,
-   enemy = 2,
-   ccc = 3,
-   ss_arts = 3,
-
 class UserRole(enum.IntEnum):
    banned = 0,
    nobody = 1,
@@ -161,6 +151,7 @@ DEFAULT_USER_CONFIG = {
    'summon_stone_icon': True,
    'enemy_icon': True,
    'artifact_icon': True,
+   'cell_icon': True,
 
    'unknown_color': c['empty'],
    'empty_color': c['brightblue'],
@@ -170,8 +161,19 @@ DEFAULT_USER_CONFIG = {
    'enemy_color': c['red'],
    'artifact_color'   : c['orange'],
    
-   'background_color'   : c['black_blue'],
-   'background_border_color'   : c['white_blue'],
+   'background_color'       : c['black_blue'],
+   'background_border_color': c['white_blue'],
+
+   'cell_background_color'       : c['black'],
+   'cell_background_border_color': c['white'],
+
+   'text_light_color'            : c['grey'],
+   'text_dark_color'             : c['black'],
+   'text_dark_light_threshold'   : 50,
+   'text_all_collected_color'    : c['green'],
+   'text_part_collected_color'   : c['red'],
+
+   'progress_bar_background_color': c['grey'],
 }
 
 def color_to_str(color):
@@ -185,6 +187,7 @@ SERVER_DEFAULT_USER_CONFIG = {
    'summon_stone_icon': sa.sql.expression.true(),
    'enemy_icon': sa.sql.expression.true(),
    'artifact_icon': sa.sql.expression.true(),
+   'cell_icon': sa.sql.expression.true(),
 
    'unknown_color': color_to_str(c['empty']),
    'empty_color': color_to_str(c['brightblue']),
@@ -196,6 +199,17 @@ SERVER_DEFAULT_USER_CONFIG = {
 
    'background_color'       : color_to_str(c['black_blue']),
    'background_border_color': color_to_str(c['white_blue']),
+
+   'cell_background_color'       : color_to_str(c['black']),
+   'cell_background_border_color': color_to_str(c['white']),
+
+   'text_light_color'            : color_to_str(c['grey']),
+   'text_dark_color'             : color_to_str(c['black']),
+   'text_dark_light_threshold'   : "50",
+   'text_all_collected_color'    : color_to_str(c['green']),
+   'text_part_collected_color'   : color_to_str(c['red']),
+
+   'progress_bar_background_color': color_to_str(c['grey']),
 }
 
 color_config_cell_aliases_config = {
@@ -206,8 +220,16 @@ color_config_cell_aliases_config = {
    'enemy'       : ["en", "enemy"],
    'artifact'    : ["a", "art"],
    'me'          : ["m"],
-   'background'  : ["bg", "back"],
-   'background_border'  : ["bgb", "backb", "bo", "bab", "board"],
+   'background'            : ["bg", "back"],
+   'background_border'     : ["bgb", "backb", "bo", "bab", "board"],
+   'cell_background'       : ["cbg", "cback"],
+   'cell_background_border': ["cbgb", "cbackb", "cbo", "cbab", "cboard"],
+   'text_light'            : ["tl", "tli", "tlight", "text_light"],
+   'text_dark': ["td", "tda", "tdark", "text_dark"],
+   'text_all_collected': ["ta", "tall", "textall", "text_all"],
+   'text_part_collected'   : ["tp", "tep", "tpart", "tepart", "textpart", "text_part"],
+   'text_part_collected'   : ["tp", "tep", "tpart", "tepart", "textpart", "text_part"],
+   'progress_bar_background': ["pb", "bar", "barbg", "bar_bg", "progress_bar"]
 }
 
 for k,v in color_config_cell_aliases_config.items():
@@ -224,6 +246,7 @@ icon_config_cell_aliases_config = {
    'summon_stone': ["ss", "summoning stone", "summon stone"],
    'enemy'       : ["en", "enemy"],
    'artifact'    : ["a", "art"],
+   'cell'        : ["c"],
 }
 
 for k,v in icon_config_cell_aliases_config.items():

@@ -6,6 +6,21 @@ from ..const import color_config_cell_aliases, icon_config_cell_aliases
 from ..reaction import Reactions
 from PIL import ImageColor
 
+class ThresholdConverter(Converter):
+   async def convert(self, ctx, threshold: int):
+      init_ctx(ctx)
+      if not threshold.isdigit():
+         ctx.report.err.add('expected threshold as number, got {}'.format(type(threshold)))
+         raise BadArgument('failed coords')
+
+      threshold = int(threshold)
+
+      if threshold < 0 or threshold > 255:
+         ctx.report.err.add('expected threshold in [0, 255], got {}'.format(threshold))
+         raise BadArgument('failed coords')
+
+      return threshold
+   
 class CoordsConverter(Converter):
    async def convert(self, ctx, coords: str):
       init_ctx(ctx)
