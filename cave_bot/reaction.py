@@ -35,6 +35,28 @@ emoji = {
    "9": "9️⃣",
 }
 
+report_emoji = {
+   r.ok: "✅",
+   r.fail: "❌",
+   r.user_data_equal: "⩵",
+   r.user_data_new: "➕",
+   r.user_data_changed: "♻️",
+   r.user_data_deleted: "➖",
+   r.user_data_wrong: "⚠️",
+   r.cell_new: "🆕",
+   r.cell_update: "🆙",
+   "0": "0️⃣",
+   "1": "1️⃣",
+   "2": "2️⃣",
+   "3": "3️⃣",
+   "4": "4️⃣",
+   "5": "5️⃣",
+   "6": "6️⃣",
+   "7": "7️⃣",
+   "8": "8️⃣",
+   "9": "9️⃣",
+}
+
 allowed_value = [r.cell_new]
 
 def number_to_digits(number):
@@ -56,7 +78,7 @@ def process_reactions(reactions, report):
 
 def add_reaction_to_report(reaction, value, report):
    msg = '{} ({}) - {}' \
-      .format(str(emoji[reaction]), value, reaction.name)
+      .format(report_emoji[reaction], value, reaction.name)
    report.reaction_msg.add(msg)
 
 def build_emoji_arr(reaction, value):
