@@ -31,7 +31,7 @@ def for_all_methods(decorator, include_with_partial, exclude):
       return cls
    return decorate
 
-@for_all_methods(decorator, ['cell', 'last_scan', 'user', 'map'], ['get_array_of_cell_orm_cell_type_fields', 'build_counters_by_cell'])
+@for_all_methods(decorator, ['cell', 'last_scan', 'user', 'map', 'color_scheme'], ['get_array_of_cell_orm_cell_type_fields', 'build_counters_by_cell'])
 class DbProcess:
    def __init__(self, db):
       self.db = db
@@ -306,3 +306,62 @@ class DbProcess:
 
       setattr(map_config, cell_name, value)   
       self.s.add(map_config)
+
+   def get_color_scheme(self, user_id, name):
+      return self.s.query(
+         self.db.m.ColorScheme
+      ).filter(
+         self.db.m.ColorScheme.user_id == user_id,
+         self.db.m.ColorScheme.name == name
+      ).first()
+
+   def add_color_scheme(self, user_id, name, color_scheme_dict):
+      color_scheme = self.s.query(
+         self.db.m.ColorScheme
+      ).filter(
+         self.db.m.ColorScheme.user_id == user_id,
+         self.db.m.ColorScheme.name == name
+      ).first()
+      if color_scheme is None:
+         color_scheme = self.db.m.ColorScheme(user_id = user_id, name = name)
+      
+      for field, value in color_scheme_dict.items():
+         setattr(color_scheme, field, value)
+
+      self.s.add(color_scheme)
+
+   def delete_color_scheme(self, user_id, name):
+      scheme = self.s.query(
+         self.db.m.ColorScheme
+      ).filter(
+         self.db.m.ColorScheme.user_id == user_id,
+         self.db.m.ColorScheme.name == name
+      ).first()
+
+      if scheme is not None:
+         self.s.delete(scheme)
+
+   def search_color_schemes(self, user_id, partial_name):
+      if user_id is not None and partial_name is not None:
+         return self.s.query(
+            self.db.m.ColorScheme
+         ).filter(
+            self.db.m.ColorScheme.user_id == user_id,
+            self.db.m.ColorScheme.name.ilike(f'%{partial_name}%')
+         ).all()
+      elif user_id is not None:
+         return self.s.query(
+            self.db.m.ColorScheme
+         ).filter(
+            self.db.m.ColorScheme.user_id == user_id
+         ).all()
+      elif partial_name is not None:
+         return self.s.query(
+            self.db.m.ColorScheme
+         ).filter(
+            self.db.m.ColorScheme.name.ilike(f'%{partial_name}%')
+         ).all()
+      else:
+         return self.s.query(
+            self.db.m.ColorScheme
+         ).all()

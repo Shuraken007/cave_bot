@@ -101,14 +101,19 @@ class MyBot(commands.Bot):
          ctx.report.msg.add('Restarted, reseted week!!!\n')
 
    async def on_command_error(self, ctx, error):
-      if isinstance(error, (MyCommandError, commands.BadArgument, commands.CheckFailure, commands.CommandNotFound)):
+      error_class_name = type(error).__name__
+      if not error_class_name in ['CommandInvokeError'] and \
+            error_class_name in commands.errors.__all__ or \
+            isinstance(error, (MyCommandError)):
+         
          await preprocess(ctx)
          if len(str(error)) > 0:
             # trace = traceback.TracebackException.from_exception(error)
             # trace_str = ''.join(trace.format())
             # ctx.report.err.add(trace_str)
-            ctx.report.err.add(str(error))
-            ctx.report.log.add({'exception': str(error)})
+            err_msg = f'{error_class_name}: {error}'
+            ctx.report.err.add(err_msg)
+            ctx.report.log.add({'exception': err_msg})
 
          await postprocess(ctx)
       else:

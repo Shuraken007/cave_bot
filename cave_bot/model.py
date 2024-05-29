@@ -49,7 +49,7 @@ class ColorValue(TypeDecorator):
       return color
    
 class Models:
-   def __init__(self, Cell, UserRecord, LastScan, Role, UserConfig, MapConfig, Base):
+   def __init__(self, Cell, UserRecord, LastScan, Role, UserConfig, ColorScheme, MapConfig, Base):
       self.Base = Base
       self.Cell = Cell
       self.UserRecord = UserRecord
@@ -57,6 +57,7 @@ class Models:
       self.Role = Role
       self.MapConfig = MapConfig
       self.UserConfig = UserConfig
+      self.ColorScheme = ColorScheme
 
 def get_table_names():
    week_postfix = get_week_start_as_str()
@@ -64,6 +65,7 @@ def get_table_names():
       'Role': 'role',
       'LastScan': 'last_scan',
       'UserConfig': 'user_config',
+      'ColorScheme': 'color_scheme',
       'MapConfig': 'map_config',
       'Cell': 'cell_' + week_postfix,
       'UserRecord': 'user_record_' + week_postfix,
@@ -128,6 +130,25 @@ def generate_models(table_names):
 
    UserConfig = type('UserConfig', (Base,), user_config_spec)
 
+   # class ColorScheme
+   color_scheme_spec = {
+      '__tablename__'   : table_names['ColorScheme'],
+      'user_id'         : Column(BigInteger, primary_key = True),
+      'name'            : Column(String(255), primary_key = True),
+      'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
+      'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
+   }
+   for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
+                     ct.idle_reward, ct.empty, ct.unknown]:
+      col_name = cell_type
+      if type(cell_type) == ct:
+         col_name = cell_type.name
+            
+      key = col_name + '_color'
+      color_scheme_spec[key] = Column(ColorValue, default=DEFAULT_USER_CONFIG[key])
+
+   ColorScheme = type('ColorScheme', (Base,), color_scheme_spec)
+
    # class MapConfig
    map_config_spec = {
       '__tablename__': table_names['MapConfig'],
@@ -143,4 +164,4 @@ def generate_models(table_names):
 
    MapConfig = type('MapConfig', (Base,), map_config_spec)
 
-   return Models(Cell, UserRecord, LastScan, Role, UserConfig, MapConfig, Base)
+   return Models(Cell, UserRecord, LastScan, Role, UserConfig, ColorScheme, MapConfig, Base)

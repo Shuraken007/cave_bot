@@ -24,6 +24,7 @@ def role():
       'UserRecord': str(uuid.uuid4()),
       'UserConfig': str(uuid.uuid4()),
       'MapConfig': str(uuid.uuid4()),
+      'ColorScheme': str(uuid.uuid4()),
    }
    models = generate_models(table_names)
    db = Db(models, config.db_connection_str, admin_id = config.admin_id)

@@ -4,6 +4,7 @@ from .const import CellType as ct, MapType
 from .reaction import Reactions as r
 from .controller_.role import Role
 from .controller_.config import Config
+from .controller_.color_scheme import ColorScheme
 from .controller_.leaderboard import Leaderboard
 from .view import View
 
@@ -15,6 +16,7 @@ class Controller:
 
       self.role = Role(db_process)
       self.config = Config(db_process)
+      self.color_scheme = ColorScheme(db_process)
       self.leaderboard = Leaderboard(db_process)
 
    def get_view(self, map_type):
@@ -105,6 +107,22 @@ class Controller:
    def copy_config(self, user, ctx):
       to = ctx.message.author
       self.config.copy(user, to, ctx.report)
+
+#  Scheme functions
+   def save_scheme(self, name, ctx):
+      user = ctx.message.author
+      self.color_scheme.save(user, name, ctx.report)
+
+   def delete_scheme(self, name, ctx):
+      user = ctx.message.author
+      self.color_scheme.delete(user, name, ctx.report)
+
+   async def search_scheme(self, user_from, partial_name, ctx):
+      await self.color_scheme.search(user_from, partial_name, ctx)
+
+   def load_scheme(self, user_from, name, ctx):
+      user = ctx.message.author
+      self.color_scheme.load(user, user_from, name, ctx.report)
 
 #  Leaderboard functions
    async def show_leaderboard(self, ctx, limit):

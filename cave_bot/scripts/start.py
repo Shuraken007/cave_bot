@@ -22,7 +22,8 @@ def main():
       'cave_bot.bot.cogs.super_admin',
       'cave_bot.bot.cogs.admin',
       'cave_bot.bot.cogs.user',
-      'cave_bot.bot.cogs.config'
+      'cave_bot.bot.cogs.config',
+      'cave_bot.bot.cogs.color_scheme',
    ]
    bot = MyBot(
       config = config, 

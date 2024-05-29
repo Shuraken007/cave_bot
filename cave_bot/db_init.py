@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists, create_database
 
-from .const import UserRole as ur
+from .const import UserRole as ur, DEFAULT_USER_CONFIG
 
 def get_engine(db_connection_str):
    echo = False
@@ -25,6 +25,7 @@ class Db:
       self.LoadSession = self.get_session(self.load_db)
 
       self.add_admin(admin_id)
+      self.add_default_color_scheme(admin_id)
 
       with self.Session() as s:
          last_scan_record = s.query(self.m.LastScan).first()
@@ -40,6 +41,23 @@ class Db:
       with self.Session() as s:
          admin = self.m.Role(id = admin_id, role = ur.super_admin)
          s.merge(admin)
+         s.commit()
+
+   def add_default_color_scheme(self, admin_id):
+      if admin_id is None:
+         return
+      default_color_scheme_dict = {}
+      for key in DEFAULT_USER_CONFIG.keys():
+         if key in [ 'map_type', 'idle_reward_icon','summon_stone_icon','enemy_icon','artifact_icon' ]:
+            continue
+         default_color_scheme_dict[key] = DEFAULT_USER_CONFIG[key]
+      with self.Session() as s:
+         color_scheme = self.m.ColorScheme(
+            user_id = admin_id,
+            name = "default",
+            **default_color_scheme_dict
+         )
+         s.merge(color_scheme)
          s.commit()
 
    def get_session(self, engine):

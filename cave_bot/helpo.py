@@ -167,4 +167,32 @@ FF = 255 at hexadecimal format
 'yes_no': commands.parameter(description="""
 \t\tpossible values: [y, n, yes, no, on, off, 1, 0, enable, disable, true, false, t ,f]
 """),
+'scheme_save': """
+save your config as color_scheme
+
+!scheme save my_someScheme
+!sch s solarLight
+""",
+'scheme_search': """
+search color_schemes and load what you like
+
+show all schemes:
+!scheme search -> !sc se
+
+search by name:
+!sc se dark
+
+search by user:
+!sc se @someUser
+
+search by name and user:
+!sc @user dark
+""",
+'scheme_load': """
+load color_scheme by user and name
+use `!scheme search`, if you don't know what to select
+
+!scheme load @someUser scheme_name
+!sc l @old dark_groove
+"""
 }
