@@ -378,7 +378,7 @@ class RenderImage():
 
       back = ImageOps.colorize(gray_back, black = back_color, white = back_border_color)
       back.putalpha(cache.images["background_alpha"])
-      cache.images[back_cache_key] = back
+      cache.images[back_cache_key] = back.copy()
 
       return back
 
