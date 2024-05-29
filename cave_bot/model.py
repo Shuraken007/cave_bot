@@ -37,7 +37,7 @@ class MapTypeValue(TypeDecorator):
       return MapType(value)
    
 class ColorValue(TypeDecorator):
-   impl = String(3*3+1+3)
+   impl = String(15)
    cache_ok = True
 
    def process_bind_param(self, color, dialect):
