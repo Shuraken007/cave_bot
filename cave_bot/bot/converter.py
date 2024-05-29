@@ -72,19 +72,41 @@ transparency must be any number in [0, 100], got {}
 """
 class ColorConverter(Converter):
 
+   def validate_hex(self, hex, report):
+      if not hex.startswith("#"):
+         hex = "#" + hex
+      rgb = None
+      try:
+         rgb = list(ImageColor.getcolor(hex, "RGB"))
+      except Exception as e:
+         report.err.add(str(e))
+         return
+      return rgb
+
    def validate_alpha(self, alpha, report):
       if alpha > 100 or alpha < 0:
          report.err.add(INVALID_COLOR_TRANSPARENCY.format(alpha))
          return
       return alpha
 
-   def validate_color_rgba(self, color_arr, rgb_from_hex, report):
+   def validate_color_rgba(self, color_arr, hex, report):
       # search alpha
+      if len(color_arr) == 3 and hex is not None and hex.isdigit():
+         alpha = int(hex)
+         color_arr.append(alpha)
+         hex = None
+
       alpha = None
       if len(color_arr) in [1, 4]:
          alpha = color_arr.pop()
          alpha = self.validate_alpha(alpha, report)
          if alpha is None:
+            return None, None
+
+      rgb_from_hex = None
+      if hex is not None:
+         rgb_from_hex = self.validate_hex(hex, report)
+         if rgb_from_hex is None:
             return None, None
 
       if rgb_from_hex is not None and len(color_arr) > 1:
@@ -106,12 +128,12 @@ class ColorConverter(Converter):
 
       return color_arr, alpha
 
-   def convert(self, ctx, color_arr, rgb_from_hex):
+   def convert(self, ctx, color_arr, hex):
       
       init_ctx(ctx)
-      if len(color_arr) == 0 and rgb_from_hex is None:
+      if len(color_arr) == 0 and hex is None:
          return
-      color_rgb, alpha = self.validate_color_rgba(color_arr, rgb_from_hex, ctx.report)
+      color_rgb, alpha = self.validate_color_rgba(color_arr, hex, ctx.report)
       if color_rgb is None and alpha is None:
          raise BadArgument()
       
@@ -122,23 +144,3 @@ class ColorConverter(Converter):
          color.append(alpha)
 
       return color
-   
-class HexColorConverter(Converter):
-   def validate_hex(self, hex, report):
-      if not hex.startswith("#"):
-         hex = "#" + hex
-      rgb = None
-      try:
-         rgb = list(ImageColor.getcolor(hex, "RGB"))
-      except Exception as e:
-         report.err.add(str(e))
-         return
-      return rgb
-
-   async def convert(self, ctx, hex: str):
-      init_ctx(ctx)
-      rgb = self.validate_hex(hex, ctx.report)
-      if rgb is None:
-         raise BadArgument()
-      
-      return rgb

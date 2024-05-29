@@ -149,6 +149,8 @@ map_colour_alias_to_rgb = {
    "white": [255, 255, 255, 50],
    "grey": [140, 140, 140, 50],
    "light_yellow": [255, 255, 153, 50],
+   "white_blue": [245, 245, 255, 100],
+   "black_blue": [0, 0, 10, 100],
 }
 c = map_colour_alias_to_rgb
 
@@ -168,7 +170,8 @@ DEFAULT_USER_CONFIG = {
    'enemy_color': c['red'],
    'artifact_color'   : c['orange'],
    
-   'background_color'   : c['empty'],
+   'background_color'   : c['black_blue'],
+   'background_border_color'   : c['white_blue'],
 }
 
 def color_to_str(color):
@@ -191,7 +194,8 @@ SERVER_DEFAULT_USER_CONFIG = {
    'enemy_color': color_to_str(c['red']),
    'artifact_color'   : color_to_str(c['orange']),
 
-   'background_color'   : color_to_str(c['empty']),
+   'background_color'       : color_to_str(c['black_blue']),
+   'background_border_color': color_to_str(c['white_blue']),
 }
 
 color_config_cell_aliases_config = {
@@ -202,7 +206,8 @@ color_config_cell_aliases_config = {
    'enemy'       : ["en", "enemy"],
    'artifact'    : ["a", "art"],
    'me'          : ["m"],
-   'background'  : ["bg", "back"]
+   'background'  : ["bg", "back"],
+   'background_border'  : ["bgb", "backb", "bo", "bab", "board"],
 }
 
 for k,v in color_config_cell_aliases_config.items():

@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 
 from ..const import CellType as ct, \
    cell_description, cell_aliases_config, CleanMap,  MapType, \
@@ -139,6 +139,10 @@ class RenderImage():
          images[alias] = img
 
       images['blank'] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
+      _, _, _, alpha = images['background'].split()
+      images['background_alpha'] = alpha
+      images['background'] = images['background'].convert('L')
+      images['fake_back'] = Image.new('RGBA', (images['background'].width, images['background'].height))
 
       return images
 
@@ -199,7 +203,7 @@ class RenderImage():
       return [y, x]
 
    def add_cells(self, images, map_type, sizes):
-      back = images['background']
+      back = images['fake_back']
       for i in range(0, map_type.value):
          for j in range(0, map_type.value):
             coords = self.get_cell_coords(i, j, sizes)
@@ -362,17 +366,28 @@ class RenderImage():
 
       return hash
 
+   def generate_back(self, cache, user_config):
+      back_color = tuple(self.color_from_config(user_config.background_color.copy()))
+      back_border_color = tuple(self.color_from_config(user_config.background_border_color.copy()))
+      back_cache_key = "{}{}".format("background", str(back_color))
+      if back_cache_key in cache.images:
+         back = cache.images[back_cache_key].copy()
+         return cache.images[back_cache_key].copy()
+      
+      gray_back = cache.images["background"]
+
+      back = ImageOps.colorize(gray_back, black = back_color, white = back_border_color)
+      back.putalpha(cache.images["background_alpha"])
+      cache.images[back_cache_key] = back
+
+      return back
+
    def generate_map(self, user_id, bright, clean, bot, view, user_config, ctx):
       map_type = view.map_type
       cache = self.cache[map_type]
 
-      back = cache.images["background"].copy()
+      back = self.generate_back(cache, user_config)
       back.draw = ImageDraw.Draw(back)
-      
-      back_color = tuple(self.color_from_config(user_config.background_color.copy()))
-      fake_back = Image.new('RGBA', (back.width, back.height), color=back_color)
-      add_img(back, fake_back, "TOPLEFT", [0, 0], foregound_on_background=True)
-      
 
       user_records = {}
       if user_id:
@@ -388,6 +403,8 @@ class RenderImage():
             coords = self.get_cell_coords(i, j, cache.sizes)
             self.add_img_by_cell(coords, img, color, back, img_name, cache.images)
             self.add_text_by_cell(f'{i+1}-{j+1}', cell_type, coords, back, bright, map_type)
+
+      add_img(back, cache.images['fake_back'], "TOPLEFT", [0, 0], foregound_on_background=True)
 
       self.add_descriptions(back, user_id, bot, bright, map_type, user_config)
       return back
