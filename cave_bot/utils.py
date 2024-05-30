@@ -103,3 +103,11 @@ def profile_end(ctx):
    ctx.report.msg.add('Profile start <--------------------------')
    ctx.report.msg.add(msg_arr)
    ctx.report.msg.add('Profile end <--------------------------')
+
+def copy_dict_with_exclude(dict, exclude):
+   res = {}
+   for k, v in dict.items():
+      if k in exclude:
+         continue
+      res[k] = v
+   return res

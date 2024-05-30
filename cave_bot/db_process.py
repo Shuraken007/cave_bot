@@ -265,6 +265,7 @@ class DbProcess:
       for field, value in user_config_dict.items():
          setattr(user_config, field, value)
 
+      self.db.add_record_to_load_db_by_record(user_config, self.db.m.UserConfig)
       self.s.add(user_config)
 
    def delete_user_config(self, user_id):
@@ -275,6 +276,7 @@ class DbProcess:
       ).first()
 
       if config is not None:
+         self.db.delete_record_from_load_db_by_record(config, self.db.m.UserConfig)
          self.s.delete(config)
       
    def get_map_max_amount(self, map_type, cell_name):
@@ -327,9 +329,10 @@ class DbProcess:
       
       for field, value in color_scheme_dict.items():
          setattr(color_scheme, field, value)
-
+      
+      self.db.add_record_to_load_db_by_record(color_scheme, self.db.m.ColorScheme)
       self.s.add(color_scheme)
-
+   
    def delete_color_scheme(self, user_id, name):
       scheme = self.s.query(
          self.db.m.ColorScheme
@@ -339,6 +342,7 @@ class DbProcess:
       ).first()
 
       if scheme is not None:
+         self.db.delete_record_from_load_db_by_record(scheme, self.db.m.ColorScheme)
          self.s.delete(scheme)
 
    def search_color_schemes(self, user_id, partial_name):

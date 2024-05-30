@@ -3,7 +3,7 @@ from PIL import Image, ImageOps, ImageDraw, ImageFont
 from ..const import CellType as ct, \
    cell_description, cell_aliases_config,  MapType, \
    color_scheme, map_colour_alias_to_rgb, DEFAULT_USER_CONFIG
-from ..utils import build_path
+from ..utils import build_path, get_mock_class_with_attr
 from .color_util import is_text_black
 from .gradient_color import get_gradient_color
 from .img_storage import ImageStorage
@@ -394,7 +394,7 @@ class RenderImage():
       if map_type == MapType.unknown:
          ctx.report.reaction.add(Reactions.fail)
          return
-      
+
       view = bot.controller.get_view(map_type)
       self.init_cache_by_map_type(view)
 
@@ -406,6 +406,9 @@ class RenderImage():
          self.storage.reset()
 
       user_config = bot.db_process.get_user_config(ctx.message.author.id)
+      if user_config is None:
+         user_config = get_mock_class_with_attr(DEFAULT_USER_CONFIG)
+
       is_config_default =  self.is_user_config_default(user_config)
 
       if not user_id and not is_view_updated and is_config_default:

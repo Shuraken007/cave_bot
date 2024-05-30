@@ -27,12 +27,10 @@ class ColorScheme:
 
       self.db_process.add_color_scheme(user.id, name, scheme_dict)
       report.reaction.add(Reactions.ok)
-      self.db_process.db.save_table(self.db_process.db.m.ColorScheme)
 
    def delete(self, user, name, report):
       self.db_process.delete_color_scheme(user.id, name)
       report.reaction.add(Reactions.ok)
-      self.db_process.db.save_table(self.db_process.db.m.ColorScheme)
 
    async def search(self, user, partial_name, ctx):
       color_schemes = self.db_process.search_color_schemes(user and user.id, partial_name)
@@ -62,4 +60,3 @@ class ColorScheme:
 
       self.db_process.set_user_config(user.id, new_config)
       report.reaction.add(Reactions.ok)
-      self.db_process.db.save_table(self.db_process.db.m.UserConfig)

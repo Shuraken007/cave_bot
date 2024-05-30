@@ -111,7 +111,7 @@ def generate_models(table_names):
    user_config_spec = {
       '__tablename__'   : table_names['UserConfig'],
       'id'              : Column(BigInteger, primary_key = True),
-      'map_type'        : Column(MapTypeValue, default = MapType.unknown, primary_key = True),
+      'map_type'        : Column(MapTypeValue, default = MapType.unknown),
       'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
       'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
       'text_light_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_light_color']),

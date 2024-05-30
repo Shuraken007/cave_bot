@@ -1,7 +1,9 @@
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy.inspection import inspect
 
 from .const import UserRole as ur, DEFAULT_USER_CONFIG
+from .utils import copy_dict_with_exclude
 
 def get_engine(db_connection_str):
    echo = False
@@ -30,7 +32,6 @@ class Db:
       with self.Session() as s:
          last_scan_record = s.query(self.m.LastScan).first()
          print(f'last_scan: {str(last_scan_record and last_scan_record.last_scan)}')
-
 
    def drop_tables(self):
       self.m.Base.metadata.drop_all(bind = self.load_db)
@@ -65,17 +66,37 @@ class Db:
       Session.configure(bind=engine)
       return Session
    
+   def query_record_by_hash_and_model(self, hash, model, session):
+      primary_keys = [key.name for key in inspect(model).primary_key]
+      filters = {}
+      for pk in primary_keys:
+         filters[pk] = hash[pk]
+      record = session.query(model).filter_by(**filters).first()
+      return record
+
+   def add_record_to_load_db_by_record(self, record, model):
+      hash = copy_dict_with_exclude(record.__dict__, ['_sa_instance_state'])
+      with self.LoadSession() as s:
+         obj = self.query_record_by_hash_and_model(hash, model, s)
+         if obj is None:
+            obj = model(**hash)
+
+         for k, v in hash.items():
+            setattr(obj, k, v)
+            
+         s.add(obj)
+         s.commit()
+
+   def delete_record_from_load_db_by_record(self, record, model):
+      hash = copy_dict_with_exclude(record.__dict__, ['_sa_instance_state'])
+      with self.LoadSession() as s:
+         obj = self.query_record_by_hash_and_model(hash, model, s)
+         if obj:
+            s.delete(obj)
+            s.commit()
+
    def save_to_load_db(self):
       self.load_from_one_db_to_another(self.memory_db, self.load_db)
-
-   def save_table(self, class_model):
-      with self.memory_db.connect() as db_from:
-         with self.load_db.connect() as db_to:
-            table = class_model.__table__
-            db_to.execute(table.delete())
-            for row in db_from.execute(sa.select(table.c)):
-               db_to.execute(table.insert().values(row._mapping))
-            db_to.commit()
 
    def load_from_one_db_to_another(self, engine_from, engine_to):
       with engine_from.connect() as db_from:

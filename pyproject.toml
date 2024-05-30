@@ -40,6 +40,8 @@ prettytable = "^3.10.0"
 [tool.poetry.scripts]
 start = "cave_bot.scripts.start:main"
 drop = "cave_bot.scripts.db_drop:main"
+save = "cave_bot.scripts.load_db_from:main"
+load = "cave_bot.scripts.load_db_to:main"
 
 [build-system]
 requires = ["poetry-core"]
