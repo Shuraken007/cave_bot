@@ -1,4 +1,4 @@
-from PIL import Image, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageFilter
 
 from ..const import CellType as ct, \
    cell_description, cell_aliases_config,  MapType, \
@@ -141,8 +141,9 @@ class RenderImage():
       images['blank'] = Image.new('RGBA', (cell_width, cell_width), (0, 0, 0, 0))
       _, _, _, alpha = images['background'].split()
       images['background_alpha'] = alpha
-      images['background_grayscale'] = images['background'].convert('L')
-      images['fake_back'] = Image.new('RGBA', (images['background'].width, images['background'].height))
+      # images['background_grayscale'] = images['background'].convert('L')
+      images['background_grayscale'] = images['background'].convert('L').filter(ImageFilter.EDGE_ENHANCE_MORE)
+      # images['fake_back'] = Image.new('RGBA', (images['background'].width, images['background'].height))
 
       _, _, _, alpha = images['cell'].split()
       images['cell_alpha'] = alpha
@@ -344,7 +345,7 @@ class RenderImage():
       return hash
 
    def generate_from_grayscale(self, grayscale_img, alpha_channel, bg_color, border_color):
-      img = ImageOps.colorize(grayscale_img, black = bg_color, white = border_color)
+      img = ImageOps.colorize(grayscale_img, black = bg_color, white = border_color, whitepoint=140, blackpoint=30)
       img.putalpha(alpha_channel)
       return img
 
