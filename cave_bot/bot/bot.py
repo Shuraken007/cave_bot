@@ -19,6 +19,7 @@ from ..helpo import help
 from ..logger import Logger
 from ..render.ascii import RenderAscii
 from ..render.image import RenderImage
+from ..render.theme import RenderTheme
 
 async def preprocess(ctx):
    init_ctx(ctx)
@@ -73,6 +74,7 @@ class MyBot(commands.Bot):
       self.logger = Logger('output')
       self.render_ascii = RenderAscii()
       self.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'], self)
+      self.render_theme = RenderTheme(self.db_process)
 
       self.initial_extensions = initial_extensions
 
@@ -219,7 +221,7 @@ class MyBot(commands.Bot):
       if name is None:
          name = str(user_id)
       return name
-
+   
    @tasks.loop(minutes=30.0)
    async def dump_memory_db_to_connection(self):
       self.db.save_to_load_db()

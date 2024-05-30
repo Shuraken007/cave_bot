@@ -3,6 +3,8 @@ import operator
 
 from ..const import DEFAULT_USER_CONFIG
 from ..reaction import Reactions
+from ..bot.bot_util import pil_image_to_dfile
+from discord import Embed, Colour
 
 class ColorScheme:
    def __init__(self, db_process):
@@ -32,7 +34,7 @@ class ColorScheme:
       self.db_process.delete_color_scheme(user.id, name)
       report.reaction.add(Reactions.ok)
 
-   async def search(self, user, partial_name, ctx):
+   async def search_as_table(self, user, partial_name, ctx):
       color_schemes = self.db_process.search_color_schemes(user and user.id, partial_name)
       tabl = prettytable.PrettyTable(['user', 'scheme'])
       for color_scheme in color_schemes:
@@ -43,6 +45,23 @@ class ColorScheme:
       msg = tabl.get_string(sort_key=operator.itemgetter(0, 1), sortby="user")
       msg_arr = msg.split('\n')
       ctx.report.msg.add(msg_arr)       
+
+   async def search(self, user, partial_name, ctx):
+      color_schemes = self.db_process.search_color_schemes(user and user.id, partial_name)
+      for color_scheme in color_schemes:
+         user_name = await ctx.bot.get_user_name_by_id(color_scheme.user_id)
+         
+         img = ctx.bot.render_theme.get_theme_img(color_scheme)
+
+         file = pil_image_to_dfile(img, f'{color_scheme.name}.png')
+         embed = Embed(
+            title=f'{user_name}: {color_scheme.name}',
+            colour = Colour.from_rgb(*color_scheme.background_color[:3]),
+            type = "article"
+         )
+         embed.set_image(url=f"attachment://{color_scheme.name}.png")
+
+         ctx.report.embed_and_files.add(embed, file)
 
    def load(self, user, user_from, name, report):
       color_scheme = self.db_process.get_color_scheme(user_from.id, name)

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from typing import Optional
 import gc
 
 from ...const import UserRole as ur
@@ -91,6 +92,11 @@ class SuperAdminCog(commands.Cog, name='SuperAdmin', description = "SuperAdmin c
         self.bot.reset_view()
         await self.bot.spawn_scan()
 
+    @strict_channels()
+    @strict_users(ur.super_admin)
+    @commands.command(aliases = ['th'], brief = "render theme")
+    async def theme(self, ctx, user: discord.User, name: str):
+        self.bot.render_theme.render(user.id, name, ctx.report)
 
 async def setup(bot):
     await bot.add_cog(SuperAdminCog(bot))

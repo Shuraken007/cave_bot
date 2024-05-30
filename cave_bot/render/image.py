@@ -8,6 +8,7 @@ from .color_util import is_text_black
 from .gradient_color import get_gradient_color
 from .img_storage import ImageStorage
 from ..reaction import Reactions
+from ..bot.bot_util import pil_image_to_dfile
 
 def add_img(background, foreground, align, shift=None, foregound_on_background=True):
    width, height = None, None
@@ -419,8 +420,10 @@ class RenderImage():
       if not img:
          img = self.generate_map(user_id, bot, view, user_config, ctx)
 
+      file=pil_image_to_dfile(img, 'img.png')      
+      
       ctx.report.msg.add(f'Map: {map_type.name}')
-      ctx.report.image.add(img)
+      ctx.report.file.add(file)
       
       if not using_save and not user_id and is_config_default:
          self.storage.add_image([map_type.name], img)

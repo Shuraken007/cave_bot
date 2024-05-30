@@ -169,6 +169,59 @@ class ArrayStorage(BaseStorage):
    
       return self.data
    
+class GroupedArrayStorage(BaseStorage):
+   def __init__(self, limit, args_amount):
+      super().__init__()
+      self.limit = limit
+      self.args_amount = args_amount
+      self.groups = []
+      self.args = []
+      for i in range(self.args_amount):
+         self.args.append([])
+
+   def stock_to_group(self):
+      data = []
+      for i in range(self.args_amount):
+         data.append(self.args[i])
+         self.args[i] = []
+
+      self.groups.append(data)
+
+   def add(self, *args_tuple):
+      if self.off:
+         return
+      args = list(args_tuple)
+      if len(args) < self.args_amount:
+         raise Exception('expected {} args, got {}'.format(self.args_amount, len(args)))
+      
+      for i in range(self.args_amount):
+         if type(args[i]) != list:
+            args[i] = [args[i]]
+      
+      for i in range(self.args_amount):
+         if len(self.args[i]) + len(args[i]) > self.limit:
+            self.stock_to_group()
+            break
+
+      for i in range(self.args_amount):
+         self.args[i].extend(args[i])
+
+      self.amount += 1
+
+   def get(self):
+      if self.off:
+         return None
+
+      for i in range(self.args_amount):
+         if len(self.args[i]) > 0:
+            self.stock_to_group()
+            break
+
+      if len(self.groups) == 0:
+         return None
+
+      return self.groups
+   
 class CounterStorage(BaseStorage):
    def __init__(self):
       super().__init__()
@@ -289,9 +342,11 @@ class Report:
       self.reaction = CounterStorage()
       self.reaction_msg = ArrayStorage()
 
-      self.image = ArrayStorage()
+      self.file = GroupedArrayStorage(10, 1)
+      self.embed = GroupedArrayStorage(10, 1)
+      self.embed_and_files = GroupedArrayStorage(2, 2)
 
-      self.storages = [self.msg, self.err, self.log, self.unique, self.reaction_msg, self.reaction, self.image]
+      self.storages = [self.msg, self.err, self.log, self.unique, self.reaction_msg, self.reaction, self.file, self.embed, self.embed_and_files]
 
       self.keys = []
 

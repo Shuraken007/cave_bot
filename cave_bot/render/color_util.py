@@ -52,12 +52,14 @@ def color_msg(msg, fg_color_alias, bg_color_alias):
    close_code = get_close_code()
    return open_code + msg + close_code
 
-def is_text_black(bg, threshold):
-   r = bg[0]
-   g = bg[1]
-   b = bg[2]
-   t = bg[3]
-   bgDelta = r*0.299 + g*0.587 + b*0.114
-   if bgDelta > threshold:
+def get_brightness(pixel):
+   r = pixel[0]
+   g = pixel[1]
+   b = pixel[2]
+   return r*0.299 + g*0.587 + b*0.114
+
+def is_text_black(pixel, threshold):
+   brightnes = get_brightness(pixel)
+   if brightnes > threshold:
       return True
    return False

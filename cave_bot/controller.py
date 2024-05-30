@@ -120,6 +120,9 @@ class Controller:
    async def search_scheme(self, user_from, partial_name, ctx):
       await self.color_scheme.search(user_from, partial_name, ctx)
 
+   async def search_as_table_scheme(self, user_from, partial_name, ctx):
+      await self.color_scheme.search_as_table(user_from, partial_name, ctx)
+
    def load_scheme(self, user_from, name, ctx):
       user = ctx.message.author
       self.color_scheme.load(user, user_from, name, ctx.report)

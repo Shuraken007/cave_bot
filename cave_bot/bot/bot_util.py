@@ -22,6 +22,12 @@ def create_report(args = None):
 
    return report
 
+def pil_image_to_dfile(img, file_name, spoiler = False):
+   image_binary = io.BytesIO()
+   img.save(image_binary, 'PNG')
+   image_binary.seek(0)
+   return discord.File(fp=image_binary, filename=file_name, spoiler = spoiler)
+
 async def response_by_report(ctx):
    if not hasattr(ctx, 'report'):
       return
@@ -43,14 +49,19 @@ async def response_by_report(ctx):
 
    for msg in send_msg_arr:
       wrapped_msg = "```ansi\n" + msg + "\n```"
-      await ctx.message.channel.send(wrapped_msg)
+      await ctx.message.channel.send(wrapped_msg, delete_after = 60*60)
    
-   if image_arr:= r.image.get():
-      for image in image_arr:
-         with io.BytesIO() as image_binary:
-            image.save(image_binary, 'PNG')
-            image_binary.seek(0)
-            await ctx.message.channel.send(file=discord.File(fp=image_binary, filename='image.png'))
+   file_group = r.file.get() or []
+   for [files] in file_group:
+      await ctx.message.channel.send(files=files, delete_after = 60*60)
+
+   embed_group = r.embed.get() or []
+   for [embeds] in embed_group:
+      await ctx.message.channel.send(embeds=embeds, delete_after = 60*60)
+
+   embed_and_files_group = r.embed_and_files.get() or []
+   for [embeds, files] in embed_and_files_group:
+      await ctx.message.channel.send(files=files, embeds=embeds, delete_after = 60*60)
 
    r.dump_to_logger(bot.logger)
    ctx.report = Report()
