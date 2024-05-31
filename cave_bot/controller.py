@@ -46,26 +46,29 @@ class Controller:
       map_types = self.db_process.get_user_map_types_unique(user.id)
       
       if len(map_types) == 0:
-         msg = ("can't detect user map difficulty, please select\n"
+         msg = ("can't detect user map difficulty, \n"
+                "   copy paste report from game "
+                "   or select manually\n"
                 "   !co m nm\n"
                 "   !config map Nightmare\n"
                 "   Normal - n, Hard - h, Nightmare - nm"
                 "   \n"
                 "   !help config map\n"
-                "   !h co m")
-
+                "   !h co m"
+                )
          if with_error:
             ctx.report.unique.add(msg)
       elif len(map_types) > 1:
          msg = ("detected more, than one difficulty ({}): {}, \n"
-                "please select smth one\n"
-                "\n"
+                "   copy paste report from game "
+                "   or select manually\n"
                 "   !co m nm\n"
                 "   !config map Nightmare\n"
                 "   Normal - n, Hard - h, Nightmare - nm"
                 "   \n"
                 "   !help config map\n"
-                "!h co m").format(len(map_types), [x.name for x in map_types])
+                "   !h co m"
+                ).format(len(map_types), [x.name for x in map_types])
          if with_error:
             ctx.report.unique.add(msg)
       else:
@@ -111,21 +114,21 @@ class Controller:
 #  Scheme functions
    def save_scheme(self, name, ctx):
       user = ctx.message.author
-      self.color_scheme.save(user, name, ctx.report)
+      self.color_scheme.save(user, name, ctx)
 
-   def delete_scheme(self, name, ctx):
+   async def delete_scheme(self, name, ctx):
       user = ctx.message.author
-      self.color_scheme.delete(user, name, ctx.report)
+      await self.color_scheme.delete(user, name, ctx)
 
-   async def search_scheme(self, user_from, partial_name, ctx):
-      await self.color_scheme.search(user_from, partial_name, ctx)
+   async def search_scheme(self, user, name, ctx):
+      await self.color_scheme.search(user, name, ctx)
 
-   async def search_as_table_scheme(self, user_from, partial_name, ctx):
-      await self.color_scheme.search_as_table(user_from, partial_name, ctx)
+   async def search_as_table_scheme(self, user, name, ctx):
+      await self.color_scheme.search_as_table(user, name, ctx)
 
-   def load_scheme(self, user_from, name, ctx):
+   async def load_scheme(self, user_from, name, ctx):
       user = ctx.message.author
-      self.color_scheme.load(user, user_from, name, ctx.report)
+      await self.color_scheme.load(user, user_from, name, ctx)
 
 #  Leaderboard functions
    async def show_leaderboard(self, ctx, limit):

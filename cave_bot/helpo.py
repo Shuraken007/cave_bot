@@ -194,8 +194,9 @@ search color_schemes and load what you like
 show all schemes:
 !scheme search -> !sc se
 
-search by name:
+search by name, name could be not full:
 !sc se dark
+name could be part of name: `lav` or `lava` vs `lava_light_bright`
 
 search by user:
 !sc se @someUser
@@ -204,10 +205,26 @@ search by name and user:
 !sc @user dark
 """,
 'scheme_load': """
-load color_scheme by user and name
+load color_scheme by user or name
+you should specify conditions to get only one scheme
+
 use `!scheme search`, if you don't know what to select
 
 !scheme load @someUser scheme_name
-!sc l @old dark_groove
+!sc l @oldfag
+!sc l dark_groove
+!sc l @oldfag dark_groove
+""",
+'scheme_delete': """
+delete color_scheme by name
+you should specify conditions to get only one scheme
+
+use `!scheme search`, if you forgot scheme name
+
+!scheme delete my_scheme
+!sc d groove_box_light
+
+name could be partial
+!sc d gro
 """
 }

@@ -27,9 +27,9 @@ class ColorSchemeCog(commands.Cog, name='ColorScheme', description = "Config com
 
 	@strict_channels()
 	@strict_users(ur.nobody)
-	@scheme.command(aliases=['d'], brief = "delete scheme from db by name")
+	@scheme.command(aliases=['d'], brief = "delete scheme from db by name", description = help['scheme_delete'])
 	async def delete(self, ctx, name: str):
-		self.bot.controller.delete_scheme(name, ctx)
+		await self.bot.controller.delete_scheme(name, ctx)
 
 	@strict_channels()
 	@strict_users(ur.nobody)
@@ -46,8 +46,8 @@ class ColorSchemeCog(commands.Cog, name='ColorScheme', description = "Config com
 	@strict_channels()
 	@strict_users(ur.nobody)
 	@scheme.command(aliases=['l'], brief = "load scheme by user and scheme name", description = help['scheme_load'])
-	async def load(self, ctx, user: discord.User, name: str):
-		self.bot.controller.load_scheme(user, name, ctx)
+	async def load(self, ctx, user: Optional[discord.User], name: Optional[str]):
+		await self.bot.controller.load_scheme(user, name, ctx)
 
 async def setup(bot):
 	await bot.add_cog(ColorSchemeCog(bot))
