@@ -457,7 +457,7 @@ class RenderImage():
 
       return total_from_db
 
-   def get_description_text(self, cell_type_name, user_id, bot, map_type, user_config):
+   def get_description_text(self, cell_type_name, user_id, bot, map_type, user_config, filling_total_founded_config):
       founded, total, description, name = None, None, None, None
       text = []
       if cell_type_name == 'artifact':
@@ -471,6 +471,9 @@ class RenderImage():
 
          description = cell_description.get(cell_type_name, "")
          name = cell_type_name
+
+         if not user_id:
+            filling_total_founded_config[cell_type_name] = total
       else:
          cell_type = ct[cell_type_name]
          
@@ -478,6 +481,10 @@ class RenderImage():
          total = self.get_total_max_amount(founded, cell_type_name, map_type, bot)
          description = cell_description.get(cell_type, "")
          name = max(cell_aliases_config[cell_type], key=len)
+
+         if not user_id:
+            filling_total_founded_config[cell_type_name] = total
+
 
       msg1 = f'{founded}/{total}'
       color =  user_config.text_all_collected_color if founded >= total else user_config.text_part_collected_color
@@ -519,11 +526,11 @@ class RenderImage():
          w, _ = self.add_text(back, text_spec, pos_spec)
          coords[0] += w*1.1
 
-   def add_description(self, cell_type_name, coords, back, user_id, bot, map_type, user_config):
+   def add_description(self, cell_type_name, coords, back, user_id, bot, map_type, user_config, filling_total_founded_config):
       cache = self.cache[map_type]
 
       img = self.get_description_image(cell_type_name, cache.images, user_config)
-      description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type, user_config)
+      description_text, description_text_spec = self.get_description_text(cell_type_name, user_id, bot, map_type, user_config, filling_total_founded_config)
       add_img(back, img, "TOPLEFT", coords, foregound_on_background=True)
       self.add_description_text(description_text, coords, back, cache, user_config)
       return cache.sizes['cell_width'], description_text_spec
@@ -596,8 +603,9 @@ class RenderImage():
       
       coords = base_coords.copy()
 
+      filling_total_founded_config = {}
       for cell_type in [ct.demon_head, ct.demon_tail, ct.demon_hands, ct.spider]:
-         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, map_type, user_config)
+         shift_y, _ = self.add_description(cell_type.name, coords.copy(), back, user_id, bot, map_type, user_config, filling_total_founded_config)
          coords[1] += shift_y * 1.1
 
       coords = base_coords.copy()
@@ -605,7 +613,7 @@ class RenderImage():
 
       boon_total, boon_found = 0, 0
       for cell_type_name in ['artifact', ct.summon_stone.name, ct.idle_reward.name, ct.empty.name]:
-         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, map_type, user_config)
+         shift_y, description_text_spec = self.add_description(cell_type_name, coords.copy(), back, user_id, bot, map_type, user_config, filling_total_founded_config)
          coords[1] += shift_y * 1.1
          if cell_type_name not in [ct.empty.name, ct.idle_reward.name]:
             boon_total += description_text_spec['total']
@@ -613,3 +621,16 @@ class RenderImage():
 
       bar_y = max(back.height * 0.95, (back.height + coords[1])/2)
       self.add_bar(bar_y, back, bot, map_type, user_id, boon_total, boon_found, user_config)
+
+      self.check_if_map_filled(filling_total_founded_config, map_type, bot)
+
+   def check_if_map_filled(self, filling_total_founded_config, map_type, bot):
+      total_remembered_amount = map_type.value ** 2
+      total_founded_amount = sum(filling_total_founded_config.values())
+      if total_remembered_amount != total_founded_amount:
+         return
+      
+      for k, v in filling_total_founded_config.items():
+         bot.controller.db_process.set_map_max_amount(
+            map_type, k, v
+         )

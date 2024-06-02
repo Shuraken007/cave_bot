@@ -21,6 +21,11 @@ class Leaderboard:
          return True
       return False
 
+   def calculate_score(self, map_type, total_cells):
+      if total_cells <= 3.6:
+         total_cells = 3.6
+      return int( map_type.value ** 2 / total_cells)
+
    def process_winners(self, winners, map_type, map_config):
       score_by_user_id = {}
       for r in winners.values():
@@ -30,7 +35,7 @@ class Leaderboard:
             cell_type_name = 'artifact'
          total_cells = getattr(map_config, cell_type_name, 1)
 
-         score = int( map_type.value ** 2 / total_cells)
+         score = self.calculate_score(map_type, total_cells)
 
          if r.user_id not in score_by_user_id:
             score_by_user_id[r.user_id] = {}
@@ -62,13 +67,14 @@ class Leaderboard:
          col_name = map_cell_name_to_shortest_alias[x.name]
          col_names.append(col_name)
          total_cells = getattr(map_config, x.name, 1)
-         score = int( map_type.value ** 2 / total_cells)
+         score = self.calculate_score(map_type, total_cells)
+
 
          score_values.append(score)
 
       col_names.append('art')
       total_cells_artifact = getattr(map_config, 'artifact', 1)
-      score_artifact = int( map_type.value ** 2 / total_cells_artifact)
+      score_artifact = self.calculate_score(map_type, total_cells_artifact)
       score_values.append(score_artifact)
       
       tabl = prettytable.PrettyTable(col_names)
