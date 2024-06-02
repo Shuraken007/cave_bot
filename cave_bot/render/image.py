@@ -473,7 +473,7 @@ class RenderImage():
          name = cell_type_name
 
          if not user_id:
-            filling_total_founded_config[cell_type_name] = total
+            filling_total_founded_config[cell_type_name] = founded
       else:
          cell_type = ct[cell_type_name]
          
@@ -483,8 +483,7 @@ class RenderImage():
          name = max(cell_aliases_config[cell_type], key=len)
 
          if not user_id:
-            filling_total_founded_config[cell_type_name] = total
-
+            filling_total_founded_config[cell_type_name] = founded
 
       msg1 = f'{founded}/{total}'
       color =  user_config.text_all_collected_color if founded >= total else user_config.text_part_collected_color
@@ -634,3 +633,5 @@ class RenderImage():
          bot.controller.db_process.set_map_max_amount(
             map_type, k, v
          )
+      
+      self.reset_storage()
