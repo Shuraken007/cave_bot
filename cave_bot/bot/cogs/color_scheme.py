@@ -45,9 +45,21 @@ class ColorSchemeCog(commands.Cog, name='ColorScheme', description = "Config com
 
 	@strict_channels()
 	@strict_users(ur.nobody)
-	@scheme.command(aliases=['l'], brief = "load scheme by user and scheme name", description = help['scheme_load'])
+	@scheme.command(aliases=['l'], brief = "load/copy scheme to config", description = help['scheme_load'])
 	async def load(self, ctx, user: Optional[discord.User], name: Optional[str]):
 		await self.bot.controller.load_scheme(user, name, ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@scheme.command(aliases=['su', 'sub'], brief = "subscribe to scheme", description = help['scheme_subscribe'])
+	async def subscribe(self, ctx, user: Optional[discord.User], name: Optional[str]):
+		await self.bot.controller.subscribe_scheme(user, name, ctx)
+
+	@strict_channels()
+	@strict_users(ur.nobody)
+	@scheme.command(aliases=['un', 'unsu', 'unsub'], brief = "unsubscribe scheme", description = help['scheme_unsubscribe'])
+	async def unsubscribe(self, ctx):
+		await self.bot.controller.unsubscribe_scheme(ctx)
 
 async def setup(bot):
 	await bot.add_cog(ColorSchemeCog(bot))

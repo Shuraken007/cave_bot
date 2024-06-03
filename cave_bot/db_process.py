@@ -309,12 +309,11 @@ class DbProcess:
       setattr(map_config, cell_name, value)   
       self.s.add(map_config)
 
-   def get_color_scheme(self, user_id, name):
+   def get_color_scheme(self, id):
       return self.s.query(
          self.db.m.ColorScheme
       ).filter(
-         self.db.m.ColorScheme.user_id == user_id,
-         self.db.m.ColorScheme.name == name
+         self.db.m.ColorScheme.id == id,
       ).first()
 
    def add_color_scheme(self, user_id, name, color_scheme_dict):
@@ -331,6 +330,7 @@ class DbProcess:
          setattr(color_scheme, field, value)
       
       self.db.add_record_to_load_db_by_record(color_scheme, self.db.m.ColorScheme)
+
       self.s.add(color_scheme)
    
    def delete_color_scheme(self, user_id, name):
@@ -341,9 +341,18 @@ class DbProcess:
          self.db.m.ColorScheme.name == name
       ).first()
 
-      if scheme is not None:
-         self.db.delete_record_from_load_db_by_record(scheme, self.db.m.ColorScheme)
-         self.s.delete(scheme)
+      if scheme is None:
+         return
+
+      for user_config in scheme.user_configs:
+         if not user_config.is_subscribed:
+            continue
+         user_config.is_subscribed = False
+         self.db.add_record_to_load_db_by_record(user_config, self.db.m.UserConfig)
+         self.s.merge(user_config)
+
+      self.db.delete_record_from_load_db_by_record(scheme, self.db.m.ColorScheme)
+      self.s.delete(scheme)
 
    def search_color_schemes(self, user_id, partial_name):
       if user_id is not None and partial_name is not None:

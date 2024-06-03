@@ -120,6 +120,8 @@ help = {
 'lead_limit': commands.parameter(description="limit output to first N scores"),
 'color_descr': """
 set color for map cells
+!warning: to see effect - unsubscribe from current color_scheme 
+`!scheme unsubscribe` -> `!sc un`
 
 !config color summon_stone 153 51 255 100
 !config color ss 153 51 255 100
@@ -214,6 +216,23 @@ use `!scheme search`, if you don't know what to select
 !sc l @oldfag
 !sc l dark_groove
 !sc l @oldfag dark_groove
+""",
+'scheme_subscribe': """
+subscribe to some scheme
+if author change scheme - you'll get effect
+your settings not overrided
+
+same syntax as for load
+!scheme subscribe @someUser scheme_name
+!sc sub @oldfag
+!sc su dark_groove
+!sc su @oldfag dark_groove
+
+unsubscribe at any moment `!sc unsubscribe`
+""",
+'scheme_unsubscribe': """
+unsubscribe from some color scheme
+your settings would be apllying now
 """,
 'scheme_delete': """
 delete color_scheme by name

@@ -2,10 +2,18 @@ from ..const import UserRole as ur
 from ..reaction import Reactions as r
 
 class Role:
-   def __init__(self, db_process):
+   def __init__(self, db_process, admin_id):
       self.db_process = db_process
+      self.admin_id = admin_id
       self.user_roles = {}
+      self.init_admin()
       self.init_all_roles()
+
+   def init_admin(self):
+      if self.admin_id is None:
+         return
+      
+      self.db_process.add_user_role(self.admin_id, ur.super_admin)
 
    def init_all_roles(self):
       user_roles = self.db_process.get_user_roles()

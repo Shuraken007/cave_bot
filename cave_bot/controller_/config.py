@@ -1,5 +1,6 @@
 from ..const import DEFAULT_USER_CONFIG
 from ..reaction import Reactions
+import prettytable
 
 class Config:
    def __init__(self, db_process):
@@ -27,6 +28,7 @@ class Config:
    def reset(self, user, report):
       user_config = self.db_process.get_user_config(user.id)
       default_config = {**DEFAULT_USER_CONFIG}
+
       default_config['map_type'] = user_config.map_type
       self.db_process.set_user_config(user.id, default_config)
       report.reaction.add(Reactions.ok)
@@ -41,9 +43,49 @@ class Config:
          report.msg.add(f'no config settings')
          return
 
-      for key in DEFAULT_USER_CONFIG.keys():
+      keys = sorted(DEFAULT_USER_CONFIG.keys())
+      text_keys = [x for x in keys if 'text_' in x]
+      color_keys = [x for x in keys if '_color' in x and x not in text_keys]
+      icon_keys = [x for x in keys if '_icon' in x]
+
+      tabl1 = prettytable.PrettyTable(['Main', 'Settings'])
+      for key in keys:
+         if key in [*text_keys, *color_keys, *icon_keys]:
+            continue
          value = getattr(user_config, key)
-         report.msg.add(f'{key}: {value}')
+
+         if key == 'subscribe_id':
+            key = 'color_scheme'
+            if user_config.subscribe is not None:
+               value = user_config.subscribe.name
+
+         if value is None:
+            value = 'None'
+
+         tabl1.add_row([key, value])
+         
+      tabl2 = prettytable.PrettyTable(['Icon', 'Settings'])
+      for key in icon_keys:
+         value = getattr(user_config, key)
+         key_str = key.removesuffix('_icon')
+         tabl2.add_row([key_str, value])
+
+      tabl3 = prettytable.PrettyTable(['Color', 'Settings'])
+      for key in color_keys:
+         value = getattr(user_config, key)
+         key_str = key.removesuffix('_color')
+         tabl3.add_row([key_str, value])
+
+      tabl4 = prettytable.PrettyTable(['Text', 'Settings'])
+      for key in text_keys:
+         value = getattr(user_config, key)
+         key_str = key.removesuffix('_color')
+         tabl4.add_row([key_str, value])
+      
+      for t in [tabl1,tabl2,tabl3,tabl4]:
+         msg = t.get_string()
+         msg_arr = msg.split('\n')
+         report.msg.add(msg_arr)         
 
    def copy(self, copy_from, copy_to, report):
       user_config = self.db_process.get_user_config(copy_from.id)

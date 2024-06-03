@@ -1,6 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase
 import sqlalchemy as sa
-from sqlalchemy import Integer, Column, DateTime, BigInteger, TypeDecorator, Boolean, String
+from sqlalchemy import Integer, Column, DateTime, BigInteger, TypeDecorator, \
+                        Boolean, String, UniqueConstraint, Identity, \
+                        ForeignKeyConstraint, ForeignKey
 from datetime import datetime, timezone
 
 from .const import CellType as ct, UserRole, MapType, DEFAULT_USER_CONFIG, color_to_str
@@ -107,67 +109,87 @@ def generate_models(table_names):
       id       = Column(BigInteger, primary_key = True)
       role     = Column(UserRoleValue)
 
-   # class UserConfig
-   user_config_spec = {
-      '__tablename__'   : table_names['UserConfig'],
-      'id'              : Column(BigInteger, primary_key = True),
-      'map_type'        : Column(MapTypeValue, default = MapType.unknown),
-      'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
-      'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
-      'text_light_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_light_color']),
-      'text_dark_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_dark_color']),
-      'text_dark_light_threshold': Column(Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
-      'text_all_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_all_collected_color']),
-      'text_part_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_part_collected_color']),
-      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
-      'cell_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_color']),
-      'cell_background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_border_color']),
-      'cell_icon' :  Column(Boolean, default=True),
-   }
-   for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
-                     ct.idle_reward, ct.empty, ct.unknown]:
-      col_name = cell_type
-      if type(cell_type) == ct:
-         col_name = cell_type.name
-      
-      if cell_type not in [ct.empty, 'me', ct.unknown]:
-         key = col_name + '_icon'
-         user_config_spec[key] = Column(Boolean, default=True)
-      
-      key = col_name + '_color'
-      user_config_spec[key] = Column(ColorValue, default=DEFAULT_USER_CONFIG[key])
-
-   UserConfig = type('UserConfig', (Base,), user_config_spec)
-
    # class ColorScheme
-   color_scheme_spec = {
-      '__tablename__'   : table_names['ColorScheme'],
-      'user_id'         : Column(BigInteger, primary_key = True),
-      'name'            : Column(String(255), primary_key = True),
-      'text_light_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_light_color']),
-      'text_dark_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_dark_color']),
-      'text_dark_light_threshold': Column(Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
-      'text_all_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_all_collected_color']),
-      'text_part_collected_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['text_part_collected_color']),
-      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
-      'progress_bar_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['progress_bar_background_color']),
-      'background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_color']),
-      'background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['background_border_color']),
-      'cell_background_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_color']),
-      'cell_background_border_color': Column(ColorValue, default=DEFAULT_USER_CONFIG['cell_background_border_color']),
-      'cell_icon' :  Column(Boolean, default=True),
-   }
-   for cell_type in ['enemy', 'artifact', 'me', ct.summon_stone, \
-                     ct.idle_reward, ct.empty, ct.unknown]:
-      col_name = cell_type
-      if type(cell_type) == ct:
-         col_name = cell_type.name
-            
-      key = col_name + '_color'
-      color_scheme_spec[key] = Column(ColorValue, default=DEFAULT_USER_CONFIG[key])
+   
+   common_columns_user_config_and_color_scheme = [ 
+      Column('cell_icon', Boolean, default=DEFAULT_USER_CONFIG['cell_icon']),
+      Column('text_dark_light_threshold', Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
+   ]
+   common_columns_user_config_and_color_scheme_copy = [ 
+      Column('cell_icon', Boolean, default=DEFAULT_USER_CONFIG['cell_icon']),
+      Column('text_dark_light_threshold', Integer, default=DEFAULT_USER_CONFIG['text_dark_light_threshold']),
+   ]
+   for k, v in DEFAULT_USER_CONFIG.items():
+      if not k.endswith('_color'):
+         continue
+      col = Column(k, ColorValue, default=v)
+      col_copy = Column(k, ColorValue, default=v)
+      common_columns_user_config_and_color_scheme.append(col)
+      common_columns_user_config_and_color_scheme_copy.append(col_copy)
 
-   ColorScheme = type('ColorScheme', (Base,), color_scheme_spec)
+   common_column_names = [x.name for x in common_columns_user_config_and_color_scheme]
 
+   class ColorScheme(Base): 
+      id      = Column(Integer, primary_key=True, server_default=Identity(start=1, cycle=True))
+      user_id = Column(BigInteger)
+      name    = Column(String(255))
+
+      uniq_1 = UniqueConstraint(user_id, name, name = 'uniq_1')
+      user_configs = sa.orm.relationship('UserConfig', back_populates="subscribe")
+
+      __tablename__ = table_names['ColorScheme']
+      __table_args__ = tuple(common_columns_user_config_and_color_scheme)
+
+      @staticmethod
+      def get_common_column_names():
+         return common_column_names
+
+      @classmethod
+      def get_common_column_names(cls):
+         return common_column_names
+
+   # class UserConfig
+
+   user_config_icon_columns = [ ]
+   for k, v in DEFAULT_USER_CONFIG.items():
+      if not k.endswith('_icon'):
+         continue
+      if k in common_column_names:
+         continue
+
+      col = Column(k, Boolean, default=v)
+      user_config_icon_columns.append(col)
+
+   user_config_auto_columns = [
+      *common_columns_user_config_and_color_scheme_copy, 
+      *user_config_icon_columns
+   ]
+
+   class UserConfig(Base): 
+      id            = Column(BigInteger,   primary_key = True)
+      map_type      = Column(MapTypeValue, default = MapType.unknown)
+      subscribe_id  = Column(Integer,      default=DEFAULT_USER_CONFIG['subscribe_id'], nullable=True)
+      is_subscribed = Column(Boolean,      default=DEFAULT_USER_CONFIG['is_subscribed'])
+      
+      subscribe_fk  = ForeignKeyConstraint(
+         [subscribe_id], [ColorScheme.id], 
+         ondelete = 'SET NULL', 
+         onupdate = 'CASCADE',
+         name = 'subscribe_fk',
+      )
+      subscribe     = sa.orm.relationship(ColorScheme, back_populates="user_configs", lazy='subquery')
+
+      __tablename__ = table_names['UserConfig']
+      __table_args__ = tuple(user_config_auto_columns)
+
+      @staticmethod
+      def get_common_column_names():
+         return common_column_names
+
+      @classmethod
+      def get_common_column_names(cls):
+         return common_column_names
+      
    # class MapConfig
    map_config_spec = {
       '__tablename__': table_names['MapConfig'],

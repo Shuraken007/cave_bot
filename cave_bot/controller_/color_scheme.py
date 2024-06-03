@@ -7,8 +7,21 @@ from ..bot.bot_util import pil_image_to_dfile
 from discord import Embed, Colour
 
 class ColorScheme:
-   def __init__(self, db_process):
+   def __init__(self, db_process, admin_id):
       self.db_process = db_process
+      self.admin_id = admin_id
+      self.add_default_color_scheme()
+
+   def add_default_color_scheme(self):
+      if self.admin_id is None:
+         return
+      
+      default_config = {}
+      for key in self.db_process.db.m.ColorScheme.get_common_column_names():
+         default_config[key] = DEFAULT_USER_CONFIG[key]
+
+      self.db_process.add_color_scheme(self.admin_id, "default", default_config)
+      
 
    async def get_one_scheme(self, user, name, ctx):
       color_schemes = self.db_process.search_color_schemes(user and user.id, name)
@@ -34,11 +47,8 @@ class ColorScheme:
          ctx.report.msg.add(f'too long name, expected 255 chars, got {len(name)}')
       
       scheme_dict = {}
-      for key in DEFAULT_USER_CONFIG.keys():
-         if key in [ 'map_type', 'idle_reward_icon','summon_stone_icon','enemy_icon','artifact_icon' ]:
-            continue
-         value = getattr(user_config, key)
-         scheme_dict[key] = value
+      for key in user_config.get_common_column_names():
+         scheme_dict[key] = getattr(user_config, key)
 
       self.db_process.add_color_scheme(user.id, name, scheme_dict)
       ctx.report.reaction.add(Reactions.ok)
@@ -95,11 +105,29 @@ class ColorScheme:
          return
 
       new_config = {}
-      for key in DEFAULT_USER_CONFIG.keys():
-         if key in [ 'map_type', 'idle_reward_icon','summon_stone_icon','enemy_icon','artifact_icon' ]:
-            continue
-         value = getattr(color_scheme, key)
-         new_config[key] = value
+      for key in color_scheme.get_common_column_names():
+         new_config[key] = getattr(color_scheme, key)
 
       self.db_process.set_user_config(user.id, new_config)
+      ctx.report.reaction.add(Reactions.ok)
+
+   async def subscribe(self, user, user_from, name, ctx):
+      color_scheme = await self.get_one_scheme(user_from, name, ctx)
+      if not color_scheme:
+         return      
+      if color_scheme is None:
+         ctx.msg.add(f'no such color_scheme')
+         ctx.report.reaction.add(Reactions.fail)
+         return
+
+      new_config = {
+         'subscribe_id': color_scheme.id,
+         'is_subscribed': True
+      }
+
+      self.db_process.set_user_config(user.id, new_config)
+      ctx.report.reaction.add(Reactions.ok)
+
+   async def unsubscribe(self, user, ctx):
+      self.db_process.set_user_config(user.id, {'is_subscribed': False})
       ctx.report.reaction.add(Reactions.ok)

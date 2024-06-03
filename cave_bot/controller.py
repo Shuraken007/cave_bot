@@ -9,14 +9,14 @@ from .controller_.leaderboard import Leaderboard
 from .view import View
 
 class Controller:
-   def __init__(self, db_process):
+   def __init__(self, db_process, admin_id):
       self.db_process = db_process
       self.view = {}
       self.user_roles = {}
 
-      self.role = Role(db_process)
+      self.role = Role(db_process, admin_id)
       self.config = Config(db_process)
-      self.color_scheme = ColorScheme(db_process)
+      self.color_scheme = ColorScheme(db_process, admin_id)
       self.leaderboard = Leaderboard(db_process)
 
    def get_view(self, map_type):
@@ -129,6 +129,14 @@ class Controller:
    async def load_scheme(self, user_from, name, ctx):
       user = ctx.message.author
       await self.color_scheme.load(user, user_from, name, ctx)
+
+   async def subscribe_scheme(self, user_from, name, ctx):
+      user = ctx.message.author
+      await self.color_scheme.subscribe(user, user_from, name, ctx)
+
+   async def unsubscribe_scheme(self, ctx):
+      user = ctx.message.author
+      await self.color_scheme.unsubscribe(user, ctx)
 
 #  Leaderboard functions
    async def show_leaderboard(self, ctx, limit):

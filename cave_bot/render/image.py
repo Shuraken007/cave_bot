@@ -208,13 +208,13 @@ class RenderImage():
       return [y, x]
 
    def add_cells(self, back, images, map_type, sizes, user_config):
-      if not user_config.cell_icon:
+      if not self.from_user_config('cell_icon', user_config):
          return
       cell_img = self.generate_from_grayscale(
          images["cell_grayscale"],         
          images["cell_alpha"],         
-         self.color_from_config(user_config.cell_background_color), 
-         self.color_from_config(user_config.cell_background_border_color),
+         self.color_from_config(self.from_user_config('cell_background_color', user_config)), 
+         self.color_from_config(self.from_user_config('cell_background_border_color', user_config)),
       )
       for i in range(0, map_type.value):
          for j in range(0, map_type.value):
@@ -247,12 +247,20 @@ class RenderImage():
       pixel_color = img.getpixel(tuple(coords))
 
       color = None
-      if is_text_black(pixel_color, user_config.text_dark_light_threshold):
-         color = user_config.text_dark_color
+      if is_text_black(pixel_color, self.from_user_config('text_dark_light_threshold', user_config)):
+         color = self.from_user_config('text_dark_color', user_config)
       else:
-         color = user_config.text_light_color
+         color = self.from_user_config('text_light_color', user_config)
 
       return self.color_from_config(color)
+   
+   def from_user_config(self, key, user_config):
+      if key in user_config.get_common_column_names() and \
+            user_config.is_subscribed and user_config.subscribe:
+         
+         user_config = user_config.subscribe
+
+      return getattr(user_config, key)
    
    def color_from_config(self, color):
       color = color.copy()
@@ -263,19 +271,19 @@ class RenderImage():
       color = None
 
       if is_known:
-         color = user_config.me_color
+         color = self.from_user_config('me_color', user_config)
       elif cell_type == ct.unknown:
-         color = user_config.unknown_color
+         color = self.from_user_config('unknown_color', user_config)
       elif cell_type == ct.empty:
-         color = user_config.empty_color
+         color = self.from_user_config('empty_color', user_config)
       elif cell_type == ct.idle_reward:
-         color = user_config.idle_reward_color
+         color = self.from_user_config('idle_reward_color', user_config)
       elif cell_type == ct.summon_stone:
-         color = user_config.summon_stone_color
+         color = self.from_user_config('summon_stone_color', user_config)
       elif cell_type in [ct.spider, ct.demon_hands, ct.demon_head, ct.demon_tail]:
-         color = user_config.enemy_color
+         color = self.from_user_config('enemy_color', user_config)
       elif cell_type in [ct.amulet_of_fear, ct.demon_skull, ct.golden_compass, ct.lucky_bones, ct.scepter_of_domination, ct.spiral_of_time, ct.token_of_memories]:
-         color = user_config.artifact_color
+         color = self.from_user_config('artifact_color', user_config)
 
       if color:
          return self.color_from_config(color)
@@ -356,8 +364,8 @@ class RenderImage():
       back = self.generate_from_grayscale(
          cache.images["background_grayscale"],         
          cache.images["background_alpha"],         
-         self.color_from_config(user_config.background_color), 
-         self.color_from_config(user_config.background_border_color),
+         self.color_from_config(self.from_user_config('background_color', user_config)), 
+         self.color_from_config(self.from_user_config('background_border_color', user_config)),
       )
       back.draw = ImageDraw.Draw(back)
 
@@ -486,7 +494,7 @@ class RenderImage():
             filling_total_founded_config[cell_type_name] = founded
 
       msg1 = f'{founded}/{total}'
-      color =  user_config.text_all_collected_color if founded >= total else user_config.text_part_collected_color
+      color =  self.from_user_config('text_all_collected_color', user_config) if founded >= total else self.from_user_config('text_part_collected_color', user_config)
       msg1_color = self.color_from_config(color)
       text.append({'text': msg1.lower(), 'color': msg1_color})
 
@@ -584,11 +592,11 @@ class RenderImage():
       x = int((self.bg_w - total_width) / 2)
 
       fill_color = get_gradient_color(progress, total_width)
-      transperancy = user_config.progress_bar_background_color[-1]
+      transperancy = self.from_user_config('progress_bar_background_color', user_config)[-1]
       fill_color.append(transperancy)
       fill_color = self.color_from_config(fill_color)
 
-      background_color = self.color_from_config(user_config.progress_bar_background_color)
+      background_color = self.color_from_config(self.from_user_config('progress_bar_background_color', user_config))
       draw = ImageDraw.Draw(back)
       draw_bar(draw, x, center_y - height / 2, total_width, height, progress, fill_color, background_color)
       self.add_bar_description(explored_cells, total_cells, progress, x, center_y, total_width, height, back, map_type, user_config)

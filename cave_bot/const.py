@@ -145,7 +145,9 @@ map_colour_alias_to_rgb = {
 c = map_colour_alias_to_rgb
 
 DEFAULT_USER_CONFIG = {
-   'map_type': MapType.normal,
+   'map_type'     : MapType.normal,
+   'subscribe_id' : 1,
+   'is_subscribed': True,
 
    'idle_reward_icon': True,
    'summon_stone_icon': True,
@@ -181,12 +183,15 @@ def color_to_str(color):
    return res
 
 SERVER_DEFAULT_USER_CONFIG = {
-   'map_type': "20",
+   'map_type': "30",
+   'subscribe_id' : "1",
+   'is_subscribed': sa.sql.expression.true(),
 
    'idle_reward_icon': sa.sql.expression.true(),
    'summon_stone_icon': sa.sql.expression.true(),
    'enemy_icon': sa.sql.expression.true(),
    'artifact_icon': sa.sql.expression.true(),
+
    'cell_icon': sa.sql.expression.true(),
 
    'unknown_color': color_to_str(c['empty']),
@@ -203,9 +208,10 @@ SERVER_DEFAULT_USER_CONFIG = {
    'cell_background_color'       : color_to_str(c['black']),
    'cell_background_border_color': color_to_str(c['white']),
 
+   'text_dark_light_threshold'   : "50",
+
    'text_light_color'            : color_to_str(c['grey']),
    'text_dark_color'             : color_to_str(c['black']),
-   'text_dark_light_threshold'   : "50",
    'text_all_collected_color'    : color_to_str(c['green']),
    'text_part_collected_color'   : color_to_str(c['red']),
 

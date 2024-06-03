@@ -43,8 +43,9 @@ class MyBot(commands.Bot):
    def init_db(self):
       week_postfix, table_names = get_table_names()
       models = generate_models(table_names)
-      self.db = Db(models, self.config.db_connection_str, admin_id = self.config.admin_id)
+      self.db = Db(models, self.config.db_connection_str)
       self.db_process = DbProcess(self.db)
+
       self.week_postfix = week_postfix
 
    def add_not_registered_self_commands(self):
@@ -70,7 +71,7 @@ class MyBot(commands.Bot):
       self.db_process = None
       self.init_db()
 
-      self.controller = Controller(self.db_process)
+      self.controller = Controller(self.db_process, self.config.admin_id)
       self.logger = Logger('output')
       self.render_ascii = RenderAscii()
       self.render_image = RenderImage(2000, 'img', 'output', ['font', 'AlegreyaSC-Regular_384.ttf'], self)

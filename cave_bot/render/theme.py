@@ -57,7 +57,7 @@ class RenderTheme:
       return img
 
    def render(self, user_id, name, report):
-      scheme = self.db_process.get_color_scheme(user_id, name)
+      scheme = self.db_process.search_color_schemes(user_id, name)
       if scheme is None:
          report.err.add('scheme not founded')
          return

@@ -4,7 +4,7 @@ from ..config import Config
 
 def main():
    config = Config()
-   table_names = get_table_names()
+   week_postfix, table_names = get_table_names()
    models = generate_models(table_names)
    db = Db(models, config.db_connection_str)
    db.drop_tables()
