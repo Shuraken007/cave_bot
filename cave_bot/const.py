@@ -141,6 +141,7 @@ map_colour_alias_to_rgb = {
    "light_yellow": [255, 255, 153, 50],
    "white_blue": [101, 131, 144, 100],
    "black_blue": [20, 26, 36, 100],
+   "white_grey": [150, 150, 150, 100],
 }
 c = map_colour_alias_to_rgb
 
@@ -167,7 +168,7 @@ DEFAULT_USER_CONFIG = {
    'background_border_color': c['white_blue'],
 
    'cell_background_color'       : c['black'],
-   'cell_background_border_color': c['white'],
+   'cell_background_border_color': c['white_grey'],
 
    'text_light_color'            : c['grey'],
    'text_dark_color'             : c['black'],
@@ -206,7 +207,7 @@ SERVER_DEFAULT_USER_CONFIG = {
    'background_border_color': color_to_str(c['white_blue']),
 
    'cell_background_color'       : color_to_str(c['black']),
-   'cell_background_border_color': color_to_str(c['white']),
+   'cell_background_border_color': color_to_str(c['white_grey']),
 
    'text_dark_light_threshold'   : "50",
 

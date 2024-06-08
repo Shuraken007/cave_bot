@@ -91,13 +91,14 @@ class MyBot(commands.Bot):
       self.add_not_registered_self_commands()
 
    def reset_view(self):
-      self.controller = Controller(self.db_process)
+      self.controller = Controller(self.db_process, self.config.admin_id)
       self.render_image.reset_storage()
 
    def reset(self, ctx):
       if self.week_postfix != get_week_start_as_str():
          self.dump_memory_db_to_connection()
          self.db.memory_db.dispose()
+         self.db.load_db.dispose()
          self.init_db()
          self.reset_view()
          ctx.report.set_key('Info')

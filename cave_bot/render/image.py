@@ -421,7 +421,7 @@ class RenderImage():
 
       is_config_default =  self.is_user_config_default(user_config)
 
-      if not user_id and not is_view_updated and is_config_default:
+      if not user_id and is_view_updated is False and is_config_default:
          img = self.storage.get_image([map_type.name])
          if img:
             using_save = True
